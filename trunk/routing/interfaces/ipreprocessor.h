@@ -37,10 +37,9 @@ public:
 	virtual QString GetName() = 0;
 	virtual int GetFileFormatVersion() = 0;
 	virtual Type GetType() = 0;
-	virtual QWidget* GetSettings() = 0;
 	virtual bool LoadSettings( QSettings* settings ) = 0;
 	virtual bool SaveSettings( QSettings* settings ) = 0;
-	virtual bool Preprocess( IImporter* importer, QString dir, QString settingFilename = "" ) = 0;
+	virtual bool Preprocess( IImporter* importer, QString dir ) = 0;
 	virtual ~IPreprocessor() {}
 };
 

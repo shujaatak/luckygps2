@@ -115,7 +115,7 @@ void OSMRendererClient::finished( QNetworkReply* reply ) {
 	}
 
 	QImage image;
-	if ( !image.load( reply, 0 ) ) {
+	if ( !image.load( reply, "PNG" ) ) {
 		m_cache.remove( id );
 		qDebug() << "failed to load image: " << id;
 		return;
@@ -126,7 +126,7 @@ void OSMRendererClient::finished( QNetworkReply* reply ) {
 	emit changed();
 }
 
-bool OSMRendererClient::loadTile( int x, int y, int zoom, QPixmap** tile )
+bool OSMRendererClient::loadTile( int x, int y, int zoom, int /*magnification*/, QPixmap** tile )
 {
 	long long id = tileID( x, y, zoom );
 
@@ -152,6 +152,7 @@ bool OSMRendererClient::loadTile( int x, int y, int zoom, QPixmap** tile )
 	request.setRawHeader( "User-Agent", "MoNav OSM Renderer 1.0" );
 	request.setAttribute( QNetworkRequest::User, QVariant( id ) );
 	request.setAttribute( QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache );
+	request.setAttribute( QNetworkRequest::HttpPipeliningAllowedAttribute, true );
 	network->get( request );
 
 	return false;

@@ -21,6 +21,7 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #define MRSettingsDialog_H
 
 #include <QWidget>
+#include "mapnikrenderer.h"
 
 namespace Ui {
 	 class MRSettingsDialog;
@@ -29,30 +30,16 @@ namespace Ui {
 class QSettings;
 
 class MRSettingsDialog : public QWidget {
-	 Q_OBJECT
+
+	Q_OBJECT
+
 public:
-	 MRSettingsDialog(QWidget *parent = 0);
-	 ~MRSettingsDialog();
 
-	struct Settings {
-		QString plugins;
-		QString fonts;
-		QString theme;
-		int fullZoom;
-		int tileSize;
-		int metaTileSize;
-		int margin;
-		int tileMargin;
-		bool reduceColors;
-		bool deleteTiles;
-		bool pngcrush;
+	MRSettingsDialog(QWidget *parent = 0);
+	~MRSettingsDialog();
 
-		std::vector< int > zoomLevels;
-	};
-
-	bool getSettings( Settings* settings );
-	bool loadSettings( QSettings* settings );
-	bool saveSettings( QSettings* settings );
+	bool readSettings( const MapnikRenderer::Settings& settings );
+	bool fillSettings( MapnikRenderer::Settings* settings );
 
 public slots:
 	void browseFont();
@@ -60,11 +47,12 @@ public slots:
 	void browsePlugins();
 
 protected:
-	 void changeEvent(QEvent *e);
+
 	void connectSlots();
 
 private:
-	 Ui::MRSettingsDialog *ui;
+
+	 Ui::MRSettingsDialog* m_ui;
 };
 
 #endif // MRSettingsDialog_H

@@ -21,7 +21,9 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #include "utils/qthelpers.h"
 #include "utils/edgeconnector.h"
 #include "interfaces/iimporter.h"
-
+#ifndef NOGUI
+#include "uttsettingsdialog.h"
+#endif
 #include <algorithm>
 #include <QMultiHash>
 #include <QList>
@@ -29,13 +31,10 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 
 UnicodeTournamentTrie::UnicodeTournamentTrie()
 {
-	m_settingsDialog = NULL;
 }
 
 UnicodeTournamentTrie::~UnicodeTournamentTrie()
 {
-	if ( m_settingsDialog != NULL )
-		delete m_settingsDialog;
 }
 
 QString UnicodeTournamentTrie::GetName()
@@ -53,48 +52,18 @@ UnicodeTournamentTrie::Type UnicodeTournamentTrie::GetType()
 	return AddressLookup;
 }
 
-QWidget* UnicodeTournamentTrie::GetSettings()
-{
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new UTTSettingsDialog();
-	return m_settingsDialog;
-}
-
-bool UnicodeTournamentTrie::LoadSettings( QSettings* settings )
-{
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new UTTSettingsDialog();
-	return m_settingsDialog->loadSettings( settings );
-}
-
-bool UnicodeTournamentTrie::SaveSettings( QSettings* settings )
-{
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new UTTSettingsDialog();
-	return m_settingsDialog->saveSettings( settings );
-}
-
-static bool load( UTTSettingsDialog::Settings *newSettings, const QString& filename)
+bool UnicodeTournamentTrie::LoadSettings( QSettings* /*settings*/ )
 {
 	return true;
 }
 
-bool UnicodeTournamentTrie::Preprocess( IImporter* importer, QString dir, QString settingFilename )
+bool UnicodeTournamentTrie::SaveSettings( QSettings* /*settings*/ )
 {
-	if ( m_settingsDialog == NULL && !settingFilename.length())
-	{
-		m_settingsDialog = new UTTSettingsDialog();
+	return true;
+}
 
-		UTTSettingsDialog::Settings settings;
-		if ( !m_settingsDialog->getSettings( &settings ) )
-			return false;
-	}
-	else
-	{
-		UTTSettingsDialog::Settings settings;
-		load(&settings, settingFilename);
-	}
-
+bool UnicodeTournamentTrie::Preprocess( IImporter* importer, QString dir )
+{
 	QString filename = fileInDirectory( dir, "Unicode Tournament Trie" );
 
 	QFile subTrieFile( filename + "_sub" );
@@ -363,7 +332,7 @@ void UnicodeTournamentTrie::insert( std::vector< utt::Node >* trie, unsigned imp
 	}
 
 	if ( !moreImportant ) {
-	(*trie)[node].dataList.push_back( data );
+		(*trie)[node].dataList.push_back( data );
 	} else {
 		(*trie)[node].dataList.insert( (*trie)[node].dataList.begin(), data );
 	}
@@ -414,5 +383,24 @@ void UnicodeTournamentTrie::writeTrie( std::vector< utt::Node >* trie, QFile& fi
 
 	delete[] buffer;
 }
+
+#ifndef NOGUI
+bool UnicodeTournamentTrie::GetSettingsWindow( QWidget** window )
+{
+	*window =  new UTTSettingsDialog();
+	return true;
+}
+
+bool UnicodeTournamentTrie::FillSettingsWindow( QWidget* /*window*/ )
+{
+	return true;
+}
+
+bool UnicodeTournamentTrie::ReadSettingsWindow( QWidget* /*window*/ )
+{
+	return true;
+}
+
+#endif
 
 Q_EXPORT_PLUGIN2(unicodetournamenttrie, UnicodeTournamentTrie)

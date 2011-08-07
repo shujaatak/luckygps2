@@ -323,7 +323,7 @@ private:
 				qCritical() << "ERROR: a node requires more space than a single block can suffice\n"
 						<< "block:" << m_block.id << "node:" << node << "size:" << size << "maxSize:" << m_settings.blockSize << "\n"
 						<< "try increasing the block size";
-				exit( -1 );
+				exit( -1 ); // TODO return gracefully!
 			}
 			return false;
 		}
@@ -458,8 +458,8 @@ private:
 		testBlock( firstEdges );
 #endif
 
-		assert( buffer - m_blockBuffer < m_settings.blockSize );
-		assert( ( buffer - beginBuffer ) * 8 + offset - beginOffset == m_block.size );
+		assert( ( unsigned ) ( buffer - m_blockBuffer ) < m_settings.blockSize );
+		assert( ( unsigned ) ( ( buffer - beginBuffer ) * 8 + offset - beginOffset ) == m_block.size );
 		blockFile.write( ( const char* ) m_blockBuffer, m_settings.blockSize );
 	}
 

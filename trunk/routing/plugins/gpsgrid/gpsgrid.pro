@@ -11,29 +11,33 @@ INCLUDEPATH += ../..
 
 DESTDIR = ../../bin/plugins_preprocessor
 
-SOURCES += gpsgrid.cpp \
-	 ggdialog.cpp
+SOURCES += gpsgrid.cpp
 
-HEADERS += gpsgrid.h \
-	 interfaces/ipreprocessor.h \
-	 interfaces/iimporter.h \
-	 utils/coordinates.h \
-	 utils/config.h \
-	 ggdialog.h \
+HEADERS += ../../interfaces/ipreprocessor.h \
+	 ../../interfaces/iimporter.h \
+	 ../../utils/coordinates.h \
+	 ../../utils/config.h \
+	 gpsgrid.h \
 	 cell.h \
 	 table.h \
-	 utils/bithelpers.h \
-	 utils/intersection.h \
-	 utils/qthelpers.h \
-	 utils/edgeconnector.h
+	 ../../utils/bithelpers.h \
+	 ../../utils/intersection.h \
+	 ../../utils/qthelpers.h \
+	 ../../utils/edgeconnector.h
 
 unix {
 	QMAKE_CXXFLAGS_RELEASE -= -O2
 	QMAKE_CXXFLAGS_RELEASE += -O3 \
-		 -march=native \
 		 -Wno-unused-function
 	QMAKE_CXXFLAGS_DEBUG += -Wno-unused-function
 }
 
-FORMS += \
-	 ggdialog.ui
+!nogui {
+	SOURCES += ggdialog.cpp
+	HEADERS += ggdialog.h
+	FORMS += ggdialog.ui
+}
+nogui {
+	DEFINES += NOGUI
+	QT -= gui
+}

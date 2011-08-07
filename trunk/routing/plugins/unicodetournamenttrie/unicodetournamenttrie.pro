@@ -12,25 +12,30 @@ INCLUDEPATH += ../..
 TEMPLATE = lib
 CONFIG += plugin static
 
-SOURCES += unicodetournamenttrie.cpp \
-	 uttsettingsdialog.cpp
+SOURCES += unicodetournamenttrie.cpp
 
 HEADERS += unicodetournamenttrie.h \
-	 utils/coordinates.h \
-	 utils/config.h \
-	 interfaces/iimporter.h \
-	 interfaces/ipreprocessor.h \
+	 ../../utils/coordinates.h \
+	 ../../utils/config.h \
+	 ../../interfaces/iimporter.h \
+	 ../../interfaces/ipreprocessor.h \
 	 trie.h \
-	 uttsettingsdialog.h \
-	 utils/bithelpers.h \
-	 utils/qthelpers.h \
-	 utils/edgeconnector.h
+	 ../../utils/bithelpers.h \
+	 ../../utils/qthelpers.h \
+	 ../../utils/edgeconnector.h
 
 unix {
 	QMAKE_CXXFLAGS_RELEASE -= -O2
-	QMAKE_CXXFLAGS_RELEASE += -O3 -march=native -Wno-unused-function
+	QMAKE_CXXFLAGS_RELEASE += -O3 -Wno-unused-function
 	QMAKE_CXXFLAGS_DEBUG += -Wno-unused-function
 }
 
-FORMS += \
-	 uttsettingsdialog.ui
+!nogui {
+	SOURCES += uttsettingsdialog.cpp
+	HEADERS += uttsettingsdialog.h
+	FORMS += uttsettingsdialog.ui
+}
+nogui {
+	DEFINES += NOGUI
+	QT -= gui
+}

@@ -87,10 +87,9 @@ public:
 
 	virtual QString GetName() = 0;
 	virtual void SetOutputDirectory( const QString& dir ) = 0;
-	virtual QWidget* GetSettings() = 0;
 	virtual bool LoadSettings( QSettings* settings ) = 0;
 	virtual bool SaveSettings( QSettings* settings ) = 0;
-	virtual bool Preprocess( QString filename, QString settingFilename) = 0;
+	virtual bool Preprocess( QString filename ) = 0;
 	// IRouter is allowed to remap node ids and must set the resulting id map
 	virtual bool SetIDMap( const std::vector< NodeID >& idMap ) = 0;
 	// IGPSLookup has to use the router's id map
