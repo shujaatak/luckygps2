@@ -18,9 +18,12 @@ public:
 		UnsignedCoordinate position; // position of the source indicator
 		double heading; // heading of the source indicator
 		UnsignedCoordinate target; // position of the target indicator
+		QVector< UnsignedCoordinate > waypoints; // a list of waypoints
 		QVector< UnsignedCoordinate > POIs; // a list of points of interest to highlight
-		QVector< int > edgeSegments; // a list of edge segments to draw; each segment only stores the length of the segment
-		QVector< UnsignedCoordinate > edges; // the sorted list of the edge segments' paths
+		QVector< int > polygonEndpointsStreet; // a list pointing to the last coordinates of each individual polygon for highlighting streets in the street chooser.
+		QVector< UnsignedCoordinate > polygonCoordsStreet; // a sorted list of polygon coordinates for highlighting streets in the street chooser.
+		QVector< int > polygonEndpointsTracklog; // a list pointing to the last coordinates of each individual polygon for highlighting the tracklog.
+		QVector< UnsignedCoordinate > polygonCoordsTracklog; // a sorted list of polygon coordinates for highlighting  the tracklog.
 		QVector< IRouter::Node > route; // the current route
 
 		PaintRequest() {
@@ -36,6 +39,7 @@ public:
 	virtual void ShowSettings() = 0;
 	virtual bool IsCompatible( int fileFormatVersion ) = 0;
 	virtual bool LoadData() = 0;
+	virtual bool UnloadData() = 0;
 	// get the maximal zoom level; possible zoom levels are: [0,GetMaxZoom()]
 	virtual int GetMaxZoom() = 0;
 	// modify the request to respond to a mouse movement

@@ -44,6 +44,6 @@ public:
 	virtual ~IPreprocessor() {}
 };
 
-Q_DECLARE_INTERFACE( IPreprocessor, "monav.IPreprocessor/1.0" )
+Q_DECLARE_INTERFACE( IPreprocessor, "monav.IPreprocessor/1.2" )
 
 #endif // IPREPROCESSING_H
