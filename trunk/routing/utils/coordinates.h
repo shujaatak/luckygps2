@@ -20,7 +20,6 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef COORDINATES_H_INCLUDED
 #define COORDINATES_H_INCLUDED
 
-#include <cfloat>
 #include <limits>
 #include <cmath>
 #include <cassert>
@@ -28,19 +27,34 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #define M_PI 3.14159265358979323846
 #endif
 
+/**
+	this class represents a GPS position
+	latitude ranges in [-90,+90]
+ */
 class GPSCoordinate {
 public:
 
+	/** initialize with invalid status */
 	GPSCoordinate()
 	{
-		latitude = longitude = DBL_MAX;
+		latitude = longitude = std::numeric_limits< double >::max();
 	}
+	/** initalize with given (lat,lon) pair */
 	GPSCoordinate( double lat, double lon )
 	{
 		latitude = lat;
 		longitude = lon;
 	}
 
+	/**
+		computes the distance on the earth's surface
+
+		uses vincenty's inverse formula
+		it computes the distance on the WGS84 ellipsoid, which should be exact enough for many purposes
+		the computation is quite slow as it includes many triogometric functions
+
+		can fail for extrem cases ( e.g., pole to pole )
+	 */
 	double Distance( const GPSCoordinate &right ) const
 	{
 		assert( fabs( latitude ) < 90 && fabs( right.latitude ) < 90 );
@@ -99,6 +113,12 @@ public:
 		return 0;
 	}
 
+	/**
+		approximates the distance on the earth's surface
+
+		uses a sphere approximation and the law of haversines
+		usually about 6% worse than vincenty's approximation
+	 */
 	double ApproximateDistance( const GPSCoordinate &right ) const
 	{
 		static const double DEG_TO_RAD = 0.017453292519943295769236907684886;
@@ -132,20 +152,30 @@ public:
 		return longitude < right.longitude;
 	}
 
+	/**
+		checks whether this coordinate is in the invalid state
+		does not check for invalid coordinates, e.g. latitude in [-90,90]
+	 */
 	bool IsValid() const
 	{
-		return latitude != DBL_MAX && longitude != DBL_MAX;
+		return latitude != std::numeric_limits< double >::max() && longitude != std::numeric_limits< double >::max();
 	}
 
 	double latitude, longitude;
 };
 
+/**
+	This class represents a coordinate in the mercator projection
+
+	x and y values range from 0 to 1
+ */
 class ProjectedCoordinate {
 public:
 
+	/** contructs a coordinate in the invalid state */
 	ProjectedCoordinate()
 	{
-		x = y = DBL_MAX;
+		x = y = std::numeric_limits< double >::max();
 	}
 
 	ProjectedCoordinate( double xVal, double yVal )
@@ -159,15 +189,24 @@ public:
 		y = yVal / ( 1u << zoom );
 	}
 
+	/** constructs a coordinate from GPS position */
 	explicit ProjectedCoordinate( const GPSCoordinate& gps )
 	{
+		if ( !gps.IsValid() ) {
+			x = y = std::numeric_limits< double >::max();
+			return;
+		}
 		x = ( gps.longitude + 180.0 ) / 360.0;
 		y = ( 1.0 - log( tan( gps.latitude * M_PI / 180.0 ) + 1.0 / cos( gps.latitude * M_PI / 180.0 ) ) / M_PI ) / 2.0;
 	}
 
+	/** converts into a GPS position */
 	GPSCoordinate ToGPSCoordinate() const
 	{
 		GPSCoordinate gps;
+		if ( !IsValid() )
+			return gps;
+
 		gps.longitude = x * 360.0 - 180;
 		const double n = M_PI - 2.0 * M_PI * y;
 		gps.latitude = 180.0 / M_PI * atan( 0.5 * ( exp( n ) - exp( -n ) ) );
@@ -191,20 +230,33 @@ public:
 		return y < right.y;
 	}
 
+	/**
+		checks whether this coordinate is in the invalid state
+		does not check for invalid coordinates, e.g. x in [0,1]
+	 */
 	bool IsValid() const
 	{
-		return x != DBL_MAX && y != DBL_MAX;
+		return x != std::numeric_limits< double >::max() && y != std::numeric_limits< double >::max();
 	}
 
 	double x, y;
 };
 
+/**
+	This class represents a quantized coordinate in mercator projection
+
+	it uses 31 bits to represent the range of x and y respectively
+	this means we have a worst-case resolution of ~2cm
+
+	try not to convert coordinates to much as each time we might loose about 2cm precision
+ */
 class UnsignedCoordinate {
 public:
 	
+	/** constructs a coordinate in the invalid state */
 	UnsignedCoordinate()
 	{
-		x = y = UINT_MAX;
+		x = y = std::numeric_limits< unsigned >::max();
 	}
 
 	UnsignedCoordinate( unsigned xVal, unsigned yVal )
@@ -213,25 +265,35 @@ public:
 		y = yVal;
 	}
 
+	/** converts from floating point coordinate */
 	explicit UnsignedCoordinate( ProjectedCoordinate tile )
 	{
-		x = floor( tile.x * ( 1u << 30 ) );
-		y = floor( tile.y * ( 1u << 30 ) );
+		if ( !tile.IsValid() ) {
+			x = y = std::numeric_limits< unsigned >::max();
+			return;
+		}
+		x = ( unsigned ) floor( tile.x * ( 1u << 30 ) );
+		y = ( unsigned ) floor( tile.y * ( 1u << 30 ) );
 	}
 
+	/** converts from GPS coordinate */
 	explicit UnsignedCoordinate( GPSCoordinate gps )
 	{
 		*this = UnsignedCoordinate( ProjectedCoordinate( gps ) );
 	}
 
+	/** converts to GPS coordinate */
 	GPSCoordinate ToGPSCoordinate() const
 	{
 		return ToProjectedCoordinate().ToGPSCoordinate();
 	}
 
+	/** converts to floating point coordinate */
 	ProjectedCoordinate ToProjectedCoordinate() const
 	{
 		ProjectedCoordinate tile;
+		if ( !IsValid() )
+			return tile;
 		tile.x = x;
 		tile.y = y;
 		tile.x /= ( 1u << 30 );
@@ -239,6 +301,7 @@ public:
 		return tile;
 	}
 
+	/** get tile index at specific zoom level */
 	unsigned GetTileX( int zoom ) const {
 		if ( zoom == 0 )
 			return 0;
@@ -249,6 +312,11 @@ public:
 			return 0;
 		return y >> ( 30 - zoom );
 	}
+
+	/**
+		get coordinate within the tile at a specific zoom level
+		\param precision specifies the amount of precision bits needed
+	 */
 	unsigned GetTileSubX( int zoom, int precision ) const {
 		assert( zoom + precision < 31 );
 		assert( zoom + precision > 0 );
@@ -279,9 +347,13 @@ public:
 		return y < right.y;
 	}
 
+	/**
+		checks whether this coordinate is in the invalid state
+		does not check for invalid coordinates, e.g. x in [0,2^31]
+	 */
 	bool IsValid() const
 	{
-		return x != UINT_MAX && y != UINT_MAX;
+		return x != std::numeric_limits< unsigned >::max() && y != std::numeric_limits< unsigned >::max();
 	}
 
 	unsigned x, y;
