@@ -8,9 +8,11 @@ PRE_TARGETDEPS += osmformat.pb.h fileformat.pb.h osmformat.pb.cc fileformat.pb.c
 
 INCLUDEPATH += ../..
 
+unix {
 CONFIG += link_pkgconfig
-PKGCONFIG += libxml-2.0
 PKGCONFIG += protobuf
+}
+
 HEADERS += osmimporter.h \
 	 statickdtree.h \
 	 ../../interfaces/iimporter.h \
@@ -19,7 +21,6 @@ HEADERS += osmimporter.h \
 	 bz2input.h \
 	 ../../utils/intersection.h \
 	 ../../utils/qthelpers.h \
-	 ../../utils/osm/xmlreader.h \
 	 ../../utils/osm/ientityreader.h \
 	 ../../utils/osm/pbfreader.h \
 	 ../../utils/osm/types.h
@@ -30,6 +31,12 @@ unix {
 	QMAKE_CXXFLAGS_RELEASE -= -O2
 	QMAKE_CXXFLAGS_RELEASE += -O3 -Wno-unused-function
 	QMAKE_CXXFLAGS_DEBUG += -Wno-unused-function
+}
+
+win32 {
+	INCLUDEPATH += ../../../lib/win64/protobuf/include
+	INCLUDEPATH += ../../../lib/win64/zlib/include
+	INCLUDEPATH += ../../../lib/win64/bzip2/include
 }
 
 RESOURCES += \

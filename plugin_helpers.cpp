@@ -104,16 +104,16 @@ bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int l
 
 	/* OSM PBF importer */
 	importer->SetOutputDirectory(QDir::tempPath());
-	bool result = importer->Preprocess(filename.filePath(), settingsFilename.filePath());
+	bool result = importer->Preprocess(filename.filePath());
 
 	/* Route plugin */
-	result = routerPlugins->Preprocess(importer, dataDir, settingsFilename.filePath());
+	result = routerPlugins->Preprocess(importer, dataDir);
 
 	/* GPS Lookup */
-	result = gpsLookupPlugins->Preprocess(importer, dataDir, settingsFilename.filePath());
+	result = gpsLookupPlugins->Preprocess(importer, dataDir);
 
 	/* Address lookup */
-	result = addressLookupPlugins->Preprocess( importer, dataDir, settingsFilename.filePath());
+	result = addressLookupPlugins->Preprocess( importer, dataDir);
 
 	importer->DeleteTemporaryFiles();
 
