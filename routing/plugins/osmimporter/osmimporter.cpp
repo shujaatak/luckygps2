@@ -18,27 +18,21 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "osmimporter.h"
-
-#ifdef LIBXML
-#include "xmlreader.h"
+#ifndef NOGUI
+#include "oisettingsdialog.h"
 #endif
-
-#include "pbfreader.h"
+#include "../../utils/osm/xmlreader.h"
+#include "../../utils/osm/pbfreader.h"
 #include "utils/qthelpers.h"
+#include "utils/formattedoutput.h"
 #include <algorithm>
-
-#include <QSettings>
 #include <QtDebug>
-
-#undef max
-#undef min
-
+#include <QSettings>
 #include <limits>
 
 OSMImporter::OSMImporter()
 {
 	Q_INIT_RESOURCE(speedprofiles);
-	m_settingsDialog = NULL;
 
 	m_kmhStrings.push_back( "kmh" );
 	m_kmhStrings.push_back( " kmh" );
@@ -49,6 +43,9 @@ OSMImporter::OSMImporter()
 
 	m_mphStrings.push_back( "mph" );
 	m_mphStrings.push_back( " mph" );
+
+	m_settings.speedProfile = ":/speed profiles/motorcar.spp";
+	m_settings.languageSettings << "name";
 }
 
 void OSMImporter::setRequiredTags( IEntityReader *reader )
@@ -60,19 +57,16 @@ void OSMImporter::setRequiredTags( IEntityReader *reader )
 	list.push_back( "barrier" );
 	for ( int i = 0; i < m_settings.languageSettings.size(); i++ )
 		list.push_back( m_settings.languageSettings[i] );
-	for ( int i = 0; i < m_settings.accessList.size(); i++ )
-		list.push_back( m_settings.accessList[i] );
-	for ( int i = 0; i < m_settings.nodeModificators.size(); i++ ) {
-		int index = list.indexOf( m_settings.nodeModificators[i].key );
+	for ( int i = 0; i < m_profile.accessList.size(); i++ )
+		list.push_back( m_profile.accessList[i] );
+	for ( int i = 0; i < m_profile.nodeModificators.size(); i++ ) {
+		int index = list.indexOf( m_profile.nodeModificators[i].key );
 		if ( index == -1 ) {
 			index = list.size();
-			list.push_back( m_settings.nodeModificators[i].key );
+			list.push_back( m_profile.nodeModificators[i].key );
 		}
 		m_nodeModificatorIDs.push_back( index );
 	}
-	list.push_back("addr:housenumber");
-	list.push_back("addr:street");
-	list.push_back("addr:city");
 	reader->setNodeTags( list );
 
 	list.clear();
@@ -86,13 +80,13 @@ void OSMImporter::setRequiredTags( IEntityReader *reader )
 	list.push_back( "maxspeed" );
 	for ( int i = 0; i < m_settings.languageSettings.size(); i++ )
 		list.push_back( m_settings.languageSettings[i] );
-	for ( int i = 0; i < m_settings.accessList.size(); i++ )
-		list.push_back( m_settings.accessList[i] );
-	for ( int i = 0; i < m_settings.wayModificators.size(); i++ ) {
-		int index = list.indexOf( m_settings.wayModificators[i].key );
+	for ( int i = 0; i < m_profile.accessList.size(); i++ )
+		list.push_back( m_profile.accessList[i] );
+	for ( int i = 0; i < m_profile.wayModificators.size(); i++ ) {
+		int index = list.indexOf( m_profile.wayModificators[i].key );
 		if ( index == -1 ) {
 			index = list.size();
-			list.push_back( m_settings.wayModificators[i].key );
+			list.push_back( m_profile.wayModificators[i].key );
 		}
 		m_wayModificatorIDs.push_back( index );
 	}
@@ -108,8 +102,6 @@ void OSMImporter::setRequiredTags( IEntityReader *reader )
 OSMImporter::~OSMImporter()
 {
 	Q_CLEANUP_RESOURCE(speedprofiles);
-	if ( m_settingsDialog != NULL )
-		delete m_settingsDialog;
 }
 
 QString OSMImporter::GetName()
@@ -122,25 +114,26 @@ void OSMImporter::SetOutputDirectory( const QString& dir )
 	m_outputDirectory = dir;
 }
 
-QWidget* OSMImporter::GetSettings()
-{
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new OISettingsDialog;
-	return m_settingsDialog;
-}
-
 bool OSMImporter::LoadSettings( QSettings* settings )
 {
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new OISettingsDialog;
-	return m_settingsDialog->loadSettings( settings );
+	if ( settings == NULL )
+		return false;
+	settings->beginGroup( "OSM Importer" );
+	m_settings.languageSettings = settings->value( "languages", QStringList( "name" ) ).toStringList();
+	m_settings.speedProfile = settings->value( "speedProfile", ":/speed profiles/motorcar.spp" ).toString();
+	settings->endGroup();
+	return true;
 }
 
 bool OSMImporter::SaveSettings( QSettings* settings )
 {
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new OISettingsDialog;
-	return m_settingsDialog->saveSettings( settings );
+	if ( settings == NULL )
+		return false;
+	settings->beginGroup( "OSM Importer" );
+	settings->setValue( "languages", m_settings.languageSettings );
+	settings->setValue( "speedProfile", m_settings.speedProfile );
+	settings->endGroup();
+	return true;
 }
 
 void OSMImporter::clear()
@@ -159,137 +152,14 @@ void OSMImporter::clear()
 	std::vector< EdgeInfo >().swap( m_edgeInfo );
 }
 
-
-static bool load( OISettingsDialog::Settings *newSettings, const QString& filename )
+bool OSMImporter::Preprocess( QString inputFilename )
 {
-
-	QSettings settings( filename, QSettings::IniFormat );
-
-	QString name = settings.value( "name" ).toString();
-
-	newSettings->defaultCitySpeed =  settings.value( "defaultCitySpeed" ).toBool();
-	newSettings->ignoreOneway = settings.value( "ignoreOneway" ).toBool();
-	newSettings->ignoreMaxspeed = settings.value( "ignoreMaxspeed" ).toBool();
-	newSettings->acceleration = settings.value( "acceleration" ).toDouble();
-	newSettings->decceleration = settings.value( "decceleration" ).toDouble();
-	newSettings->tangentialAcceleration = settings.value( "tangentialAcceleration" ).toDouble();
-	newSettings->pedestrian = settings.value( "pedestrian" ).toInt();
-	newSettings->otherCars = settings.value( "otherCars" ).toInt();
-
-	/* only support 3 access types at the moment */
-	QString accessType = settings.value( "accessType" ).toString();
-	newSettings->accessList.clear();
-
-	if(accessType == "motorcar")
-	{
-		newSettings->accessList.push_back("motorcar");
-		newSettings->accessList.push_back("motor_vehicle");
-		newSettings->accessList.push_back("vehicle");
-		newSettings->accessList.push_back("access");
-	}
-	else if(accessType == "bicycle")
-	{
-		newSettings->accessList.push_back("bicycle");
-		newSettings->accessList.push_back("vehicle");
-		newSettings->accessList.push_back("access");
-	}
-	else if(accessType == "foot")
-	{
-		newSettings->accessList.push_back("foot");
-		newSettings->accessList.push_back("access");
-	}
-	else
-		return false;
-
-	settings.beginGroup( "OSM Importer" );
-	QStringList languageSettings = settings.value( "languageSettings", QStringList( "name:en" ) + QStringList( "name" ) ).toStringList();
-	for ( int language = 0; language < languageSettings.size(); language++ )
-	{
-		newSettings->languageSettings.append( languageSettings[language] );
-	}
-	settings.endGroup();
-
-	newSettings->highways.clear();
-	int highwayCount = settings.value( "highwayCount" ).toInt();
-	for ( int i = 0; i < highwayCount; i++ )
-	{
-		MoNav::Highway highway;
-		highway.priority = settings.value( QString( "highway.%1.priority" ).arg( i ) ).toInt();
-		highway.value = settings.value( QString( "highway.%1.value" ).arg( i ) ).toString();
-		highway.maxSpeed = settings.value( QString( "highway.%1.maxSpeed" ).arg( i ) ).toInt();
-		highway.defaultCitySpeed = settings.value( QString( "highway.%1.defaultCitySpeed" ).arg( i ) ).toInt();
-		highway.averageSpeed = settings.value( QString( "highway.%1.averageSpeed" ).arg( i ) ).toInt();
-		highway.pedestrian = settings.value( QString( "highway.%1.pedestrian" ).arg( i ) ).toBool();
-		highway.otherLeftPenalty = settings.value( QString( "highway.%1.otherLeftPenalty" ).arg( i ) ).toBool();
-		highway.otherRightPenalty = settings.value( QString( "highway.%1.otherRightPenalty" ).arg( i ) ).toBool();
-		highway.otherStraightPenalty = settings.value( QString( "highway.%1.otherStraightPenalty" ).arg( i ) ).toBool();
-		highway.otherLeftEqual = settings.value( QString( "highway.%1.otherLeftEqual" ).arg( i ) ).toBool();
-		highway.otherRightEqual = settings.value( QString( "highway.%1.otherRightEqual" ).arg( i ) ).toBool();
-		highway.otherStraightEqual = settings.value( QString( "highway.%1.otherStraightEqual" ).arg( i ) ).toBool();
-		highway.leftPenalty = settings.value( QString( "highway.%1.leftPenalty" ).arg( i ) ).toInt();
-		highway.rightPenalty = settings.value( QString( "highway.%1.rightPenalty" ).arg( i ) ).toInt();
-
-		newSettings->highways.push_back( highway );
-	}
-	qSort( newSettings->highways );
-
-	newSettings->wayModificators.clear();
-	int wayModificatorCount = settings.value( "wayModificatorsCount" ).toInt();
-	for ( int i = 0; i < wayModificatorCount; i++ )
-	{
-		MoNav::WayModificator mod;
-		mod.key = settings.value( QString( "wayModificator.%1.key" ).arg( i ) ).toString();
-		mod.checkValue = settings.value( QString( "wayModificator.%1.checkValue" ).arg( i ) ).toBool();
-		if ( mod.checkValue )
-			mod.value = settings.value( QString( "wayModificator.%1.value" ).arg( i ) ).toString();
-		mod.invert = settings.value( QString( "wayModificator.%1.invert" ).arg( i ) ).toBool();
-		mod.type = ( MoNav::WayModificatorType ) settings.value( QString( "wayModificator.%1.type" ).arg( i ) ).toInt();
-		mod.modificatorValue = settings.value( QString( "wayModificator.%1.modificatorValue" ).arg( i ) );
-
-		newSettings->wayModificators.push_back( mod );
-	}
-
-	newSettings->nodeModificators.clear();
-	int nodeModificatorCount = settings.value( "nodeModificatorsCount" ).toInt();
-	for ( int i = 0; i < nodeModificatorCount; i++ )
-	{
-		MoNav::NodeModificator mod;
-		mod.key = settings.value( QString( "nodeModificator.%1.key" ).arg( i ) ).toString();
-		mod.checkValue = settings.value( QString( "nodeModificator.%1.checkValue" ).arg( i ) ).toBool();
-		if ( mod.checkValue )
-			mod.value = settings.value( QString( "nodeModificator.%1.value" ).arg( i ) ).toString();
-		mod.invert = settings.value( QString( "nodeModificator.%1.invert" ).arg( i ) ).toBool();
-		mod.type = ( MoNav::NodeModificatorType ) settings.value( QString( "nodeModificator.%1.type" ).arg( i ) ).toInt();
-		mod.modificatorValue = settings.value( QString( "nodeModificator.%1.modificatorValue" ).arg( i ) );
-
-		newSettings->nodeModificators.push_back( mod );
-	}
-
-	if ( !settings.status() == QSettings::NoError )
-	{
-		qCritical() << "error accessing file:" << filename << settings.status();
+	if ( !m_profile.load( m_settings.speedProfile ) ) {
+		qCritical() << "Failed to load speed profile:" << m_settings.speedProfile;
 		return false;
 	}
 
-	qDebug() << "OSM Importer:: loaded speed profile:" << name << "," << filename;
-	return true;
-}
-
-bool OSMImporter::Preprocess( QString inputFilename, QString settingFilename )
-{
-	if ( m_settingsDialog == NULL && !settingFilename.length() )
-{
-		m_settingsDialog = new OISettingsDialog();
-
-	if ( !m_settingsDialog->getSettings( &m_settings ) )
-		return false;
-	}
-	else
-	{
-		load(&m_settings, settingFilename);
-	}
-
-	if ( m_settings.highways.size() == 0 ) {
+	if ( m_profile.highways.size() == 0 ) {
 		qCritical( "no highway types specified" );
 		return false;
 	}
@@ -301,8 +171,8 @@ bool OSMImporter::Preprocess( QString inputFilename, QString settingFilename )
 	if ( !typeData.open( QIODevice::WriteOnly ) )
 		return false;
 
-	for ( int type = 0; type < m_settings.highways.size(); type++ )
-		typeData << m_settings.highways[type].value;
+	for ( int type = 0; type < m_profile.highways.size(); type++ )
+		typeData << m_profile.highways[type].value;
 	typeData << QString( "roundabout" );
 
 	m_statistics = Statistics();
@@ -383,7 +253,6 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	FileStream wayNameData( filename + "_way_names" );
 	FileStream wayRefData( filename + "_way_refs" );
 	FileStream restrictionData( filename + "_restrictions" );
-	FileStream hnData( filename + "_hn" ); /* house numbers */
 
 	if ( !edgeData.open( QIODevice::WriteOnly ) )
 		return false;
@@ -403,8 +272,6 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 		return false;
 	if ( !restrictionData.open( QIODevice::WriteOnly ) )
 		return false;
-	if ( !hnData.open( QIODevice::WriteOnly ) )
-		return false;
 
 	m_wayNames[QString()] = 0;
 	wayNameData << QString();
@@ -412,15 +279,10 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	wayRefData << QString();
 
 	IEntityReader* reader = NULL;
-#ifdef LIBXML
 	if ( inputFilename.endsWith( "osm.bz2" ) || inputFilename.endsWith( ".osm" ) )
 		reader = new XMLReader();
-	else
-#endif
-	{
-		if ( inputFilename.endsWith( ".pbf" ) )
+	else if ( inputFilename.endsWith( ".pbf" ) )
 		reader = new PBFReader();
-	}
 
 	if ( reader == NULL ) {
 		qCritical() << "file format not supporter";
@@ -434,7 +296,7 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 
 	try {
 		GPSCoordinate min( std::numeric_limits< double >::max(), std::numeric_limits< double >::max() );
-		GPSCoordinate max( std::numeric_limits< double >::min(), std::numeric_limits< double >::min() );
+		GPSCoordinate max( -std::numeric_limits< double >::max(), -std::numeric_limits< double >::max() );
 
 		setRequiredTags( reader );
 
@@ -473,11 +335,6 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 					m_statistics.numberOfPlaces++;
 				}
 
-				if( node.housenumber)
-				{
-					hnData << inputNode.coordinate.latitude << inputNode.coordinate.longitude << node.streetname << node.housenumber;
-				}
-
 				continue;
 			}
 
@@ -510,9 +367,9 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 						m_wayRefs[ref] = id;
 					}
 
-					if ( m_settings.ignoreOneway )
+					if ( m_profile.ignoreOneway )
 						way.direction = Way::Bidirectional;
-					if ( m_settings.ignoreMaxspeed )
+					if ( m_profile.ignoreMaxspeed )
 						way.maximumSpeed = -1;
 
 					if ( way.direction == Way::Opposite )
@@ -859,7 +716,7 @@ bool OSMImporter::remapEdges( QString filename, const std::vector< UnsignedCoord
 				assert( !bidirectional );
 			}
 
-			assert( ( int ) type < m_settings.highways.size() );
+			assert( ( int ) type < m_profile.highways.size() );
 			if ( speed <= 0 )
 				speed = std::numeric_limits< double >::max();
 
@@ -917,16 +774,16 @@ bool OSMImporter::remapEdges( QString filename, const std::vector< UnsignedCoord
 					double distance = fromCoordinate.Distance( toCoordinate );
 
 					double segmentSpeed = speed;
-					if ( m_settings.defaultCitySpeed && ( nodeLocation[from].isInPlace || nodeLocation[to].isInPlace ) ) {
+					if ( m_profile.defaultCitySpeed && ( nodeLocation[from].isInPlace || nodeLocation[to].isInPlace ) ) {
 						if ( segmentSpeed == std::numeric_limits< double >::max() ) {
-							segmentSpeed = m_settings.highways[type].defaultCitySpeed;
+							segmentSpeed = m_profile.highways[type].defaultCitySpeed;
 							m_statistics.numberOfDefaultCitySpeed++;
 						}
 					}
 
-					segmentSpeed = std::min( ( double ) m_settings.highways[type].maxSpeed, segmentSpeed );
+					segmentSpeed = std::min( ( double ) m_profile.highways[type].maxSpeed, segmentSpeed );
 
-					segmentSpeed *= m_settings.highways[type].averageSpeed / 100.0;
+					segmentSpeed *= m_profile.highways[type].averageSpeed / 100.0;
 					segmentSpeed /= 1.0 + addPercentage / 100.0;
 
 					double toAngle;
@@ -940,7 +797,7 @@ bool OSMImporter::remapEdges( QString filename, const std::vector< UnsignedCoord
 						toAngle = atan2( ( double ) nodeCoordinates[from].y - nodeCoordinates[to].y, ( double ) nodeCoordinates[from].x - nodeCoordinates[to].x );
 						double halfAngle = ( lastAngle - toAngle ) / 2.0;
 						double radius = sin( fabs( halfAngle ) ) / cos( fabs( halfAngle ) ) * distance / 2.0;
-						double maxSpeed = sqrt( m_settings.tangentialAcceleration * radius ) * 3.6;
+						double maxSpeed = sqrt( m_profile.tangentialAcceleration * radius ) * 3.6;
 						if ( radius < 1000 && radius > 2.5 && maxSpeed < segmentSpeed ) // NAN and inf not possible
 							segmentSpeed = maxSpeed; // turn radius and maximum tangential acceleration limit turning speed
 						lastAngle = toAngle + M_PI;
@@ -1030,7 +887,7 @@ bool OSMImporter::remapEdges( QString filename, const std::vector< UnsignedCoord
 				mappedEdgesData << source << target << bidirectional << seconds;
 				mappedEdgesData << nameID << refID;
 				if ( roundabout )
-					mappedEdgesData << unsigned( m_settings.highways.size() );
+					mappedEdgesData << unsigned( m_profile.highways.size() );
 				else
 					mappedEdgesData << type;
 				mappedEdgesData << pathID << nextRoutingNode - pathNode - 1;
@@ -1095,7 +952,7 @@ bool OSMImporter::computeTurningPenalties( QString filename )
 	unsigned edge = 0;
 	unsigned restriction = 0;
 	std::vector< double > table;
-	std::vector< int > histogram( m_settings.highways.size(), 0 );
+	std::vector< int > histogram( m_profile.highways.size(), 0 );
 	for ( unsigned node = 0; node < m_routingNodes.size(); node++ ) {
 		penaltyData << ( int ) m_inDegree[node] << ( int ) m_outDegree[node];
 
@@ -1113,9 +970,9 @@ bool OSMImporter::computeTurningPenalties( QString filename )
 			//qDebug() << restrictions[i].from << restrictions[i].to;
 			for ( unsigned j = edge; j < m_edgeInfo.size() && m_edgeInfo[j].node == node; j++ ) {
 				//qDebug() << m_edgeInfo[j].oldID;
-				if ( m_edgeInfo[j].oldID == restrictions[i].from && m_edgeInfo[j].backward )
+										  if ( m_edgeInfo[j].oldID == restrictions[i].from && m_edgeInfo[j].backward )
 					from = m_edgeInfo[j].id;
-				if ( m_edgeInfo[j].oldID == restrictions[i].to && m_edgeInfo[j].forward )
+										  if ( m_edgeInfo[j].oldID == restrictions[i].to && m_edgeInfo[j].forward )
 					to = m_edgeInfo[j].id;
 				if ( from != std::numeric_limits< unsigned >::max() && to != std::numeric_limits< unsigned >::max() ) {
 					table[from * m_outDegree[node] + to] = -1; // infinity == not allowed
@@ -1148,7 +1005,7 @@ bool OSMImporter::computeTurningPenalties( QString filename )
 
 				if ( from.speed == 0 || to.speed == 0 )
 					continue;
-				if ( m_settings.decceleration == 0 || m_settings.acceleration == 0 )
+				if ( m_profile.decceleration == 0 || m_profile.acceleration == 0 )
 					continue;
 
 				double angle = fmod( ( from.angle - to.angle ) / M_PI * 180.0 + 360.0, 360.0 ) - 180.0;
@@ -1159,10 +1016,10 @@ bool OSMImporter::computeTurningPenalties( QString filename )
 				}
 				double maxVelocity = std::min( from.speed, to.speed );
 				if ( radius < 1000 ) // NAN and inf not possible
-					maxVelocity = std::min( maxVelocity, sqrt( m_settings.tangentialAcceleration * radius ) * 3.6 ); // turn radius and maximum tangential acceleration limit turning speed
+					maxVelocity = std::min( maxVelocity, sqrt( m_profile.tangentialAcceleration * radius ) * 3.6 ); // turn radius and maximum tangential acceleration limit turning speed
 
-				if ( m_settings.highways[to.type].pedestrian && fabs( angle ) < 180 - 45 )
-					maxVelocity = std::min( maxVelocity, ( double ) m_settings.pedestrian );
+				if ( m_profile.highways[to.type].pedestrian && fabs( angle ) < 180 - 45 )
+					maxVelocity = std::min( maxVelocity, ( double ) m_profile.pedestrian );
 
 				{
 					int otherDirections = 0;
@@ -1171,19 +1028,19 @@ bool OSMImporter::computeTurningPenalties( QString filename )
 					bool skip = true;
 
 					if ( angle < 0 && angle > -180 + 45 ) {
-						if ( m_settings.highways[from.type].otherLeftPenalty )
+						if ( m_profile.highways[from.type].otherLeftPenalty )
 							skip = false;
-						else if ( m_settings.highways[from.type].otherLeftEqual )
+						else if ( m_profile.highways[from.type].otherLeftEqual )
 							equal = true;
 					} else if ( angle > 0 && angle < 180 - 45 ) {
-						if ( m_settings.highways[from.type].otherRightPenalty )
+						if ( m_profile.highways[from.type].otherRightPenalty )
 							skip = false;
-						else if ( m_settings.highways[from.type].otherRightEqual )
+						else if ( m_profile.highways[from.type].otherRightEqual )
 							equal = true;
 					} else {
-						if ( m_settings.highways[from.type].otherStraightPenalty )
+						if ( m_profile.highways[from.type].otherStraightPenalty )
 							skip = false;
-						else if ( m_settings.highways[from.type].otherStraightEqual )
+						else if ( m_profile.highways[from.type].otherStraightEqual )
 							equal = true;
 					}
 
@@ -1197,25 +1054,25 @@ bool OSMImporter::computeTurningPenalties( QString filename )
 							otherDirections--; // exclude your target
 
 						for ( unsigned type = 0; type < histogram.size(); type++ ) {
-							if ( m_settings.highways[type].priority > m_settings.highways[from.type].priority )
+							if ( m_profile.highways[type].priority > m_profile.highways[from.type].priority )
 								otherDirections += histogram[type];
 						}
 
 						if ( otherDirections >= 1 )
-							maxVelocity = std::min( maxVelocity, ( double ) m_settings.otherCars );
+							maxVelocity = std::min( maxVelocity, ( double ) m_profile.otherCars );
 					}
 				}
 
 				// the time it takes to deccelerate vs the travel time assumed on the edge
-				double decceleratingPenalty = ( from.speed - maxVelocity ) * ( from.speed - maxVelocity ) / ( 2 * from.speed * m_settings.decceleration * 3.6 );
+				double decceleratingPenalty = ( from.speed - maxVelocity ) * ( from.speed - maxVelocity ) / ( 2 * from.speed * m_profile.decceleration * 3.6 );
 				// the time it takes to accelerate vs the travel time assumed on the edge
-				double acceleratingPenalty = ( to.speed - maxVelocity ) * ( to.speed - maxVelocity ) / ( 2 * to.speed * m_settings.acceleration * 3.6 );
+				double acceleratingPenalty = ( to.speed - maxVelocity ) * ( to.speed - maxVelocity ) / ( 2 * to.speed * m_profile.acceleration * 3.6 );
 
 				table[tablePosition] = decceleratingPenalty + acceleratingPenalty;
 				if ( angle < 0 && angle > -180 + 45 )
-					table[tablePosition] += m_settings.highways[to.type].leftPenalty;
+					table[tablePosition] += m_profile.highways[to.type].leftPenalty;
 				if ( angle > 0 && angle < 180 - 45 )
-					table[tablePosition] += m_settings.highways[to.type].rightPenalty;
+					table[tablePosition] += m_profile.highways[to.type].rightPenalty;
 				//if ( tables[position + from.id + m_inDegree[node] * to.id] > m_statistics.maxTurningPenalty ) {
 				//	qDebug() << angle << radius << from.speed << to.speed << maxVelocity;
 				//	qDebug() << from.length << to.length;
@@ -1260,7 +1117,7 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 	way->placeName.clear();
 	way->usefull = false;
 	way->access = true;
-	way->accessPriority = m_settings.accessList.size();
+	way->accessPriority = m_profile.accessList.size();
 	way->addFixed = 0;
 	way->addPercentage = 0;
 
@@ -1300,8 +1157,8 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 							way->direction = Way::Oneway;
 					}
 
-					for ( int type = 0; type < m_settings.highways.size(); type++ ) {
-						if ( value == m_settings.highways[type].value ) {
+					for ( int type = 0; type < m_profile.highways.size(); type++ ) {
+						if ( value == m_profile.highways[type].value ) {
 							way->type = type;
 							way->usefull = true;
 						}
@@ -1365,7 +1222,7 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 		}
 
 		key -= m_settings.languageSettings.size();
-		if ( key < m_settings.accessList.size() ) {
+		if ( key < m_profile.accessList.size() ) {
 				if ( key < way->accessPriority ) {
 					if ( value == "private" || value == "no" || value == "agricultural" || value == "forestry" || value == "delivery" ) {
 						way->access = false;
@@ -1389,7 +1246,7 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 			if ( m_wayModificatorIDs[modificator] != key )
 				continue;
 
-			const MoNav::WayModificator& mod = m_settings.wayModificators[modificator];
+			const MoNav::WayModificator& mod = m_profile.wayModificators[modificator];
 			if ( mod.checkValue && mod.value != value )
 				continue;
 
@@ -1421,7 +1278,7 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 	node->population = -1;
 	node->penalty = 0;
 	node->access = true;
-	node->accessPriority = m_settings.accessList.size();
+	node->accessPriority = m_profile.accessList.size();
 
 	for ( unsigned tag = 0; tag < inputNode.tags.size(); tag++ ) {
 		int key = inputNode.tags[tag].key;
@@ -1431,7 +1288,6 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 			switch ( NodeTags::Key( key ) ) {
 			case NodeTags::Place:
 				{
-					/* converting e.g. "city" string into "Place::City" */
 					node->type = parsePlaceType( value );
 					break;
 				}
@@ -1445,7 +1301,7 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 				}
 			case NodeTags::Barrier:
 				{
-					if ( node->accessPriority == m_settings.accessList.size() )
+					if ( node->accessPriority == m_profile.accessList.size() )
 						node->access = false;
 					break;
 				}
@@ -1467,7 +1323,7 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 		}
 
 		key -= m_settings.languageSettings.size();
-		if ( key < m_settings.accessList.size() ) {
+		if ( key < m_profile.accessList.size() ) {
 				if ( key < node->accessPriority ) {
 					if ( value == "private" || value == "no" || value == "agricultural" || value == "forestry" || value == "delivery" ) {
 						node->access = false;
@@ -1480,27 +1336,6 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 
 			continue;
 		}
-
-		key -= m_settings.accessList.size();
-		if ( key == 0) /* addr:housenumber */
-		{
-
-		} else if ( key == 1) /* addr:street */
-		{
-
-		} else if ( key == 2) /* addr:city */
-		{
-			/* not supproted yet */
-		}
-		/* possible stuff: addr:postcode */
-
-	}
-
-	/* addr:housenumbers fix: use only nodes where a street name is given */
-	if(node->streetname.length() == 0)
-	{
-		node->housenumber = 0;
-		node->city = "";
 	}
 
 	// rescan tags to apply modificators
@@ -1512,7 +1347,7 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 			if ( m_nodeModificatorIDs[modificator] != key )
 				continue;
 
-			const MoNav::NodeModificator& mod = m_settings.nodeModificators[modificator];
+			const MoNav::NodeModificator& mod = m_profile.nodeModificators[modificator];
 			if ( mod.checkValue && mod.value != value )
 				continue;
 
@@ -1552,7 +1387,7 @@ void OSMImporter::readRelation( Relation* relation, const IEntityReader::Relatio
 			case RelationTags::Except:
 				{
 					QStringList accessTypes = value.split( ';' );
-					foreach( QString access, m_settings.accessList ) {
+					foreach( QString access, m_profile.accessList ) {
 						if ( accessTypes.contains( access ) )
 							relation->restriction.access = false;
 					}
@@ -2016,7 +1851,83 @@ void OSMImporter::DeleteTemporaryFiles()
 	QFile::remove( filename + "_way_names" );
 	QFile::remove( filename + "_way_refs" );
 	QFile::remove( filename + "_way_types" );
-	QFile::remove( filename + "_hn" );
+}
+
+#ifndef NOGUI
+	// IGUISettings
+bool OSMImporter::GetSettingsWindow( QWidget** window )
+{
+	*window = new OISettingsDialog();
+	return true;
+}
+
+bool OSMImporter::FillSettingsWindow( QWidget* window )
+{
+	OISettingsDialog* settings = qobject_cast< OISettingsDialog* >( window );
+	if ( settings == NULL )
+		return false;
+
+	return settings->readSettings( m_settings );
+}
+
+bool OSMImporter::ReadSettingsWindow( QWidget* window )
+{
+	OISettingsDialog* settings = qobject_cast< OISettingsDialog* >( window );
+	if ( settings == NULL )
+		return false;
+
+	return settings->fillSettings( &m_settings );
+}
+#endif
+
+// IConsoleSettings
+QString OSMImporter::GetModuleName()
+{
+	return GetName();
+}
+
+bool OSMImporter::GetSettingsList( QVector< Setting >* settings )
+{
+	settings->push_back( Setting( "", "profile", "build in speed profile", "speed profile name" ) );
+	settings->push_back( Setting( "", "profile-file", "read speed profile from file", "speed profile filename" ) );
+	settings->push_back( Setting( "", "list-profiles", "lists build in speed profiles", "" ) );
+	settings->push_back( Setting( "", "add-language", "adds a language to the language list", "name[:XXX]" ) );
+
+	return true;
+}
+
+bool OSMImporter::SetSetting( int id, QVariant data )
+{
+	switch( id ) {
+	case 0:
+		m_settings.speedProfile = ":/speed profiles/" + data.toString() + ".spp";
+		break;
+	case 1:
+		m_settings.speedProfile = data.toString();
+		break;
+	case 2:
+		{
+			QDir dir( ":speed profiles/" );
+			dir.setNameFilters( QStringList( "*.spp" ) );
+			QStringList profiles = dir.entryList( QDir::Files, QDir::Name );
+			profiles.replaceInStrings( ".spp", "" );
+			printf( "%s\n\n", printStringTable( profiles, 1, "Speed Profiles" ).toUtf8().constData() );
+			break;
+		}
+	case 3:
+		{
+			QString language = data.toString();
+			if ( !language.startsWith( "name" ) ) {
+				qCritical() << "language entry has to start with \"name\"";
+				return false;
+			}
+			m_settings.languageSettings.push_back( language );
+		}
+	default:
+		return false;
+	}
+
+	return true;
 }
 
 Q_EXPORT_PLUGIN2( osmimporter, OSMImporter )

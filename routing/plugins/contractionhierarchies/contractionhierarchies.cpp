@@ -22,18 +22,18 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #include "contractor.h"
 #include "contractioncleanup.h"
 #include "utils/qthelpers.h"
+#ifndef NOGUI
+#include "chsettingsdialog.h"
+#endif
 
 #include <QSettings>
 
 ContractionHierarchies::ContractionHierarchies()
 {
-	m_settingsDialog = NULL;
 }
 
 ContractionHierarchies::~ContractionHierarchies()
 {
-	if ( m_settingsDialog != NULL )
-		delete m_settingsDialog;
 }
 
 QString ContractionHierarchies::GetName()
@@ -43,16 +43,19 @@ QString ContractionHierarchies::GetName()
 
 bool ContractionHierarchies:: LoadSettings( QSettings* settings )
 {
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new CHSettingsDialog();
-	return m_settingsDialog->loadSettings( settings );
+	settings->beginGroup( "ContractionHierarchies" );
+	bool ok = false;
+	m_settings.blockSize = settings->value( "blockSize", 12 ).toInt( &ok );
+	settings->endGroup();
+	return ok;
 }
 
 bool ContractionHierarchies::SaveSettings( QSettings* settings )
 {
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new CHSettingsDialog();
-	return m_settingsDialog->saveSettings( settings );
+	settings->beginGroup( "ContractionHierarchies" );
+	settings->setValue( "blockSize", m_settings.blockSize );
+	settings->endGroup();
+	return true;
 }
 
 int ContractionHierarchies::GetFileFormatVersion()
@@ -65,36 +68,8 @@ ContractionHierarchies::Type ContractionHierarchies::GetType()
 	return Router;
 }
 
-QWidget* ContractionHierarchies::GetSettings()
+bool ContractionHierarchies::Preprocess( IImporter* importer, QString dir )
 {
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new CHSettingsDialog();
-	return m_settingsDialog;
-}
-
-static bool load( CHSettingsDialog::Settings *newSettings, const QString& filename )
-{
-	QSettings settings( filename, QSettings::IniFormat );
-
-	settings.beginGroup( "Contraction Hierarchies" );
-	newSettings->blockSize = settings.value( "blockSize", 12 ).toInt();
-	settings.endGroup();
-
-	return true;
-}
-
-bool ContractionHierarchies::Preprocess( IImporter* importer, QString dir, QString settingFilename )
-{
-	if ( m_settingsDialog == NULL && !settingFilename.length())
-	{
-		m_settingsDialog = new CHSettingsDialog();
-		m_settingsDialog->getSettings( &m_settings );
-	}
-	else
-	{
-		load(&m_settings, settingFilename);
-	}
-
 	QString filename = fileInDirectory( dir, "Contraction Hierarchies" );
 
 	std::vector< IImporter::RoutingNode > inputNodes;
@@ -232,6 +207,57 @@ bool ContractionHierarchies::Preprocess( IImporter* importer, QString dir, QStri
 	importer->SetIDMap( map );
 
 	return true;
+}
+
+#ifndef NOGUI
+bool ContractionHierarchies::GetSettingsWindow( QWidget** window )
+{
+	*window = new CHSettingsDialog();
+	return true;
+}
+
+bool ContractionHierarchies::FillSettingsWindow( QWidget* window )
+{
+	CHSettingsDialog* settings = qobject_cast< CHSettingsDialog* >( window );
+	if ( settings == NULL )
+		return false;
+	return settings->readSettings( m_settings );
+}
+
+bool ContractionHierarchies::ReadSettingsWindow( QWidget* window )
+{
+	CHSettingsDialog* settings = qobject_cast< CHSettingsDialog* >( window );
+	if ( settings == NULL )
+		return false;
+	return settings->fillSettings( &m_settings );
+}
+
+#endif
+
+// IConsoleSettings
+QString ContractionHierarchies::GetModuleName()
+{
+	return GetName();
+}
+
+bool ContractionHierarchies::GetSettingsList( QVector< Setting >* settings )
+{
+	settings->push_back( Setting( "", "block-size", "sets block size of compressed graph to 2^x", "integer > 7" ) );
+	return true;
+}
+
+bool ContractionHierarchies::SetSetting( int id, QVariant data )
+{
+	bool ok = true;
+	switch( id ) {
+	case 0:
+		m_settings.blockSize = data.toInt( &ok );
+		break;
+	default:
+		return false;
+	}
+
+	return ok;
 }
 
 Q_EXPORT_PLUGIN2( contractionhierarchies, ContractionHierarchies )

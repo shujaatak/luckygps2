@@ -33,6 +33,7 @@ RendererBase::RendererBase()
 	m_tileSize = 256;
 	m_settingsDialog = NULL;
 	m_advancedSettings = NULL;
+	m_magnification = 1;
 }
 
 RendererBase::~RendererBase()
@@ -46,13 +47,6 @@ RendererBase::~RendererBase()
 int RendererBase::GetMaxZoom()
 {
 	return m_zoomLevels.size() - 1;
-}
-
-void RendererBase::reset()
-{
-	m_cache.clear();
-	m_zoomLevels.clear();
-	unload();
 }
 
 void RendererBase::setupPolygons()
@@ -89,7 +83,7 @@ void RendererBase::advancedSettingsChanged()
 bool RendererBase::LoadData()
 {
 	if ( m_loaded )
-		reset();
+		UnloadData();
 
 	if ( m_settingsDialog == NULL )
 		m_settingsDialog = new BRSettingsDialog();
@@ -104,6 +98,15 @@ bool RendererBase::LoadData()
 		return false;
 
 	m_loaded = true;
+	return true;
+}
+bool RendererBase::UnloadData()
+{
+	m_cache.clear();
+	m_zoomLevels.clear();
+	// invoke derived class' callback
+	unload();
+
 	return true;
 }
 
@@ -151,6 +154,10 @@ bool RendererBase::Paint( QPainter* painter, const PaintRequest& request )
 		return false;
 	if ( request.zoom < 0 || request.zoom >= ( int ) m_zoomLevels.size() )
 		return false;
+	if ( m_magnification != request.virtualZoom ) {
+		m_cache.clear();
+		m_magnification = request.virtualZoom;
+	}
 
 	int zoom = m_zoomLevels[request.zoom];
 
@@ -184,13 +191,18 @@ bool RendererBase::Paint( QPainter* painter, const PaintRequest& request )
 	const int xWidth = 1 << zoom;
 	const int yWidth = 1 << zoom;
 
-	QRect boundingBox = inverseTransform.mapRect( QRect(0, 0, sizeX, sizeY ) );
+	QRect boundingBox = inverseTransform.mapRect( QRect( 0, 0, sizeX, sizeY ) );
 
 	int minX = floor( ( double ) boundingBox.x() / m_tileSize + request.center.x * tileFactor );
 	int maxX = ceil( ( double ) boundingBox.right() / m_tileSize + request.center.x * tileFactor );
 	int minY = floor( ( double ) boundingBox.y() / m_tileSize + request.center.y * tileFactor );
 	int maxY = ceil( ( double ) boundingBox.bottom() / m_tileSize + request.center.y * tileFactor );
 
+	painter->resetTransform();
+	painter->translate( sizeX / 2, sizeY / 2 );
+	painter->rotate( rotation );
+
+	int scaledTileSize = m_tileSize * request.virtualZoom;
 	int posX = ( minX - request.center.x * tileFactor ) * m_tileSize;
 	for ( int x = minX; x < maxX; ++x ) {
 		int posY = ( minY - request.center.y * tileFactor ) * m_tileSize;
@@ -200,45 +212,61 @@ bool RendererBase::Paint( QPainter* painter, const PaintRequest& request )
 			if ( x >= 0 && x < xWidth && y >= 0 && y < yWidth ) {
 				long long id = tileID( x, y, zoom );
 				if ( !m_cache.contains( id ) ) {
-					if ( !loadTile( x, y, zoom, &tile ) ) {
-						tile = new QPixmap( m_tileSize, m_tileSize );
+					if ( !loadTile( x, y, zoom, request.virtualZoom, &tile ) ) {
+						tile = new QPixmap( scaledTileSize, scaledTileSize );
 						tile->fill( QColor( 241, 238 , 232, 255 ) );
 					}
 
-					long long minCacheSize = 2 * m_tileSize * m_tileSize * tile->depth() / 8 * ( maxX - minX ) * ( maxY - minY );
+					long long minCacheSize = 2 * scaledTileSize * scaledTileSize * tile->depth() / 8 * ( maxX - minX ) * ( maxY - minY );
 					if ( m_cache.maxCost() < minCacheSize ) {
-						qDebug() << "had to increase cache size to accomodate all tiles for at least two images: " << minCacheSize / 1024 / 1024 << " MB";
+						qDebug() << "had to increase cache size to accommodate all tiles for at least two images: " << minCacheSize / 1024 / 1024 << " MB";
 						m_cache.setMaxCost( minCacheSize );
 					}
 
-					m_cache.insert( id, tile, m_tileSize * m_tileSize * tile->depth() / 8 );
+					m_cache.insert( id, tile, scaledTileSize * scaledTileSize * tile->depth() / 8 );
 				}
 				else {
 					tile = m_cache.object( id );
 				}
 			}
 
-			if ( tile != NULL )
-				painter->drawPixmap( posX, posY, *tile );
-			else
-				painter->fillRect( posX, posY,  m_tileSize, m_tileSize, QColor( 241, 238 , 232, 255 ) );
+			if ( tile != NULL ) {
+				if ( tile->width() != scaledTileSize || tile->height() != scaledTileSize )
+					*tile = tile->scaled( scaledTileSize, scaledTileSize, Qt::IgnoreAspectRatio, m_settings.filter ? Qt::SmoothTransformation : Qt::FastTransformation );
+				painter->drawPixmap( posX * request.virtualZoom, posY * request.virtualZoom, *tile );
+			} else {
+				painter->fillRect( posX * request.virtualZoom, posY * request.virtualZoom,  scaledTileSize, scaledTileSize, QColor( 241, 238 , 232, 255 ) );
+			}
 			posY += m_tileSize;
 		}
 		posX += m_tileSize;
 	}
 
+	painter->setTransform( transform );
+
 	if ( m_settings.antiAliasing )
 		painter->setRenderHint( QPainter::Antialiasing );
 
-	if ( request.edgeSegments.size() > 0 && request.edges.size() > 0 ) {
+	if ( request.polygonEndpointsStreet.size() > 0 && request.polygonCoordsStreet.size() > 0 ) {
 		int position = 0;
-		for ( int i = 0; i < request.edgeSegments.size(); i++ ) {
+		for ( int i = 0; i < request.polygonEndpointsStreet.size(); i++ ) {
 			QVector< ProjectedCoordinate > line;
-			for ( ; position < request.edgeSegments[i]; position++ ) {
-				ProjectedCoordinate pos = request.edges[position].ToProjectedCoordinate();
+			for ( ; position < request.polygonEndpointsStreet[i]; position++ ) {
+				ProjectedCoordinate pos = request.polygonCoordsStreet[position].ToProjectedCoordinate();
 				line.push_back( ProjectedCoordinate( ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor ) );
 			}
-			drawPolyline( painter, boundingBox, line, QColor( 0, 0, 128, 128 ) );
+			drawPolyline( painter, boundingBox, line, QColor( 255, 255, 0, 128 ) );
+		}
+	}
+	if ( request.polygonEndpointsTracklog.size() > 0 && request.polygonCoordsTracklog.size() > 0 ) {
+		int position = 0;
+		for ( int i = 0; i < request.polygonEndpointsTracklog.size(); i++ ) {
+			QVector< ProjectedCoordinate > line;
+			for ( ; position < request.polygonEndpointsTracklog[i]; position++ ) {
+				ProjectedCoordinate pos = request.polygonCoordsTracklog[position].ToProjectedCoordinate();
+				line.push_back( ProjectedCoordinate( ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor ) );
+			}
+			drawPolyline( painter, boundingBox, line, QColor( 178, 034, 034, 128 ) );
 		}
 	}
 
@@ -251,8 +279,28 @@ bool RendererBase::Paint( QPainter* painter, const PaintRequest& request )
 		drawPolyline( painter, boundingBox, line, QColor( 0, 0, 128, 128 ) );
 	}
 
+	static const int numColors = 6;
+	static const QColor outerColors[6] = {
+		QColor( 0, 128 * 5 / 5, 128 * 0 / 5 ),
+		QColor( 0, 128 * 4 / 5, 128 * 1 / 5 ),
+		QColor( 0, 128 * 3 / 5, 128 * 2 / 5 ),
+		QColor( 0, 128 * 2 / 5, 128 * 3 / 5 ),
+		QColor( 0, 128 * 1 / 5, 128 * 4 / 5 ),
+		QColor( 0, 128 * 0 / 5, 128 * 5 / 5 )
+	};
+	static const QColor innerColors[6] = {
+		QColor( 255 * 5 / 5 + 255 * 0 / 5, 255 * 5 / 5, 0 ),
+		QColor( 255 * 4 / 5 + 255 * 1 / 5, 255 * 4 / 5, 0 ),
+		QColor( 255 * 3 / 5 + 255 * 2 / 5, 255 * 3 / 5, 0 ),
+		QColor( 255 * 2 / 5 + 255 * 3 / 5, 255 * 2 / 5, 0 ),
+		QColor( 255 * 1 / 5 + 255 * 4 / 5, 255 * 1 / 5, 0 ),
+		QColor( 255 * 0 / 5 + 255 * 5 / 5, 255 * 0 / 5, 0 )
+	};
+
 	if ( request.POIs.size() > 0 ) {
 		for ( int i = 0; i < request.POIs.size(); i++ ) {
+			if ( !request.POIs[i].IsValid() )
+				continue;
 			ProjectedCoordinate pos = request.POIs[i].ToProjectedCoordinate();
 			drawIndicator( painter, transform, inverseTransform, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, sizeX, sizeY, request.virtualZoom, QColor( 196, 0, 0 ), QColor( 0, 0, 196 ) );
 		}
@@ -261,13 +309,30 @@ bool RendererBase::Paint( QPainter* painter, const PaintRequest& request )
 	if ( request.target.IsValid() )
 	{
 		ProjectedCoordinate pos = request.target.ToProjectedCoordinate();
-		drawIndicator( painter, transform, inverseTransform, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, sizeX, sizeY, request.virtualZoom, QColor( 0, 0, 128 ), QColor( 255, 0, 0 ) );
+		drawIndicator( painter, transform, inverseTransform, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, sizeX, sizeY, request.virtualZoom, outerColors[numColors - 1], innerColors[numColors - 1] );
+	}
+
+	bool firstWaypoint = true;
+	if ( request.waypoints.size() > 0 ) {
+		for ( int i = 0; i < request.waypoints.size(); i++ ) {
+			if ( !request.waypoints[i].IsValid() )
+				continue;
+			ProjectedCoordinate pos = request.waypoints[i].ToProjectedCoordinate();
+			int color = i + 1;
+			if ( color >= numColors )
+				color = numColors - 1;
+			if ( firstWaypoint )
+				drawIndicator( painter, transform, inverseTransform, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, sizeX, sizeY, request.virtualZoom, outerColors[color], innerColors[color] );
+			else
+				drawCircle( painter, transform, inverseTransform, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, sizeX, sizeY, request.virtualZoom, outerColors[color], innerColors[color] );
+			firstWaypoint = false;
+		}
 	}
 
 	if ( request.position.IsValid() )
 	{
 		ProjectedCoordinate pos = request.position.ToProjectedCoordinate();
-		drawIndicator( painter, transform, inverseTransform, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, sizeX, sizeY, request.virtualZoom, QColor( 0, 128, 0 ), QColor( 255, 255, 0 ) );
+		drawIndicator( painter, transform, inverseTransform, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, sizeX, sizeY, request.virtualZoom, outerColors[0], innerColors[0] );
 		drawArrow( painter, ( pos.x - request.center.x ) * zoomFactor, ( pos.y - request.center.y ) * zoomFactor, request.heading - 90, QColor( 0, 128, 0 ), QColor( 255, 255, 0 ) );
 	}
 
@@ -310,6 +375,19 @@ void RendererBase::drawIndicator( QPainter* painter, const QTransform& transform
 		painter->setPen( QPen( inner, 2 ) );
 		painter->drawEllipse( x - 8, y - 8, 16, 16);
 	}
+}
+
+void RendererBase::drawCircle( QPainter* painter, const QTransform& transform, const QTransform& /*inverseTransform*/, int x, int y, int sizeX, int sizeY, int virtualZoom, QColor outer, QColor inner )
+{
+	QPoint mapped = transform.map( QPoint( x, y ) );
+	int margin = 9 * virtualZoom;
+	if ( mapped.x() < margin || mapped.y() < margin || mapped.x() >= sizeX - margin || mapped.y() >= sizeY - margin )
+		return;
+	painter->setBrush( Qt::NoBrush );
+	painter->setPen( QPen( outer, 5 ) );
+	painter->drawEllipse( x - 8, y - 8, 16, 16);
+	painter->setPen( QPen( inner, 2 ) );
+	painter->drawEllipse( x - 8, y - 8, 16, 16);
 }
 
 void RendererBase::drawPolyline( QPainter* painter, const QRect& boundingBox, QVector< ProjectedCoordinate > line, QColor color )

@@ -22,29 +22,69 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QObject>
 #include <QFile>
+#include <QVector>
 #include "interfaces/ipreprocessor.h"
-#include "mrsettingsdialog.h"
+#include "interfaces/iguisettings.h"
+#include "interfaces/iconsolesettings.h"
 
-class MapnikRenderer : public QObject, public IPreprocessor
+class MapnikRenderer :
+		public QObject,
+#ifndef NOGUI
+		public IGUISettings,
+#endif
+		public IConsoleSettings,
+		public IPreprocessor
 {
 	Q_OBJECT
 	Q_INTERFACES( IPreprocessor )
+	Q_INTERFACES( IConsoleSettings )
+#ifndef NOGUI
+	Q_INTERFACES( IGUISettings )
+#endif
 
 public:
-	 MapnikRenderer();
+
+	struct Settings {
+		QString plugins;
+		QString fonts;
+		QString theme;
+		int fullZoom;
+		int tileSize;
+		int metaTileSize;
+		int margin;
+		int tileMargin;
+		bool reduceColors;
+		bool deleteTiles;
+		bool pngcrush;
+
+		QVector< int > zoomLevels;
+	};
+
+	MapnikRenderer();
+	virtual ~MapnikRenderer();
+
+	// IPreprocessor
 	virtual QString GetName();
 	virtual int GetFileFormatVersion();
 	virtual Type GetType();
-	virtual QWidget* GetSettings();
 	virtual bool LoadSettings( QSettings* settings );
 	virtual bool SaveSettings( QSettings* settings );
 	virtual bool Preprocess( IImporter* importer, QString dir );
-	virtual ~MapnikRenderer();
 
-signals:
-	void changed();
+#ifndef NOGUI
+	// IGUISettings
+	virtual bool GetSettingsWindow( QWidget** window );
+	virtual bool FillSettingsWindow( QWidget* window );
+	virtual bool ReadSettingsWindow( QWidget* window );
+#endif
+
+	// IConsoleSettings
+	virtual QString GetModuleName();
+	virtual bool GetSettingsList( QVector< Setting >* settings );
+	virtual bool SetSetting( int id, QVariant data );
 
 protected:
+
 	struct MetaTile {
 		int zoom;
 		int x;
@@ -65,7 +105,7 @@ protected:
 		QFile* tilesFile;
 	};
 
-	MRSettingsDialog* m_settingsDialog;
+	Settings m_settings;
 };
 
 #endif // MAPNIKRENDERER_H

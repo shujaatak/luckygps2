@@ -18,22 +18,25 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "interfaces/iimporter.h"
+#ifndef NOGUI
+#include "ggdialog.h"
+#endif
 #include "gpsgrid.h"
+#include "cell.h"
+#include "table.h"
 #include "utils/intersection.h"
 #include "utils/qthelpers.h"
+#include <vector>
 
 #include <QFile>
 #include <algorithm>
 
 GPSGrid::GPSGrid()
 {
-	m_settingsDialog = NULL;
 }
 
 GPSGrid::~GPSGrid()
 {
-	if ( m_settingsDialog != NULL )
-		delete m_settingsDialog;
 }
 
 QString GPSGrid::GetName()
@@ -51,48 +54,18 @@ GPSGrid::Type GPSGrid::GetType()
 	return GPSLookup;
 }
 
-QWidget* GPSGrid::GetSettings()
-{
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new GGDialog();
-	return m_settingsDialog;
-}
-
-bool GPSGrid::LoadSettings( QSettings* settings )
-{
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new GGDialog();
-	return m_settingsDialog->loadSettings( settings );
-}
-
-bool GPSGrid::SaveSettings( QSettings* settings )
-{
-	if ( m_settingsDialog == NULL )
-		m_settingsDialog = new GGDialog();
-	return m_settingsDialog->saveSettings( settings );
-}
-
-
-static bool load( GGDialog::Settings *newSettings, const QString& filename)
+bool GPSGrid::LoadSettings( QSettings* /*settings*/ )
 {
 	return true;
 }
 
-bool GPSGrid::Preprocess( IImporter* importer, QString dir, QString settingFilename )
+bool GPSGrid::SaveSettings( QSettings* /*settings*/ )
 {
-	if ( m_settingsDialog == NULL && !settingFilename.length() )
-	{
-		m_settingsDialog = new GGDialog();
-		GGDialog::Settings settings;
-		if ( !m_settingsDialog->getSettings( &settings ) )
-			return false;
-	}
-	else
-	{
-		GGDialog::Settings settings;
-		load(&settings, settingFilename);
-	}
+	return true;
+}
 
+bool GPSGrid::Preprocess( IImporter* importer, QString dir )
+{
 	QString filename = fileInDirectory( dir, "GPSGrid" );
 
 	QFile gridFile( filename + "_grid" );
@@ -267,7 +240,24 @@ bool GPSGrid::clipEdge( ProjectedCoordinate source, ProjectedCoordinate target, 
 				if ( clipHelper( yDiff, max.y - source.y, &tMinimum, &tMaximum ) )
 					return true;
 	return false;
-
 }
+
+#ifndef NOGUI
+bool GPSGrid::GetSettingsWindow( QWidget** window )
+{
+	*window = new GGDialog();
+	return true;
+}
+
+bool GPSGrid::FillSettingsWindow( QWidget* /*window*/ )
+{
+	return true;
+}
+
+bool GPSGrid::ReadSettingsWindow( QWidget* /*window*/ )
+{
+	return true;
+}
+#endif
 
 Q_EXPORT_PLUGIN2(gpsgrid, GPSGrid)

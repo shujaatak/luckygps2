@@ -21,8 +21,9 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #define OSMIMPORTER_H
 
 #include "interfaces/iimporter.h"
-#include "ientityreader.h"
-#include "oisettingsdialog.h"
+#include "interfaces/iguisettings.h"
+#include "interfaces/iconsolesettings.h"
+#include "../../utils/osm/ientityreader.h"
 #include "statickdtree.h"
 #include "types.h"
 #include "utils/intersection.h"
@@ -31,20 +32,37 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHash>
 #include <cstring>
 
-class OSMImporter : public QObject, public IImporter
+class OSMImporter :
+		public QObject,
+#ifndef NOGUI
+		public IGUISettings,
+#endif
+		public IConsoleSettings,
+		public IImporter
 {
 	Q_OBJECT
 	Q_INTERFACES( IImporter )
+	Q_INTERFACES( IConsoleSettings );
+#ifndef NOGUI
+	Q_INTERFACES( IGUISettings )
+#endif
 
 public:
 
+	struct Settings {
+		QString speedProfile;
+		QStringList languageSettings;
+	};
+
 	OSMImporter();
+	virtual ~OSMImporter();
+
+	// IPreprocessor
 	virtual QString GetName();
 	virtual void SetOutputDirectory( const QString& dir );
-	virtual QWidget* GetSettings();
 	virtual bool LoadSettings( QSettings* settings );
 	virtual bool SaveSettings( QSettings* settings );
-	virtual bool Preprocess( QString filename, QString settingFilename = "" );
+	virtual bool Preprocess( QString filename );
 	virtual bool SetIDMap( const std::vector< NodeID >& idMap );
 	virtual bool GetIDMap( std::vector< NodeID >* idMap );
 	virtual bool SetEdgeIDMap( const std::vector< NodeID >& idMap );
@@ -58,7 +76,18 @@ public:
 	virtual bool GetAddressData( std::vector< Place >* dataPlaces, std::vector< Address >* dataAddresses, std::vector< UnsignedCoordinate >* dataWayBuffer, std::vector< QString >* addressNames );
 	virtual bool GetBoundingBox( BoundingBox* box );
 	virtual void DeleteTemporaryFiles();
-	virtual ~OSMImporter();
+
+#ifndef NOGUI
+	// IGUISettings
+	virtual bool GetSettingsWindow( QWidget** window );
+	virtual bool FillSettingsWindow( QWidget* window );
+	virtual bool ReadSettingsWindow( QWidget* window );
+#endif
+
+	// IConsoleSettings
+	virtual QString GetModuleName();
+	virtual bool GetSettingsList( QVector< Setting >* settings );
+	virtual bool SetSetting( int id, QVariant data );
 
 protected:
 
@@ -123,11 +152,6 @@ protected:
 
 		bool access;
 		int accessPriority;
-
-		unsigned int housenumber;
-		QString streetname; /* street name */
-		QString city;
-
 	};
 
 	struct Restriction {
@@ -289,9 +313,10 @@ protected:
 
 	Statistics m_statistics;
 	QString m_outputDirectory;
-	OISettingsDialog* m_settingsDialog;
 
-	OISettingsDialog::Settings m_settings;
+	Settings m_settings;
+	MoNav::SpeedProfile m_profile;
+
 	std::vector< QString > m_kmhStrings;
 	std::vector< QString > m_mphStrings;
 
