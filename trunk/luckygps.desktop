@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=luckyGPS
+Comment=Display map and GPS position
+Encoding=UTF-8
+Version=0.6
+Type=Application
+Exec=luckygps
+Icon=luckygps
+Terminal=false
+Categories=GTK;Utility;Geography;
+StartupNotify=true
+Name[de_DE]=luckyGPS
