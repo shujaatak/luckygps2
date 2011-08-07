@@ -1,0 +1,77 @@
+luckygps (0.751) maverick; urgency=low
+
+  * New UI
+  * New overview map
+  * New imperial units
+  * New fullscreen mode
+  * Speedup of map drawing 
+  * Fixing map download problem on windows
+  * New track/log handling, importing is not needed anymore
+  * New GPS Information
+
+ -- Daniel <dg@luckygps.com>  Mon, 22 Nov 2010 00:44:07 +0100
+
+luckygps (0.74) maverick; urgency=low
+
+  * Fix gpsd responding with "Unrecognized request" error
+  * New: Use tabs instead of drop down box for settings "topic"
+  * New: Allow user to pick route start/end location from map
+  * Fix: map goes blank after fast scroll (zoom)
+
+ -- Daniel <dg@luckygps.com>  Wed, 13 Oct 2010 23:56:00 +0200
+
+luckygps (0.73) lucid; urgency=low
+
+  * Fix crash on loading gpx route files on linux
+  * Fix compile errors on win32
+  * Update libs
+
+ -- Daniel <dg@luckygps.com>  Thu, 23 Sep 2010 14:06:28 -0700
+
+luckygps (0.72) lucid; urgency=low
+
+  * Increase download speed up of tiles to 10 times (depending on internet connection)
+  * Updating several libraries (windows)
+  * Updating Spatialite to v2.4RC3
+  * Add 'browse folder' dialog to 'Settings->Maps' for non mobile devices
+
+ -- Daniel <dg@luckygps.com>  Wed, 22 Sep 2010 14:01:42 -0700
+
+luckygps (0.71) lucid; urgency=low
+
+  * Fixed: naming of some UI elements
+  * Update: German translation and hungarian language file
+  * Fixed: Remove debug output
+  * New: Download tiles to hard drive even without using a route / navigation file
+
+ -- Daniel <dg@luckygps.com>  Sat, 18 Sep 2010 16:01:53 -0700
+
+luckygps (0.7.0-1) unstable; urgency=low
+
+  * Lot's of fixes in GPS detection code
+  * See tag 0.7
+
+ -- Daniel <dg@luckygps.com>  Tue, 30 Sep 2010 23:59:25 -0800
+ 
+luckygps (0.7.0-1) unstable; urgency=low
+
+  * Speedups (again up to 300% depending on use case)
+  * Lots of bugfixes
+  * Support for Windows platform
+  * Support for gpsd >= 2.90
+  * See rev77 / tag 0.7pre3
+
+ -- Daniel <dg@luckygps.com>  Tue, 30 Mar 2010 22:59:25 -0800
+
+luckygps (0.6.0-1) unstable; urgency=low
+
+  * Support offline routing, no streets yet but gps coordinates and cities
+  * See rev5 - rev77
+
+ -- Daniel <dg@luckygps.com>  Tue, 16 Feb 2010 18:39:25 -0800
+
+luckygps (0.5.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Daniel <dg@luckygps.com>  Tue, 08 Dec 2009 14:39:25 -0800
