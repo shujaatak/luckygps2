@@ -27,6 +27,9 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #define M_PI 3.14159265358979323846
 #endif
 
+/* "max" collides with std::numeric_limits< double >::max() */
+#undef max
+
 /**
 	this class represents a GPS position
 	latitude ranges in [-90,+90]

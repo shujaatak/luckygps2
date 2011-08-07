@@ -21,7 +21,6 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NOGUI
 #include "oisettingsdialog.h"
 #endif
-#include "../../utils/osm/xmlreader.h"
 #include "../../utils/osm/pbfreader.h"
 #include "utils/qthelpers.h"
 #include "utils/formattedoutput.h"
@@ -279,10 +278,15 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	wayRefData << QString();
 
 	IEntityReader* reader = NULL;
+#ifdef LIBXML
 	if ( inputFilename.endsWith( "osm.bz2" ) || inputFilename.endsWith( ".osm" ) )
 		reader = new XMLReader();
-	else if ( inputFilename.endsWith( ".pbf" ) )
+	else
+#endif
+	{
+	if ( inputFilename.endsWith( ".pbf" ) )
 		reader = new PBFReader();
+	}
 
 	if ( reader == NULL ) {
 		qCritical() << "file format not supporter";
@@ -806,10 +810,13 @@ bool OSMImporter::remapEdges( QString filename, const std::vector< UnsignedCoord
 					seconds += distance * 3.6 / segmentSpeed;
 					seconds += addFixed;
 
-					unsigned nodePenalty = std::lower_bound( m_penaltyNodes.begin(), m_penaltyNodes.end(), m_usedNodes[from] ) - m_penaltyNodes.begin();
+					NodePenalty nodeFrom(m_usedNodes[from], 0);
+					unsigned nodePenalty = std::lower_bound( m_penaltyNodes.begin(), m_penaltyNodes.end(), nodeFrom ) - m_penaltyNodes.begin();
 					if ( nodePenalty < m_penaltyNodes.size() && m_penaltyNodes[nodePenalty].id == m_usedNodes[from] )
 						seconds += m_penaltyNodes[nodePenalty].seconds;
-					nodePenalty = std::lower_bound( m_penaltyNodes.begin(), m_penaltyNodes.end(), m_usedNodes[to] ) - m_penaltyNodes.begin();
+
+					NodePenalty nodeTo(m_usedNodes[to], 0);
+					nodePenalty = std::lower_bound( m_penaltyNodes.begin(), m_penaltyNodes.end(), nodeTo ) - m_penaltyNodes.begin();
 					if ( nodePenalty < m_penaltyNodes.size() && m_penaltyNodes[nodePenalty].id == m_usedNodes[to] )
 						seconds += m_penaltyNodes[nodePenalty].seconds;
 
