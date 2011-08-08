@@ -1,7 +1,7 @@
 /*
  * This file is part of the luckyGPS project.
  *
- * Copyright (C) 2009 - 2010 Daniel Genrich <dg@luckygps.com>
+ * Copyright (C) 2009 - 2011 Daniel Genrich <dg@luckygps.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include "interfaces/iimporter.h"
 #include "interfaces/ipreprocessor.h"
 
+/* not sure for what I still need "settingsFile" -- TODO dg */
 bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int local)
 {
 	IImporter *importer = NULL;
