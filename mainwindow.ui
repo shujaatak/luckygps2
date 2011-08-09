@@ -220,12 +220,6 @@
                <property name="cursor">
                 <cursorShape>ArrowCursor</cursorShape>
                </property>
-               <property name="frameShape">
-                <enum>QFrame::StyledPanel</enum>
-               </property>
-               <property name="frameShadow">
-                <enum>QFrame::Raised</enum>
-               </property>
                <layout class="QHBoxLayout" name="horizontalLayout_44">
                 <property name="spacing">
                  <number>0</number>
@@ -4125,12 +4119,6 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>MapWidget</class>
-   <extends>QFrame</extends>
-   <header location="global">mapwidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ButtonFrameWidget</class>
    <extends>QFrame</extends>
    <header location="global">customwidgets.h</header>
@@ -4146,6 +4134,12 @@
    <class>LineEditWidget</class>
    <extends>QLineEdit</extends>
    <header location="global">customwidgets.h</header>
+  </customwidget>
+  <customwidget>
+   <class>GLMapWidget</class>
+   <extends>QFrame</extends>
+   <header location="global">glmapwidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
