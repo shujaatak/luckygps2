@@ -35,6 +35,9 @@
 
 #include "tile.h"
 
+/* ----------------------------	*/
+/* LineEditWidget   			*/
+/* ----------------------------	*/
 class LineEditWidget : public QLineEdit
 {
 	Q_OBJECT
@@ -51,6 +54,9 @@ signals:
 	void lostFocus();
 };
 
+/* ----------------------------	*/
+/* ButtonFrameWidget			*/
+/* ----------------------------	*/
 class ButtonFrameWidget : public QFrame
 {
 	Q_OBJECT

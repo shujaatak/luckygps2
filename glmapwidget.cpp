@@ -82,7 +82,6 @@ static double tval()
 GLMapWidget::GLMapWidget(QWidget *parent)
 	: QGLWidget(QGLFormat(QGL::SampleBuffers), parent) /* SampleBuffers */
 {
-	setFixedSize(200, 200);
 	setAutoFillBackground(false);
 
 
