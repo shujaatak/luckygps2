@@ -24,7 +24,11 @@
 
 #include "interfaces/irouter.h"
 
+#if defined(Q_OS_WIN32) || defined(Q_OS_WIN64)
 #include <climits>
+#else
+#include <float.h>
+#endif
 
 #include <QList>
 #include <QString>
