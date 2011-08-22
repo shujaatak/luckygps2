@@ -126,6 +126,8 @@ void MapnikThread::createTile(int x, int y)
     Envelope<double> box = Envelope<double>(lon_0, lat_0, lon_1, lat_1);
     m.zoomToBox(box);
 
+    m.set_buffer_size(128);
+
     /* Render image with default Agg renderer */
     Image32 img = Image32(TILE_SIZE, TILE_SIZE);
     agg_renderer<Image32> render(m, img);
