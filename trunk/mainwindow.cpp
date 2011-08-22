@@ -230,7 +230,7 @@ MainWindow::MainWindow(QWidget *parent, int local)
 	connect(ui->lineEditRouteStartGPS, SIGNAL(gotFocus()), ui->map, SLOT(callback_routecb_getFocus()));
 	connect(ui->lineEditRouteStartGPS, SIGNAL(lostFocus()), ui->map, SLOT(callback_routecb_lostFocus()));
 	connect(ui->lineEditRouteDestinationGPS, SIGNAL(gotFocus()), ui->map, SLOT(callback_routecb_getFocus()));
-	connect(ui->lineEditRouteDestinationGPS, SIGNAL(lostFocus()), ui->map, SLOT(callback_routecb_lostFocus()));
+        connect(ui->lineEditRouteDestinationGPS, SIGNAL(lostFocus()), ui->map, SLOT(callback_routecb_lostFocus()));
 }
 
 MainWindow::~MainWindow()

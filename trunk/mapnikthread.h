@@ -41,21 +41,18 @@ using namespace mapnik;
 #endif
 
 
-class MapnikThread : public QThread
+class MapnikThread : public QObject
 {
+    Q_OBJECT
+
 public:
     MapnikThread();
 
 #ifdef WITH_MAPNIK
 public:
-    MapnikThread(Map *map);
     ~MapnikThread();
 
-    void run();
-
-    Tile *_tile;
-private:
-    Map *_map;
+    void createTile(int x, int y);
 #endif
 };
 
