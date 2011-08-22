@@ -2,8 +2,8 @@
 # Project created by QtCreator 2009-11-03T16:33:44
 # -------------------------------------------------
 QT += network \
-	xml \
-	opengl
+        xml  \
+        opengl
 TARGET = luckygps
 TEMPLATE = app
 SOURCES += main.cpp \
@@ -14,15 +14,16 @@ SOURCES += main.cpp \
 	convertunits.cpp \
 	tiledownload.cpp \
 	mapnikthread.cpp \
-	sqlite3.c \
 	settings_update.cpp \
 	customwidgets.cpp \
 	import_export.cpp \
 	system_helpers.cpp \
 	nmea0183.cpp \
 	plugin_helpers.cpp \
-    routing.cpp \
-    glmapwidget.cpp
+        routing.cpp \
+        glmapwidget.cpp \
+        spatialite.c \
+    sqlite3.c
 HEADERS += mainwindow.h \
 	mapwidget.h \
 	tilemanagement.h \
@@ -126,12 +127,14 @@ linux-g++ {
 	QMAKE_CXXFLAGS_RELEASE += -O3 \
 		 -Wno-unused-function
 
+        DEFINES += WITH_MAPNIK=1
+
 	# Disabled at the moment
 	# geos lib for linux* platform
 	# INCLUDEPATH += /usr/include/geos
 	# -lgeos_c -lproj
 
-	LIBS += -lprotobuf -lgomp -lbz2
+        LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik
 	desktop.path += /usr/share/applications
 	desktop.files += ./luckygps.desktop
 

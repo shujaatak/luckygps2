@@ -25,6 +25,7 @@
 
 #include "mainwindow.h"
 #include "mapwidget.h"
+#include "mapnikthread.h"
 #include "route.h"
 #include "tilemanagement.h"
 
@@ -155,6 +156,10 @@ MapWidget::MapWidget(QWidget *parent)
 	_tilesManager = new TileDownload(this);
 
 	_routing = new Routing();
+
+        MapnikThread *tmpmap = new MapnikThread();
+        tmpmap->createTile(24209, 42382);
+        delete tmpmap;
 }
 
 MapWidget::~MapWidget()
