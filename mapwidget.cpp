@@ -158,7 +158,7 @@ MapWidget::MapWidget(QWidget *parent)
 	_routing = new Routing();
 
         MapnikThread *tmpmap = new MapnikThread();
-        tmpmap->createTile(24209, 42382);
+        tmpmap->createTile(24209, 42382, 17);
         delete tmpmap;
 }
 
