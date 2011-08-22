@@ -95,12 +95,6 @@ void MapnikThread::createTile(int x, int y)
     QString dbSettingsString("%(datasource_settings)s");
     xml.replace(dbSettingsString, dbSettings);
 
-    QFile xmlFile("/home/daniel/test.txt");
-    xmlFile.open(QIODevice::WriteOnly);
-    xmlFile.write((const char *)xml.toAscii().data());
-    xmlFile.close();
-
-
     Map m(256,256);
     load_map_string(m, xml.toStdString());
 
@@ -126,6 +120,7 @@ void MapnikThread::createTile(int x, int y)
     Envelope<double> box = Envelope<double>(lon_0, lat_0, lon_1, lat_1);
     m.zoomToBox(box);
 
+    /* Copied from osm2pgsql for better label placement */
     m.set_buffer_size(128);
 
     /* Render image with default Agg renderer */
