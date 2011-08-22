@@ -30,6 +30,7 @@ MapnikThread::MapnikThread()
 {
     QString mapnikDir("/home/daniel/mapnik_files");
 
+    /* Register fonts */
     QDir fontDir = mapnikDir + "/dejavu-fonts-ttf-2.33/ttf/";
     QFileInfoList fileList = fontDir.entryInfoList(QStringList("*.ttf"), QDir::Files);
     if(fileList.length() > 0)
@@ -39,16 +40,14 @@ MapnikThread::MapnikThread()
             qDebug() << "Register font: " << fileList[i].filePath();
         }
 
+    /* Register plugins */
     datasource_cache::instance()->register_datasources("/usr/lib/mapnik/0.7/input/");
-}
 
-MapnikThread::~MapnikThread()
-{
 
-}
+    /* ------------------------------- */
+    /*    Adjust xml style template    */
+    /* ------------------------------- */
 
-void MapnikThread::createTile(int x, int y)
-{
     /* Load xml style template */
     QFile file("/home/daniel/mapnik_files/luckygps-default.template");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -95,12 +94,30 @@ void MapnikThread::createTile(int x, int y)
     QString dbSettingsString("%(datasource_settings)s");
     xml.replace(dbSettingsString, dbSettings);
 
-    Map m(256,256);
-    load_map_string(m, xml.toStdString());
+    /* ------------------------------- */
 
-    /* Mapnik direct rendering using postgres/postgis db */
-    projection proj("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over");
 
+    /* Create Mapnik map */
+    _map = new Map(256,256);
+
+    /* load map settings */
+    load_map_string(*_map, xml.toStdString());
+
+    /* Copied from osm2pgsql for better label placement */
+    _map->set_buffer_size(128);
+
+    /* Google srid=900913 projection used for rendering */
+    _proj = projection("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over");
+}
+
+MapnikThread::~MapnikThread()
+{
+    if(_map)
+        delete _map;
+}
+
+void MapnikThread::createTile(int x, int y, int zoom)
+{
     /* Calculate pixel positions of bottom-left & top-right */
     int p0_x = x * TILE_SIZE;
     int p0_y = (y + 1) * TILE_SIZE;
@@ -108,25 +125,21 @@ void MapnikThread::createTile(int x, int y)
     int p1_y = y * TILE_SIZE;
 
     /* convert pixel to lat/lon degree */
-    double lon_0 = rad_to_deg(pixel_to_longitude(17, p0_x)); // zoom = 6
-    double lat_0 = rad_to_deg(pixel_to_latitude(17, p0_y));
-    double lon_1 = rad_to_deg(pixel_to_longitude(17, p1_x));
-    double lat_1 = rad_to_deg(pixel_to_latitude(17, p1_y));
+    double lon_0 = rad_to_deg(pixel_to_longitude(zoom, p0_x));
+    double lat_0 = rad_to_deg(pixel_to_latitude(zoom, p0_y));
+    double lon_1 = rad_to_deg(pixel_to_longitude(zoom, p1_x));
+    double lat_1 = rad_to_deg(pixel_to_latitude(zoom, p1_y));
 
-    proj.forward(lon_0, lat_0);
-    proj.forward(lon_1, lat_1);
+    _proj.forward(lon_0, lat_0);
+    _proj.forward(lon_1, lat_1);
 
     /* calculate bounding box for the tile */
     Envelope<double> box = Envelope<double>(lon_0, lat_0, lon_1, lat_1);
-    m.zoomToBox(box);
-
-    /* Copied from osm2pgsql for better label placement */
-    m.set_buffer_size(128);
+    _map->zoomToBox(box);
 
     /* Render image with default Agg renderer */
     Image32 img = Image32(TILE_SIZE, TILE_SIZE);
-    agg_renderer<Image32> render(m, img);
-
+    agg_renderer<Image32> render(*_map, img);
     render.apply();
 
     save_to_file(img.data(), "/home/daniel/test.png", "png");
@@ -135,65 +148,5 @@ void MapnikThread::createTile(int x, int y)
 #else
 MapnikThread::MapnikThread()
 {
-}
-#endif
-
-
-#if 0
-int x, y, zoom;
-QString path;
-QString filename;
-
-if(!_tile)
-    return;
-
-x = _tile->_x;
-y = _tile->_y;
-zoom = _tile->_z;
-path = _tile->_path;
-
-delete _tile;
-_tile = NULL;
-
-filename = get_tilename(x, y, zoom, path);
-
-if(!QFile::exists(filename))
-{
-    QFile file(filename);
-    file.open(QIODevice::WriteOnly);
-    file.close();
-
-            qDebug("%s\n", filename.toAscii());
-
-    /* Mapnik direct rendering using postgres/postgis db */
-    projection proj(_map->srs());
-
-    /* Calculate pixel positions of bottom-left & top-right */
-    int p0_x = x * TILE_SIZE;
-    int p0_y = (y + 1) * TILE_SIZE;
-    int p1_x = (x + 1) * TILE_SIZE;
-    int p1_y = y * TILE_SIZE;
-
-    /* convert pixel to lat/lon degree */
-    double lon_0 = rad_to_deg(pixel_to_lon(zoom, p0_x));
-    double lat_0 = rad_to_deg(pixel_to_lat(zoom, p0_y));
-    double lon_1 = rad_to_deg(pixel_to_lon(zoom, p1_x));
-    double lat_1 = rad_to_deg(pixel_to_lat(zoom, p1_y));
-
-    proj.forward(lon_0, lat_0);
-    proj.forward(lon_1, lat_1);
-
-    /* calculate bounding box for the tile */
-    Envelope<double> box = Envelope<double>::Envelope(lon_0, lat_0, lon_1, lat_1);
-    _map->zoomToBox(box);
-
-    /* Render image with default Agg renderer */
-    Image32 img = Image32::Image32(TILE_SIZE, TILE_SIZE);
-    agg_renderer<Image32> render(*_map, img);
-
-    render.apply();
-
-    file.remove();
-    save_to_file(img.data(), filename.toStdString(), "png");
 }
 #endif

@@ -52,7 +52,11 @@ public:
 public:
     ~MapnikThread();
 
-    void createTile(int x, int y);
+    void createTile(int x, int y, int zoom);
+
+private:
+    Map *_map;
+    projection _proj;
 #endif
 };
 
