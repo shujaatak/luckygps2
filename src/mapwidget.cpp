@@ -156,10 +156,11 @@ MapWidget::MapWidget(QWidget *parent)
 	_tilesManager = new TileDownload(this);
 
 	_routing = new Routing();
-
+#ifdef WITH_MAPNIK
         MapnikThread *tmpmap = new MapnikThread();
         tmpmap->createTile(24209, 42382, 17);
         delete tmpmap;
+#endif
 }
 
 MapWidget::~MapWidget()
