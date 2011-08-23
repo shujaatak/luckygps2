@@ -49,8 +49,8 @@ HEADERS += ./src/mainwindow.h \
 	./src/datasource.h
 FORMS += ./src/mainwindow.ui
 # CODECFORTR = UTF-8
-TRANSLATIONS =	luckygps_de.ts \
-				luckygps_hu.ts
+TRANSLATIONS =	./translations/luckygps_de.ts \
+				./translations/luckygps_hu.ts
 
 DEFINES +=	SQLITE_ENABLE_RTREE=1 \
 			SQLITE_ENABLE_FTS3 OMIT_PROJ=1
