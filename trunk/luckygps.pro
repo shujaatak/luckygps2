@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 
-INCLUDEPATH += ./routing
+INCLUDEPATH += ./routing ./src
 
 SUBDIRS = routing/plugins/client_plugins.pro
 SUBDIRS += routing/plugins/preprocessor_plugins.pro

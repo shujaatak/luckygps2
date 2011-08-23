@@ -6,61 +6,61 @@ QT += network \
         opengl
 TARGET = luckygps
 TEMPLATE = app
-SOURCES += main.cpp \
-	mainwindow.cpp \
-	tabs_update.cpp \
-	mapwidget.cpp \
-	tilemanagement.cpp \
-	convertunits.cpp \
-	tiledownload.cpp \
-	mapnikthread.cpp \
-	settings_update.cpp \
-	customwidgets.cpp \
-	import_export.cpp \
-	system_helpers.cpp \
-	nmea0183.cpp \
-	plugin_helpers.cpp \
-        routing.cpp \
-        glmapwidget.cpp \
-        spatialite.c \
-    sqlite3.c \
-    datasourcemanager.cpp \
-    datasource.cpp
-HEADERS += mainwindow.h \
-	mapwidget.h \
-	tilemanagement.h \
-	convertunits.h \
-	tiledownload.h \
-	mapnikthread.h \
-	tile.h \
-	sqlite3.h \
-	customwidgets.h \
-	track.h \
-	import_export.h \
-	route.h \
-	plugin_helpers.h \
-	system_helpers.h \
-	nmea0183.h \
-	gpsd.h \
-    routing.h \
-    route_description.h \
-    glmapwidget.h \
-    datasourcemanager.h \
-    datasource.h
-FORMS += mainwindow.ui
+SOURCES += ./src/main.cpp \
+	./src/mainwindow.cpp \
+	./src/tabs_update.cpp \
+	./src/mapwidget.cpp \
+	./src/tilemanagement.cpp \
+	./src/convertunits.cpp \
+	./src/tiledownload.cpp \
+	./src/mapnikthread.cpp \
+	./src/settings_update.cpp \
+	./src/customwidgets.cpp \
+	./src/import_export.cpp \
+	./src/system_helpers.cpp \
+	./src/nmea0183.cpp \
+	./src/plugin_helpers.cpp \
+	./src/routing.cpp \
+	./src/glmapwidget.cpp \
+	./src/spatialite.c \
+	./src/sqlite3.c \
+	./src/datasourcemanager.cpp \
+	./src/datasource.cpp
+HEADERS += ./src/mainwindow.h \
+	./src/mapwidget.h \
+	./src/tilemanagement.h \
+	./src/convertunits.h \
+	./src/tiledownload.h \
+	./src/mapnikthread.h \
+	./src/tile.h \
+	./src/sqlite3.h \
+	./src/customwidgets.h \
+	./src/track.h \
+	./src/import_export.h \
+	./src/route.h \
+	./src/plugin_helpers.h \
+	./src/system_helpers.h \
+	./src/nmea0183.h \
+	./src/gpsd.h \
+	./src/routing.h \
+	./src/route_description.h \
+	./src/glmapwidget.h \
+	./src/datasourcemanager.h \
+	./src/datasource.h
+FORMS += ./src/mainwindow.ui
 # CODECFORTR = UTF-8
 TRANSLATIONS =	luckygps_de.ts \
 				luckygps_hu.ts
 
 DEFINES +=	SQLITE_ENABLE_RTREE=1 \
-			SQLITE_ENABLE_FTS3
+			SQLITE_ENABLE_FTS3 OMIT_PROJ=1
 
-INCLUDEPATH += ./routing
+INCLUDEPATH += ./routing ./src
 LIBS += -L./routing/bin/plugins_client -lcontractionhierarchiesclient -lgpsgridclient -lunicodetournamenttrieclient -lmbtilesmanagerclient \
 		-L./routing/bin/plugins_preprocessor -losmimporter -lcontractionhierarchies -lgpsgrid -lunicodetournamenttrie
 
 win32 {
-	SOURCES += gpsd_win.cpp
+	SOURCES += ./src/gpsd_win.cpp
 	RC_FILE = luckygps.rc
 
 	!contains(QMAKE_HOST.arch, x86_64) {
@@ -74,7 +74,7 @@ win32 {
 		CONFIG += console
 
 		# geos debug lib
-		# LIBS += $$PWD/lib/$$SYSLIBPATH/geos/lib/geosd_c_i.lib
+		LIBS += $$PWD/lib/$$SYSLIBPATH/geos/lib/geosd_c_i.lib
 
 		# qextserialport debug lib
 		LIBS += $$PWD/lib/$$SYSLIBPATH/qextserialport/lib/qextserialportd1.lib
@@ -92,7 +92,7 @@ win32 {
 		LIBS += /NODEFAULTLIB:libcmt.lib /DEBUG /pdb:"Release/luckygps.pdb"
 
 		# geos lib
-		# LIBS += $$PWD/lib/$$SYSLIBPATH/geos/lib/geos_c_i.lib
+		LIBS += $$PWD/lib/$$SYSLIBPATH/geos/lib/geos_c_i.lib
 
 		# qextserialport lib
 		LIBS += $$PWD/lib/$$SYSLIBPATH/qextserialport/lib/qextserialport1.lib
@@ -116,7 +116,7 @@ win32 {
 	INCLUDEPATH += $$PWD/lib/$$SYSLIBPATH/qextserialport/include
 
 	# geos lib include path
-	# INCLUDEPATH += $$PWD/lib/$$SYSLIBPATH/geos/include
+	INCLUDEPATH += $$PWD/lib/$$SYSLIBPATH/geos/include
 
 	# INCLUDEPATH += $$PWD/lib/$$SYSLIBPATH/crashrpt/include
 
@@ -125,7 +125,7 @@ win32 {
 }
 
 linux-g++ {
-	SOURCES += gpsd_linux.cpp
+	SOURCES += ./src/gpsd_linux.cpp
 
 	QMAKE_CXXFLAGS_RELEASE -= -O2
 	QMAKE_CXXFLAGS_RELEASE += -O3 \
@@ -138,7 +138,7 @@ linux-g++ {
 	# INCLUDEPATH += /usr/include/geos
 	# -lgeos_c -lproj
 
-        LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik
+	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik
 	desktop.path += /usr/share/applications
 	desktop.files += ./luckygps.desktop
 

@@ -1,7 +1,7 @@
 TEMPLATE = lib
 CONFIG += plugin static
 
-INCLUDEPATH += ../.. ../../../
+INCLUDEPATH += ../.. ../../../src
 
 DESTDIR = ../../bin/plugins_client
 unix {
