@@ -23,7 +23,9 @@ SOURCES += main.cpp \
         routing.cpp \
         glmapwidget.cpp \
         spatialite.c \
-    sqlite3.c
+    sqlite3.c \
+    datasourcemanager.cpp \
+    datasource.cpp
 HEADERS += mainwindow.h \
 	mapwidget.h \
 	tilemanagement.h \
@@ -42,7 +44,9 @@ HEADERS += mainwindow.h \
 	gpsd.h \
     routing.h \
     route_description.h \
-    glmapwidget.h
+    glmapwidget.h \
+    datasourcemanager.h \
+    datasource.h
 FORMS += mainwindow.ui
 # CODECFORTR = UTF-8
 TRANSLATIONS =	luckygps_de.ts \
