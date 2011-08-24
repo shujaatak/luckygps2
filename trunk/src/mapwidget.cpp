@@ -93,22 +93,17 @@ MapWidget::MapWidget(QWidget *parent)
     _starty = 0;
     _zoom = 0;
     _centerMap = false;
-    _cacheSize = 0;
-	_outlineCacheSize = 0;
     _degree = 0.0;
     _activeTrack = false;
     _enableScrollWheel = true;
     _max_generate_zoom = 17;
-	_mapImg = NULL;
-	_outlineMapImg = NULL;
-    _gotMissingTiles = false;
 	_cbInFocus = false;
 	_grabGPSCoords = false;
 	_routingInfoHeight = 0;
 	_mapStyle = 0;
 	_painterImg = NULL;
 	_mapRedrawCounter = 0;
-	_tileManager = NULL;
+	_dsm = NULL;
 
 	_rsImage = QImage(":/icons/start-bg.png");
 	_rfImage = QImage(":/icons/finish-bg.png");
@@ -119,78 +114,25 @@ MapWidget::MapWidget(QWidget *parent)
 	_cfImage = QImage(":/icons/compass-wheel-small.png");
 
 	memset(&_gpsdata, 0, sizeof(nmeaGPS));
-    memset(&_tileInfo, 0, sizeof(TileInfo));
-
-    /* timer to check for internet connection once in a while */
-    connect(&_inetTimer, SIGNAL(timeout()), this, SLOT(callback_inet_connection_update()));
-    _inetTimer.start();
 
 	/* timer to redraw map totally */
     connect(&_redrawTimer, SIGNAL(timeout()), this, SLOT(callback_redraw()));
     _redrawTimer.start(2000);
 
-    _manager = new QNetworkAccessManager(this);
-	connect(_manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
-
-	/*
-	foreach (QObject *plugin, QPluginLoader::staticInstances())
-	{
-		if (ITilemanager *i = qobject_cast< ITilemanager* >(plugin))
-		{
-			qDebug() << "MapWidget - found plugin:" << i->GetName();
-			if (i->GetName() == "MBTiles Tile Manager" )
-				_tileManager = i;
-		}
-	}
-	if(_tileManager)
-	{
-		_tileManager->SetInputDirectory( "e:\\" );
-		if (!_tileManager->LoadData())
-		{
-			delete _tileManager;
-			_tileManager = NULL;
-		}
-	}
-	*/
-
-	_tilesManager = new TileDownload(this);
-
 	_routing = new Routing();
 #ifdef WITH_MAPNIK
-        MapnikThread *tmpmap = new MapnikThread();
-        tmpmap->createTile(24209, 42382, 17);
-        delete tmpmap;
+	MapnikThread *tmpmap = new MapnikThread();
+	tmpmap->createTile(24209, 42382, 17);
+	delete tmpmap;
 #endif
 }
 
 MapWidget::~MapWidget()
 {
-	if(_mapImg)
-		delete _mapImg;
-	if(_outlineMapImg)
-		delete _outlineMapImg;
 	if(_painterImg)
 		delete _painterImg;
 
-    delete _manager;
-
-	delete _tilesManager;
-
 	delete _routing;
-
-	while(_outlineCache.length() > 0)
-	{
-		Tile mytile = _outlineCache.takeFirst();
-		if(mytile._img)
-			delete mytile._img;
-	}
-
-    while(_cache.length() > 0)
-    {
-        Tile mytile = _cache.takeFirst();
-        if(mytile._img)
-            delete mytile._img;
-	}
 }
 
 void MapWidget::slotRequestFinished(QNetworkReply *reply)
@@ -211,34 +153,9 @@ void MapWidget::slotRequestFinished(QNetworkReply *reply)
     reply->deleteLater();
 }
 
-void MapWidget::callback_inet_connection_update()
-{
-	if(_tilesManager->get_autodownload())
-	{
-
-		QUrl url = QUrl::fromEncoded("http://www.google.de");
-		QNetworkRequest request(url);
-		QNetworkReply *reply = _manager->get(request);
-
-		_inetTimer.start(10000);
-	}
-	else
-		_inetTimer.start(1000);
-}
-
 void MapWidget::callback_redraw()
 {
     update();
-}
-
-void MapWidget::callback_http_finished()
-{
-	_tilesManager->set_inet(true);
-}
-
-void MapWidget::callback_no_inet()
-{
-	_tilesManager->set_inet(false);
 }
 
 void MapWidget::callback_fullscreen_clicked()
@@ -255,6 +172,10 @@ void MapWidget::callback_fullscreen_clicked()
 
 void MapWidget::paintEvent(QPaintEvent *event)
 {
+	/* Valid DataSourceManager is needed to draw a map */
+	if(!_dsm)
+		return;
+
 	int toDrawX = event->rect().x();
 	int toDrawY = event->rect().y();
 	int toDrawWidth = event->rect().width();
@@ -319,8 +240,8 @@ void MapWidget::paintEvent(QPaintEvent *event)
 			_degree = _gpsdata.track;
     }
 
-    QPen pen = painter.pen();
-    pen.setCapStyle(Qt::RoundCap);
+	QPen pen = painter.pen();
+	pen.setCapStyle(Qt::RoundCap);
 	pen.setJoinStyle(Qt::RoundJoin);
 	painter.setPen(pen);
 	font = painter.font();
@@ -337,46 +258,9 @@ void MapWidget::paintEvent(QPaintEvent *event)
     /* ---------------------------------- */
 
     /* requested tile information */
-    TileInfo tile_info;
+	TileInfo tile_info;
 
-	QImage *mapImg;
-
-    /* generate list of tiles which are needed for the current x, y and zoom level */
-	TileList *requested_tiles = get_necessary_tiles(_x, _y, get_zoom(), width(), height(), _mappath, tile_info);
-
-    /* check if the same tile rect is requested as the last time */
-	if(_mapImg && !_gotMissingTiles &&
-       _tileInfo.min_tile_x== tile_info.min_tile_x &&
-       _tileInfo.min_tile_y== tile_info.min_tile_y &&
-       _tileInfo.max_tile_x== tile_info.max_tile_x &&
-       _tileInfo.max_tile_y== tile_info.max_tile_y)
-    {
-		mapImg = _mapImg;
-    }
-    else
-    {
-
-        /* Let's center the coordinates here using width + height of map widget */
-		mapImg = fill_tiles_pixel(requested_tiles, &missingTiles, &_cache, tile_info.nx, tile_info.ny);
-		delete _mapImg;
-		_mapImg = mapImg;
-    }
-
-	memcpy(&_tileInfo, &tile_info, sizeof(TileInfo));
-    delete requested_tiles;
-
-	if(missingTiles.length() > 0)
-        _gotMissingTiles = true;
-    else
-        _gotMissingTiles = false;
-
-	/* check tile cache for MAX items */
-    while(_cache.length() > _cacheSize)
-    {
-        Tile mytile = _cache.takeFirst();
-        if(mytile._img)
-            delete mytile._img;
-    }
+	QImage *mapImg = _dsm->getImage(_x, _y, get_zoom(), width(), height()); // TODO
     
 	if(mapImg)
     {
@@ -656,11 +540,12 @@ void MapWidget::paintEvent(QPaintEvent *event)
 		painter.setPen(pen);
 	}
 
+#if 0
 	/* draw overview map */
 	if(get_zoom() > 7)
 	{
 		TileInfo tile_info;
-		QImage *outlineMapImg;
+		QImage *outlineMapImg = NULL;
 		int w = width() / 6;
 		int h = height() / 6;
 
@@ -727,6 +612,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
 			}
 		}
 	}
+#endif
 
 
     /* prepare half transparent information area on the top */
@@ -856,21 +742,6 @@ void MapWidget::paintEvent(QPaintEvent *event)
 	}
 	widgetPainter.drawImage(0, 0, *_painterImg);
 	widgetPainter.end();
-
-    /* -------------------------------------------------- */
-    /* The following stuff got nothing to do with drawing */
-    /* -------------------------------------------------- */
-
-	/* request missing tiles from internet/renderer */
-	{
-		/* put tile into missing tiles (thread) list */
-		TileListP tileList;
-
-		for(int i = 0; i < missingTiles.length(); i++)
-			tileList.append(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mappath, _mapurl));
-
-		_tilesManager->dlGetTiles(tileList);
-	}
 
 	// qDebug() << pixel_to_longitude(get_zoom(), _x) << " " << pixel_to_latitude(get_zoom(), _y) << " - " << pixel_to_longitude(get_zoom(), _x + width()) << " " << pixel_to_latitude(get_zoom(), _y + height());
 
@@ -1131,6 +1002,7 @@ void MapWidget::set_zoom(int zoom)
 
 void MapWidget::generate_tiles(int x, int y, int zoom, int w, int h)
 {
+#if 0
     /* requested tile information */
     TileInfo tile_info;
 
@@ -1146,5 +1018,6 @@ void MapWidget::generate_tiles(int x, int y, int zoom, int w, int h)
 
     if(requested_tiles)
         delete requested_tiles;
+#endif
 }
 

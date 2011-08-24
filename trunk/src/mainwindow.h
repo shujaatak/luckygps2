@@ -15,6 +15,7 @@
 
 #include "routing.h" // this headers needs to be first because of the MAX macro defined later
 #include "customwidgets.h"
+#include "datasourcemanager.h"
 #include "gpsd.h"
 #include "track.h"
 #include "gpsd.h"
@@ -81,6 +82,10 @@ private:
 	/* route + tracks folder update timer */
 	QTimer _folderTimer;
 
+	/* DataSourceManager for managing map sources */
+	/* and creating map crops for display */
+	DataSourceManager *_dsm;
+
 private slots:
 	void on_lineEditRouteDestinationGPS_textChanged(QString );
 	void on_route_end_gps_button_clicked();
@@ -133,17 +138,17 @@ private slots:
 
 private:
     /* settings/db handling (in settings_update.cpp) */
-    bool load_settings(gps_settings_t *settings, bool reset = 0,  bool startup = 0);
-    bool save_settings();
-    QStringList load_track_formats();
-	QString save_track(Track *newtrack);
-    void get_gps_settings(gps_settings_t &settings);
-    void set_gps_settings(gps_settings_t &settings);
-    bool check_dbversion();
+	bool loadSettings(gps_settings_t *settings, bool reset = 0,  bool startup = 0);
+	bool saveSettings();
+	QStringList loadTrackFormats();
+	QString saveTrack(Track *newtrack);
+	void getGpsSettings(gps_settings_t &settings);
+	void setGpsSettings(gps_settings_t &settings);
+	bool checkDBversion();
 	void tabGpsUpdate(const nmeaGPS &gpsdata);
 	void clearGpsInfo();
 
-    void handle_zoom_buttons(int new_zoom);
+	void handleZoomButtons(int new_zoom);
 
 	/* Tracks tab - "start"/"stop" UI button updates */
 	void startstopTrack(bool value);

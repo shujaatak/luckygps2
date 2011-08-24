@@ -30,14 +30,13 @@
 #include <QWheelEvent>
 #include <QWidget>
 
-/* Tile Management Plugin Interface */
-#include "interfaces/itilemanager.h"
-
 #include "gpsd.h"
 #include "tiledownload.h"
 #include "route.h"
 #include "routing.h"
 #include "track.h"
+
+#include "datasourcemanager.h"
 
 
 class MapWidget : public QFrame
@@ -49,26 +48,16 @@ public:
 	~MapWidget();
 
 	/* access to private variables */
-	void set_path(QString path) { _mappath = path; }
-	QString get_path() { return _mappath; }
-	void set_url(QString url) { _mapurl = url; }
-	QString get_url() { return _mapurl; }
 	int get_zoom() { return _zoom; }
 	QPoint get_pos() { return QPoint(_x,_y); }
 	void set_pos(QPoint point) { _x = point.x(); _y = point.y(); }
-	void force_redraw() { _gotMissingTiles = true; repaint(); }
+	void force_redraw() { /* _gotMissingTiles = true; */ repaint(); }
 
 	/* widget functions */
 	void set_center(double latitude, double longitude, int hor_corr, bool autocenter, bool do_update = true);
 	void set_center(bool autocenter) { _centerMap = autocenter; }
 	bool get_center() { return _centerMap; }
 	void set_zoom(int value);
-	void set_cache_size(int cacheSize)
-	{
-		_cacheSize = cacheSize;
-		_outlineCacheSize = cacheSize / 4;
-		if(_outlineCacheSize < 4) _outlineCacheSize = 4;
-	}
 	void set_scroll_wheel(bool value) { _enableScrollWheel = value; }
 	void set_mirror(int value) { _mirror = (bool)value; }
 	int get_mirror() { return _mirror; }
@@ -91,8 +80,9 @@ protected:
 	void wheelEvent(QWheelEvent *event);
 
 private:
+	DataSourceManager *_dsm;
+
 	void drawPolyline(QPainter* painter, const QRect& boundingBox, QPoint *points, int size);
-	QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);
 
 	QToolButton *_fullscreenButton;
 
@@ -100,14 +90,6 @@ private:
 
 	/* handle map movement by mouse drag-and-drop */
 	int _x, _y, _startx, _starty, _zoom;
-
-	/* map data management */
-	QString _mappath;
-	QString _mapurl;
-
-	/* Internet connection detection handling */
-	QTimer _inetTimer;
-	QNetworkAccessManager *_manager;
 
 	/* center the map automatically? */
 	bool _centerMap;
@@ -123,15 +105,6 @@ private:
 
 	/* unit */
 	int _unit; // 0 == metrical, 1 == imperial
-
-	/* MapWidget tile cache */
-	TileList _cache;
-	int _cacheSize;
-	TileList _outlineCache;
-	int _outlineCacheSize;
-	TileInfo _tileInfo;
-	QImage *_mapImg;
-	bool _gotMissingTiles;
 
 	/* minimum UI redraw timer */
 	QTimer _redrawTimer;
@@ -159,17 +132,10 @@ private:
 	QImage *_painterImg;
 	int _mapRedrawCounter;
 
-	ITilemanager *_tileManager;
-
 public:
-	/* images served for the overview map widget */
-	QImage *_outlineMapImg;
 
 	/* routing info box */
 	int _routingInfoHeight;
-
-	/* Tiles Manager */
-	TileDownload *_tilesManager;
 
 	/* track management */
 	Track _track;

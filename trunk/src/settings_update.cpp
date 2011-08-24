@@ -46,7 +46,7 @@ static double tval()
 #endif
 
 /* check for compatible db version */
-bool MainWindow::check_dbversion()
+bool MainWindow::checkDBversion()
 {
     sqlite3_stmt *st = NULL;
     bool ret = false;
@@ -68,7 +68,7 @@ bool MainWindow::check_dbversion()
 
 /* load GUI standard settings from luckygps.sqlite database */
 /* TODO: better error handling in case of db/query failing */
-bool MainWindow::load_settings(gps_settings_t *settings, bool reset, bool startup)
+bool MainWindow::loadSettings(gps_settings_t *settings, bool reset, bool startup)
 {
     int sql_error;
     int map_id = 0, track_id = 0;
@@ -148,7 +148,7 @@ bool MainWindow::load_settings(gps_settings_t *settings, bool reset, bool startu
 			/* -------------- */
             /* cache settings */
 			/* -------------- */
-            ui->map->set_cache_size(sqlite3_column_int(st, 5));
+			_dsm->set_cache_size(sqlite3_column_int(st, 5));
             ui->settings_cache_spinbox->setValue(sqlite3_column_int(st, 5));
             on_settings_cache_spinbox_valueChanged(sqlite3_column_int(st, 5));
         }
@@ -410,7 +410,7 @@ bool MainWindow::save_settings()
     return true;
 }
 
-QStringList MainWindow::load_track_formats()
+QStringList MainWindow::loadTrackFormats()
 {
     QStringList list;
 
@@ -423,14 +423,14 @@ QStringList MainWindow::load_track_formats()
 }
 
 
-QString MainWindow::save_track(Track *newtrack)
+QString MainWindow::saveTrack(Track *newtrack)
 {
 	/* export to gpx format, we use the track gpx format here */
 	return export_gpx(*newtrack, _trackPath);
 }
 
 /* gps settings helper function to assign correct values from UI */
-void MainWindow::get_gps_settings(gps_settings_t &settings)
+void MainWindow::getGpsSettings(gps_settings_t &settings)
 {
     settings.host = ui->label_gpsd_host->text();
     settings.port = ui->label_gpsd_port->text();
@@ -459,7 +459,7 @@ void MainWindow::get_gps_settings(gps_settings_t &settings)
 }
 
 /* gps settings helper function to assign correct values to UI */
-void MainWindow::set_gps_settings(gps_settings_t &settings)
+void MainWindow::setGpsSettings(gps_settings_t &settings)
 {
     ui->label_gpsd_host->setText(settings.host);
     ui->label_gpsd_port->setText(settings.port);
