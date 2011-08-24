@@ -53,53 +53,6 @@ QImage *get_map(Tile mytile)
         return NULL;
 }
 
-/* This function is part of the MapWidget to be able to access plugins */
-QImage *MapWidget::fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny)
-{
-	QImage *paintImg = NULL;
-    QPainter painter;
-    int i;
-
-    /* init painting on a pixmap/image */
-	paintImg = new QImage(nx * TILE_SIZE, ny * TILE_SIZE, QImage::Format_RGB32);
-	if(!paintImg)
-        return NULL;
-	painter.begin(paintImg);
-	painter.setRenderHint(QPainter::Antialiasing, true);
-	painter.fillRect(0,0, nx * TILE_SIZE, ny * TILE_SIZE, Qt::white);
-
-    for (i = 0; i < requested_tiles->length(); i++)
-    {
-        int cache_index = -1;
-        if((cache_index = cache->indexOf(requested_tiles->at(i))) < 0)
-        {
-			QImage *img = NULL;
-			if(_tileManager)
-				img = _tileManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
-			else
-				img = get_map(requested_tiles->at(i));
-
-            if(img)
-            {
-                cache->append(Tile(requested_tiles->at(i), img));
-                painter.drawImage(requested_tiles->at(i)._posx, requested_tiles->at(i)._posy, *img);
-            }
-            else
-            {
-				missing_tiles->append(requested_tiles->at(i));
-            }
-        }
-        else
-        {
-            painter.drawImage(requested_tiles->at(i)._posx, requested_tiles->at(i)._posy, *(cache->at(cache_index)._img));
-        }
-
-    }
-    painter.end();
-
-	return paintImg;
-}
-
 TileList *get_necessary_tiles(int pixel_x, int pixel_y, int zoom, int width, int height, QString path, TileInfo &info)
 {
 	int i, j;

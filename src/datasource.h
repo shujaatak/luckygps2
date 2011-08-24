@@ -26,7 +26,7 @@ class datasource : public QObject
 {
     Q_OBJECT
 public:
-    explicit datasource(QObject *parent = 0);
+	explicit datasource(QObject *parent = 0);
 
 signals:
 

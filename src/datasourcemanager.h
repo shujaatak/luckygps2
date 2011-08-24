@@ -20,13 +20,61 @@
 #ifndef DATASOURCEMANAGER_H
 #define DATASOURCEMANAGER_H
 
+#include <QImage>
 #include <QObject>
+
+#include "tilemanagement.h"
+#include "tiledownload.h"
 
 class DataSourceManager : public QObject
 {
     Q_OBJECT
+
 public:
-    explicit DataSourceManager(QObject *parent = 0);
+	explicit DataSourceManager(QObject *parent = 0);
+	~DataSourceManager();
+
+	QImage *getImage(int x, int y, int zoom, int width, int height);
+
+	void setCacheSize(int cacheSize)
+	{
+		_cacheSize = cacheSize;
+		_outlineCacheSize = cacheSize / 4;
+		if(_outlineCacheSize < 4) _outlineCacheSize = 4;
+	}
+
+	/* Map settings */
+	void setPath(QString path) { _mapPath = path; }
+	QString getPath() { return _mapPath; }
+	void setUrl(QString url) { _mapUrl = url; }
+	QString getUrl() { return _mapUrl; }
+
+private:
+
+	QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);
+
+	/* MapWidget tile cache */
+	TileList _cache;
+	int _cacheSize;
+	TileList _outlineCache;
+	int _outlineCacheSize;
+	TileInfo _tileInfo;
+	bool _gotMissingTiles;
+	QImage *_mapImg;
+
+	/* images served for the overview map widget */
+	QImage *_outlineMapImg;
+
+	/* map data management */
+	QString _mapPath;
+	QString _mapUrl;
+
+	/* Tiles Manager */
+	TileDownload *_tilesManager;
+
+	/* Internet connection detection handling */
+	QTimer _inetTimer;
+	QNetworkAccessManager *_networkManager;
 
 signals:
 

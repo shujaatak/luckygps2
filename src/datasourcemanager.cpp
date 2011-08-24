@@ -19,7 +19,181 @@
 
 #include "datasourcemanager.h"
 
-DataSourceManager::DataSourceManager(QObject *parent) :
-    QObject(parent)
+DataSourceManager::DataSourceManager(QObject *parent)
+	: QObject(parent)
 {
+	_gotMissingTiles = false;
+
+	_cacheSize = 0;
+	_outlineCacheSize = 0;
+
+	_mapImg = NULL;
+	_outlineMapImg = NULL;
+
+	memset(&_tileInfo, 0, sizeof(TileInfo));
+
+	/* timer to check for internet connection once in a while */
+	connect(&_inetTimer, SIGNAL(timeout()), this, SLOT(callback_inet_connection_update()));
+	_inetTimer.start();
+
+	_networkManager = new QNetworkAccessManager(this);
+	connect(_manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
+
+	_tilesManager = new TileDownload(this);
+}
+
+DataSourceManager::~DataSourceManager()
+{
+	if(_mapImg)
+		delete _mapImg;
+	if(_outlineMapImg)
+		delete _outlineMapImg;
+
+	while(_outlineCache.length() > 0)
+	{
+		Tile mytile = _outlineCache.takeFirst();
+		if(mytile._img)
+			delete mytile._img;
+	}
+
+	while(_cache.length() > 0)
+	{
+		Tile mytile = _cache.takeFirst();
+		if(mytile._img)
+			delete mytile._img;
+	}
+
+	delete _networkManager;
+
+	delete _tilesManager;
+}
+
+void DataSourceManager::callback_inet_connection_update()
+{
+	if(_tilesManager->get_autodownload())
+	{
+
+		QUrl url = QUrl::fromEncoded("http://www.google.de");
+		QNetworkRequest request(url);
+		QNetworkReply *reply = _manager->get(request);
+
+		_inetTimer.start(10000);
+	}
+	else
+		_inetTimer.start(1000);
+}
+
+void DataSourceManager::callback_http_finished()
+{
+	_tilesManager->set_inet(true);
+}
+
+void DataSourceManager::callback_no_inet()
+{
+	_tilesManager->set_inet(false);
+}
+
+
+/* This function is part of the MapWidget to be able to access plugins */
+QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny)
+{
+	QImage *paintImg = NULL;
+	QPainter painter;
+	int i;
+
+	/* init painting on a pixmap/image */
+	paintImg = new QImage(nx * TILE_SIZE, ny * TILE_SIZE, QImage::Format_RGB32);
+	if(!paintImg)
+		return NULL;
+	painter.begin(paintImg);
+	painter.setRenderHint(QPainter::Antialiasing, true);
+	painter.fillRect(0,0, nx * TILE_SIZE, ny * TILE_SIZE, Qt::white);
+
+	for (i = 0; i < requested_tiles->length(); i++)
+	{
+		int cache_index = -1;
+		if((cache_index = cache->indexOf(requested_tiles->at(i))) < 0)
+		{
+			QImage *img = NULL;
+			if(_tileManager)
+				img = _tileManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
+			else
+				img = get_map(requested_tiles->at(i));
+
+			if(img)
+			{
+				cache->append(Tile(requested_tiles->at(i), img));
+				painter.drawImage(requested_tiles->at(i)._posx, requested_tiles->at(i)._posy, *img);
+			}
+			else
+			{
+				missing_tiles->append(requested_tiles->at(i));
+			}
+		}
+		else
+		{
+			painter.drawImage(requested_tiles->at(i)._posx, requested_tiles->at(i)._posy, *(cache->at(cache_index)._img));
+		}
+
+	}
+	painter.end();
+
+	return paintImg;
+}
+
+QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int height)
+{
+	/* generate list of tiles which are needed for the current x, y and zoom level */
+	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width(), height(), _mappath, tile_info);
+
+	/* check if the same tile rect is requested as the last time */
+	if(_mapImg && !_gotMissingTiles &&
+	   _tileInfo.min_tile_x== tile_info.min_tile_x &&
+	   _tileInfo.min_tile_y== tile_info.min_tile_y &&
+	   _tileInfo.max_tile_x== tile_info.max_tile_x &&
+	   _tileInfo.max_tile_y== tile_info.max_tile_y)
+	{
+		mapImg = _mapImg;
+	}
+	else
+	{
+
+		/* Let's center the coordinates here using width + height of map widget */
+		mapImg = fill_tiles_pixel(requested_tiles, &missingTiles, &_cache, tile_info.nx, tile_info.ny);
+		delete _mapImg;
+		_mapImg = mapImg;
+	}
+
+	memcpy(&_tileInfo, &tile_info, sizeof(TileInfo));
+	delete requested_tiles;
+
+	if(missingTiles.length() > 0)
+		_gotMissingTiles = true;
+	else
+		_gotMissingTiles = false;
+
+	/* check tile cache for MAX items */
+	while(_cache.length() > _cacheSize)
+	{
+		Tile mytile = _cache.takeFirst();
+		if(mytile._img)
+			delete mytile._img;
+	}
+
+	/* -------------------------------------------------- */
+	/* The following stuff got nothing to do with drawing */
+	/* -------------------------------------------------- */
+
+	/* request missing tiles from internet/renderer */
+	{
+		/* put tile into missing tiles (thread) list */
+		TileListP tileList;
+
+		for(int i = 0; i < missingTiles.length(); i++)
+			tileList.append(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mappath, _mapurl));
+
+		_tilesManager->dlGetTiles(tileList);
+	}
+
+	return  mapImg;
 }

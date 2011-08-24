@@ -127,7 +127,7 @@ MainWindow::MainWindow(QWidget *parent, int local)
 		else
 		{
 			/* TODO: better handling of old databases, but in the moment, just delete incompatible ones */
-			if(!check_dbversion())
+			if(!checkDBversion())
 			{
 				sqlite3_close(_db);
 				if(QFile::remove(dbname))
@@ -156,9 +156,12 @@ MainWindow::MainWindow(QWidget *parent, int local)
 		sqlite3_exec(_db, "PRAGMA cache_size=10000;", 0, NULL, 0);
 	}
 
+	/* needs to be initialized before loadSettings() */
+	_dsm = new DataSourceManager();
+
 	/* load GUI standard settings from luckygps.sqlite database */
 	gps_settings_t settings;
-	load_settings(&settings, 0, 1); /* TODO: check return value */
+	loadSettings(&settings, 0, 1); /* TODO: check return value */
 
 	int ret = ui->map->_routing->init(getDataHome(_local));
 	if(ret < 0)
@@ -230,7 +233,7 @@ MainWindow::MainWindow(QWidget *parent, int local)
 	connect(ui->lineEditRouteStartGPS, SIGNAL(gotFocus()), ui->map, SLOT(callback_routecb_getFocus()));
 	connect(ui->lineEditRouteStartGPS, SIGNAL(lostFocus()), ui->map, SLOT(callback_routecb_lostFocus()));
 	connect(ui->lineEditRouteDestinationGPS, SIGNAL(gotFocus()), ui->map, SLOT(callback_routecb_getFocus()));
-        connect(ui->lineEditRouteDestinationGPS, SIGNAL(lostFocus()), ui->map, SLOT(callback_routecb_lostFocus()));
+	connect(ui->lineEditRouteDestinationGPS, SIGNAL(lostFocus()), ui->map, SLOT(callback_routecb_lostFocus()));
 }
 
 MainWindow::~MainWindow()
@@ -239,15 +242,18 @@ MainWindow::~MainWindow()
 	Track &track = ui->map->_track;
 	if(track.active)
 	{
-		save_track(&track);
+		saveTrack(&track);
 		track.active = false;
 	}
 	ui->map->_activeTrack = false;
 
 	/* we save last pos + zoom here */
-	save_settings();
+	saveSettings();
 
 	delete ui;
+
+	/* DataSourceManager needs to be deleted after UI */
+	delete _dsm;
 
 	/* shutdown gpsd */
 	delete _gpsd;
@@ -282,7 +288,7 @@ void MainWindow::on_button_left_minus_clicked()
 	zoom_buttons_clicked(old_zoom, new_zoom);
 }
 
-void MainWindow::handle_zoom_buttons(int new_zoom)
+void MainWindow::handleZoomButtons(int new_zoom)
 {
 	if(new_zoom == 2)
 	{
@@ -324,7 +330,7 @@ void MainWindow::zoom_buttons_clicked(int old_zoom, int new_zoom)
 	}
 
 	/* update zoom in/out button status (enabled/disabled) according to new zoom */
-	handle_zoom_buttons(new_zoom);
+	handleZoomButtons(new_zoom);
 
 	/* get a copy of gpsd data */
 	_gpsd->gpsd_get_data(&gpsdata);
@@ -387,7 +393,7 @@ void MainWindow::on_button_settings_reset_clicked()
 {
 	gps_settings_t settings;
 
-	load_settings(&settings);
+	loadSettings(&settings);
 
 	ui->map->force_redraw();
 }
@@ -396,7 +402,7 @@ void MainWindow::on_button_settings_defaults_clicked()
 {
 	gps_settings_t settings;
 
-	load_settings(&settings, 1);
+	loadSettings(&settings, 1);
 
 	ui->map->force_redraw();
 }
@@ -405,8 +411,8 @@ void MainWindow::on_button_settings_save_clicked()
 {
 	gps_settings_t settings;
 
-	save_settings();
-	load_settings(&settings);
+	saveSettings();
+	loadSettings(&settings);
 
 	ui->map->force_redraw();
 }
@@ -421,10 +427,10 @@ void MainWindow::on_trackNewButton_clicked()
 		Track &track = ui->map->_track;
 		if(track.active)
 		{
-			save_track(&track);
+			saveTrack(&track);
 			track.active = false;
 
-			qDebug("on_trackNewButton_clicked - save_track");
+			qDebug("on_trackNewButton_clicked - saveTrack");
 		}
 		ui->map->_activeTrack = false;
 	}
@@ -434,11 +440,11 @@ void MainWindow::on_trackNewButton_clicked()
 	ui->trackConStopButton->setText(tr("Stop"));
 
 	QDateTime datetime = QDateTime::currentDateTime ();
-	QString track_name = datetime.toString("yyyyMMdd-hhmmss");
-	ui->map->_track = Track(-1, track_name, TrackSegment(-1), true);
+	QString trackName = datetime.toString("yyyyMMdd-hhmmss");
+	ui->map->_track = Track(-1, trackName, TrackSegment(-1), true);
 
 	/* save track to fool track folder update function */
-	ui->map->_track.filename = save_track(&ui->map->_track);
+	ui->map->_track.filename = saveTrack(&ui->map->_track);
 
 	/* select new track in combobox */
 	ui->trackImportCb->addItem(ui->map->_track.filename);
@@ -456,7 +462,7 @@ void MainWindow::startstopTrack(bool value)
 		Track &track = ui->map->_track;
 		if(track.active)
 		{
-			save_track(&track);
+			saveTrack(&track);
 			track.active = false;
 		}
 		ui->map->_activeTrack = false;
@@ -519,7 +525,7 @@ void MainWindow::on_routeImportButton_clicked()
 
 				/* update zoom in/out button status (enabled/disabled) according to new zoom */
 				int width_corr = (!_mobileMode && (ui->buttonLeftTrack->isChecked() || ui->buttonLeftRoute->isChecked() || ui->buttonLeftSettings->isChecked())) ? 302: 0;
-				handle_zoom_buttons(zoom);
+				handleZoomButtons(zoom);
 				ui->map->set_center((ui->map->_route.bb[1] + ui->map->_route.bb[3])*0.5, (ui->map->_route.bb[0] + ui->map->_route.bb[2])*0.5, width_corr, false);
 
 				/* disable autocenter button */
@@ -543,7 +549,7 @@ void MainWindow::on_button_calc_route_clicked()
 
 			/* update zoom in/out button status (enabled/disabled) according to new zoom */
 			int width_corr = (!_mobileMode && (ui->buttonLeftTrack->isChecked() || ui->buttonLeftRoute->isChecked() || ui->buttonLeftSettings->isChecked())) ? 302: 0;
-			handle_zoom_buttons(zoom);
+			handleZoomButtons(zoom);
 			ui->map->set_center((ui->map->_route.bb[1] + ui->map->_route.bb[3])*0.5, (ui->map->_route.bb[0] + ui->map->_route.bb[2])*0.5, width_corr, false);
 
 			/* disable autocenter button */
@@ -626,7 +632,7 @@ void MainWindow::tabfolderUpdate()
 		if(trackPathDir.exists())
 		{
 			int correct = 1;
-			QFileInfoList fileList = trackPathDir.entryInfoList(load_track_formats(), QDir::Files);
+			QFileInfoList fileList = trackPathDir.entryInfoList(loadTrackFormats(), QDir::Files);
 
 			/* check if any new files are there */
 			for(int i = 0; i < fileList.length(); i++)
@@ -747,7 +753,7 @@ void MainWindow::on_trackImportCb_activated(int index)
 	if(track_path_dir.exists())
 	{
 		int i = 0;
-		QFileInfoList file_list = track_path_dir.entryInfoList(load_track_formats(), QDir::Files);
+		QFileInfoList file_list = track_path_dir.entryInfoList(loadTrackFormats(), QDir::Files);
 		for(i = 0; i < file_list.length(); i++)
 			if(file_list[i].fileName() == ui->trackImportCb->currentText())
 				break;
@@ -787,7 +793,7 @@ void MainWindow::on_trackImportCb_activated(int index)
 
 				/* update zoom in/out button status (enabled/disabled) according to new zoom */
 				int width_corr = (!_mobileMode && (ui->buttonLeftTrack->isChecked() || ui->buttonLeftRoute->isChecked() || ui->buttonLeftSettings->isChecked())) ? 302: 0;
-				handle_zoom_buttons(zoom);
+				handleZoomButtons(zoom);
 				ui->map->set_center((ui->map->_track.bb[1] + ui->map->_track.bb[3])*0.5, (ui->map->_track.bb[0] + ui->map->_track.bb[2])*0.5, width_corr, false);
 
 				/* disable autocenter button */
@@ -957,7 +963,7 @@ void MainWindow::on_buttonLeftSettings_toggled(bool checked)
 	{
 		/* only load_settings if we changed from settings tab */
 		gps_settings_t settings;
-		load_settings(&settings);
+		loadSettings(&settings);
 
 		/* close map on very small width < height screens */
 		if(desktop.width() < desktop.height())
