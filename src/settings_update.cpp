@@ -113,7 +113,7 @@ bool MainWindow::loadSettings(gps_settings_t *settings, bool reset, bool startup
             ui->label_map_path->setText(label_map_path);
             map_id = sqlite3_column_int(st, 4);
             ui->cb_map_autodownload->setChecked(sqlite3_column_int(st, 6));
-			// TODO _dsm->set_autodownload(sqlite3_column_int(st, 6));
+			_dsm->set_autodownload(sqlite3_column_int(st, 6));
 
 			/* ---------------- */
 			/* general settings */

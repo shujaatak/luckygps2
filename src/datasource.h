@@ -38,23 +38,25 @@ public:
 	bool get_inet(){ return _inet; }
 	void set_inet(bool value)
 	{
-		if(!_autodownload)
-		{
-			_inet = 0;
-			return;
-		}
+			if(!_autodownload)
+			{
+					_inet = 0;
+					return;
+			}
 
-		/* If internet connection is up again, start downloading missing tiles again */
-		// TODO if((value != _inet) && value)
-		//	dlGetTiles();
-		// TODO: use callback here to inform classes that internet status changed?
+			/* If internet connection is up again, start downloading missing tiles again */
+			// if((value != _inet) && value)
+			// 		dlGetTiles();
 
-		_inet = value;
+			_inet = value;
 	}
 
 	/* Sometimes it is not allowed to use the internet */
 	bool get_autodownload() { return _autodownload; }
-	void set_autodownload(bool value) { _autodownload = value; if(get_inet() && !get_autodownload()) set_inet(0); }
+	void set_autodownload(bool value) { _autodownload = value; if(_inet && !_autodownload) _inet = 0;
+
+	/* data sink: Where to write the downloaded images */
+	DataSource *_ds;
 
 private:
 	/* Flags to describe what operations are possible on this data source */
