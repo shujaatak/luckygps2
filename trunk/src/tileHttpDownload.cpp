@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tiledownload.h"
+#include "tileHttpDownload.h"
 #include "filetilemanager.h"
 
 #include <QApplication>
@@ -34,46 +34,45 @@
 /* Get a maximum of 10 tiles parallel */
 #define MAX_TILES_GET 10
 
-TileDownload::TileDownload(DataSource *ds, QObject *parent)
-	: QObject(parent)
+TileHttpDownload::TileHttpDownload(DataSource *ds, QObject *parent)
+	: DataSource(parent)
 {
 	_ds = ds;
 
-	_autodownload = true;
+	set_autodownload(true);
 
 	_dlManager = new QNetworkAccessManager(this);
 	connect(_dlManager, SIGNAL(finished(QNetworkReply*)), SLOT(dlDownloadFinished(QNetworkReply*)));
 }
 
-TileDownload::~TileDownload()
+TileHttpDownload::~TileHttpDownload()
 {
 	delete _dlManager;
 }
 
-void TileDownload::dlGetTiles(TileListP tileList)
+QImage *TileHttpDownload::loadMapTile(const Tile *mytile)
 {
+	Tile *newtile = new Tile(*mytile, NULL);
+	delete mytile;
+
 	/* create path if it does not exist */
 	QDir dir;
-	for(int i = 0; i < tileList.length(); i++)
-	{
-		dir.setPath(tileList[i]->_path.arg(tileList[i]->_z).arg(tileList[i]->_x).arg("").arg("").arg(""));
-		if(!dir.exists())
-			dir.mkpath(tileList[i]->_path.arg(tileList[i]->_z).arg(tileList[i]->_x).arg("").arg("").arg(""));
-	}
 
-	for(int i = 0; i < tileList.length(); i++)
-	{
-		Tile *tmpTile = tileList.takeLast();
+	dir.setPath(newtile->_path.arg(newtile->_z).arg(newtile->_x).arg("").arg("").arg(""));
+	if(!dir.exists())
+		dir.mkpath(newtile->_path.arg(newtile->_z).arg(newtile->_x).arg("").arg("").arg(""));
 
-		if((_dlTilesLeft.length() + _dlTilesTodo.length() > MAX_TILES_GET) || !_inet)
-			_dlTilesTodo.append(tmpTile);
-		else
-			dlQueueTile(tmpTile);
-	}
+	if((_dlTilesLeft.length() + _dlTilesTodo.length() > MAX_TILES_GET) || !get_inet())
+		_dlTilesTodo.append(newtile);
+	else
+		dlQueueTile(newtile);
+
+	return NULL;
 }
 
+#if 0
 /* If internet connection is up again, put missing tiles into download queue again */
-void TileDownload::dlGetTiles()
+void TileHttpDownload::dlGetTiles()
 {
 	for(int i = 0; i < _dlTilesTodo.length(); i++)
 	{
@@ -83,8 +82,9 @@ void TileDownload::dlGetTiles()
 			dlQueueTile(tmpTile);
 	}
 }
+#endif
 
-void TileDownload::dlQueueTile(Tile *tile)
+void TileHttpDownload::dlQueueTile(Tile *tile)
 {
 	char buffer[1024];
 
@@ -103,7 +103,7 @@ void TileDownload::dlQueueTile(Tile *tile)
 }
 
 
-void TileDownload::dlDownloadFinished(QNetworkReply *reply)
+void TileHttpDownload::dlDownloadFinished(QNetworkReply *reply)
 {
 	QUrl url = reply->url();
 	Tile *downloadedTile = NULL;
@@ -134,7 +134,7 @@ void TileDownload::dlDownloadFinished(QNetworkReply *reply)
 	if(downloadedTile)
 		delete downloadedTile;
 
-	if(_dlTilesTodo.length() > 0 && _inet)
+	if(_dlTilesTodo.length() > 0 && get_inet())
 		dlQueueTile(_dlTilesTodo.takeLast());
 
 	_dlCurrentDownloads.removeAll(reply);

@@ -44,7 +44,7 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	connect(_networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
 
 	_dsFile = new fileTileMgr(this);
-	_tilesManager = new TileDownload(_dsFile, this);
+	_dsHttp = new TileDownload(_dsFile, this);
 }
 
 DataSourceManager::~DataSourceManager()
@@ -218,9 +218,7 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 		TileListP tileList;
 
 		for(int i = 0; i < missingTiles.length(); i++)
-			tileList.append(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mapPath, _mapUrl));
-
-		_tilesManager->dlGetTiles(tileList);
+			_dsHttp->loadMapTile(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mapPath, _mapUrl));
 	}
 
 	return  mapImg;

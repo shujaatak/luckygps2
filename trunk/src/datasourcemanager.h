@@ -25,7 +25,7 @@
 #include <QTimer>
 
 #include "datasource.h"
-#include "tiledownload.h"
+#include "tileHttpDownload.h"
 
 class DataSourceManager : public QObject
 {
@@ -54,7 +54,7 @@ public:
 	void callback_http_finished();
 
 	/* Tiles Manager */
-	TileDownload *_tilesManager;
+	// TileDownload *_tilesManager;
 
 private:
 

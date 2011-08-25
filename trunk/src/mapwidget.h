@@ -31,7 +31,7 @@
 
 #include "gpsd.h"
 #include "datasourcemanager.h"
-#include "tiledownload.h"
+#include "tileHttpDownload.h"
 #include "route.h"
 #include "routing.h"
 #include "track.h"
