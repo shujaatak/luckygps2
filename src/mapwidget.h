@@ -21,7 +21,6 @@
 #define MAPWIDGET_H
 
 #include <QFrame>
-#include <QHttp>
 #include <QMouseEvent>
 #include <QPoint>
 #include <QString>
@@ -31,12 +30,11 @@
 #include <QWidget>
 
 #include "gpsd.h"
+#include "datasourcemanager.h"
 #include "tiledownload.h"
 #include "route.h"
 #include "routing.h"
 #include "track.h"
-
-#include "datasourcemanager.h"
 
 
 class MapWidget : public QFrame
@@ -80,13 +78,12 @@ protected:
 	void wheelEvent(QWheelEvent *event);
 
 private:
-	DataSourceManager *_dsm;
-
 	void drawPolyline(QPainter* painter, const QRect& boundingBox, QPoint *points, int size);
 
 	QToolButton *_fullscreenButton;
-
 	bool _sameevent;
+
+	DataSourceManager *_dsm;
 
 	/* handle map movement by mouse drag-and-drop */
 	int _x, _y, _startx, _starty, _zoom;
@@ -145,13 +142,7 @@ public:
 	Route _route;
 	Routing *_routing;
 
-	void callback_no_inet();
-	void callback_http_finished();
-
 private slots:
-	/* Internet connection detection handling */
-	void callback_inet_connection_update();
-	void slotRequestFinished(QNetworkReply *reply);
 
 	/* full map redraw timer */
 	void callback_redraw();

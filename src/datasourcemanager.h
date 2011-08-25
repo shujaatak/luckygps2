@@ -22,6 +22,7 @@
 
 #include <QImage>
 #include <QObject>
+#include <QTimer>
 
 #include "tilemanagement.h"
 #include "tiledownload.h"
@@ -49,6 +50,12 @@ public:
 	void setUrl(QString url) { _mapUrl = url; }
 	QString getUrl() { return _mapUrl; }
 
+	void callback_no_inet();
+	void callback_http_finished();
+
+	/* Tiles Manager */
+	TileDownload *_tilesManager;
+
 private:
 
 	QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);
@@ -69,9 +76,6 @@ private:
 	QString _mapPath;
 	QString _mapUrl;
 
-	/* Tiles Manager */
-	TileDownload *_tilesManager;
-
 	/* Internet connection detection handling */
 	QTimer _inetTimer;
 	QNetworkAccessManager *_networkManager;
@@ -79,6 +83,11 @@ private:
 signals:
 
 public slots:
+
+private slots:
+	/* Internet connection detection handling */
+	void callback_inet_connection_update();
+	void slotRequestFinished(QNetworkReply *reply);
 
 };
 

@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QHttp>
+#include <QPainter>
+
 #include "datasourcemanager.h"
 
 DataSourceManager::DataSourceManager(QObject *parent)
@@ -37,7 +40,7 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	_inetTimer.start();
 
 	_networkManager = new QNetworkAccessManager(this);
-	connect(_manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
+	connect(_networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
 
 	_tilesManager = new TileDownload(this);
 }
@@ -75,7 +78,7 @@ void DataSourceManager::callback_inet_connection_update()
 
 		QUrl url = QUrl::fromEncoded("http://www.google.de");
 		QNetworkRequest request(url);
-		QNetworkReply *reply = _manager->get(request);
+		QNetworkReply *reply = _networkManager->get(request);
 
 		_inetTimer.start(10000);
 	}
@@ -91,6 +94,24 @@ void DataSourceManager::callback_http_finished()
 void DataSourceManager::callback_no_inet()
 {
 	_tilesManager->set_inet(false);
+}
+
+void DataSourceManager::slotRequestFinished(QNetworkReply *reply)
+{
+	if (reply->error() > 0)
+	{
+		QString message = "Error number = " + reply->errorString();
+		qDebug("%s\n", message.toAscii().constData());
+
+		callback_no_inet();
+	}
+	else
+	{
+		callback_http_finished();
+	}
+
+	reply->abort();
+	reply->deleteLater();
 }
 
 
@@ -115,8 +136,8 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 		if((cache_index = cache->indexOf(requested_tiles->at(i))) < 0)
 		{
 			QImage *img = NULL;
-			if(_tileManager)
-				img = _tileManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
+			if(NULL)
+				img = NULL; //_tilesManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
 			else
 				img = get_map(requested_tiles->at(i));
 
@@ -144,7 +165,7 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int height)
 {
 	/* generate list of tiles which are needed for the current x, y and zoom level */
-	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width(), height(), _mappath, tile_info);
+	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width(), height(), _mapPath, tile_info);
 
 	/* check if the same tile rect is requested as the last time */
 	if(_mapImg && !_gotMissingTiles &&
