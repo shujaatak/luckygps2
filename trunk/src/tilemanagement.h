@@ -38,8 +38,8 @@
 #endif /* !M_PI */
 
 
-QString get_tilename(int x, int y, int z, QString path);
-QImage *get_map(int x, int y, int zoom, QString path);
+QString get_tilename(int x, int y, int zoom, QString path);
+QImage *getMap(Tile mytile);
 QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);
 TileList *get_necessary_tiles(int pixel_x, int pixel_y, int zoom, int width, int height, QString path, TileInfo &info);
 QString get_scale(double lat, double lon, double lon2, int *width, int units /* metrical or imperial */, int length);

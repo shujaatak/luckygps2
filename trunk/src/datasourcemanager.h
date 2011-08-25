@@ -24,7 +24,6 @@
 #include <QObject>
 #include <QTimer>
 
-#include "tilemanagement.h"
 #include "tiledownload.h"
 
 class DataSourceManager : public QObject
@@ -35,7 +34,7 @@ public:
 	explicit DataSourceManager(QObject *parent = 0);
 	~DataSourceManager();
 
-	QImage *getImage(int x, int y, int zoom, int width, int height);
+	QImage *getImage(int x, int y, int zoom, int width, int height, TileInfo &tile_info);
 
 	void setCacheSize(int cacheSize)
 	{

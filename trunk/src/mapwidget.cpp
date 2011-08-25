@@ -101,7 +101,7 @@ MapWidget::MapWidget(QWidget *parent)
 	_mapStyle = 0;
 	_painterImg = NULL;
 	_mapRedrawCounter = 0;
-	// _dsm = NULL;
+	_dsm = NULL;
 
 	_rsImage = QImage(":/icons/start-bg.png");
 	_rfImage = QImage(":/icons/finish-bg.png");
@@ -153,14 +153,13 @@ void MapWidget::callback_fullscreen_clicked()
 void MapWidget::paintEvent(QPaintEvent *event)
 {
 	/* Valid DataSourceManager is needed to draw a map */
-	//if(!_dsm)
-	//	return;
+	if(!_dsm)
+		return;
 
 	int toDrawX = event->rect().x();
 	int toDrawY = event->rect().y();
 	int toDrawWidth = event->rect().width();
 	int toDrawHeight = event->rect().height();
-	TileList missingTiles;
     QPainter painter;
 	QFont font;
 
@@ -239,8 +238,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
 
     /* requested tile information */
 	TileInfo tile_info;
-
-	QImage *mapImg = NULL; //_dsm->getImage(_x, _y, get_zoom(), width(), height()); // TODO
+	QImage *mapImg = _dsm->getImage(_x, _y, get_zoom(), width(), height(), tile_info);
     
 	if(mapImg)
     {

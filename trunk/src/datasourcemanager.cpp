@@ -139,7 +139,7 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 			if(NULL)
 				img = NULL; //_tilesManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
 			else
-				img = get_map(requested_tiles->at(i));
+				img = getMap(requested_tiles->at(i));
 
 			if(img)
 			{
@@ -162,8 +162,11 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 	return paintImg;
 }
 
-QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int height)
+QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int height, TileInfo &tile_info)
 {
+	TileList missingTiles;
+	QImage *mapImg = NULL;
+
 	/* generate list of tiles which are needed for the current x, y and zoom level */
 	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width(), height(), _mapPath, tile_info);
 
@@ -211,7 +214,7 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 		TileListP tileList;
 
 		for(int i = 0; i < missingTiles.length(); i++)
-			tileList.append(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mappath, _mapurl));
+			tileList.append(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mapPath, _mapUrl));
 
 		_tilesManager->dlGetTiles(tileList);
 	}
