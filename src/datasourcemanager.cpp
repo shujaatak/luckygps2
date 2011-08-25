@@ -43,8 +43,8 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	_networkManager = new QNetworkAccessManager(this);
 	connect(_networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
 
-	_dsFile = new fileTileMgr(this);
-	_dsHttp = new TileDownload(_dsFile, this);
+	_dsFile = new FileTileMgr(this);
+	_dsHttp = new TileHttpDownload(_dsFile, this);
 }
 
 DataSourceManager::~DataSourceManager()
@@ -70,14 +70,16 @@ DataSourceManager::~DataSourceManager()
 
 	delete _networkManager;
 
-	delete _tilesManager;
+	if(_dsHttp)
+		delete _dsHttp;
 
-	delete _dsFile;
+	if(_dsFile)
+		delete _dsFile;
 }
 
 void DataSourceManager::callback_inet_connection_update()
 {
-	if(_tilesManager->get_autodownload())
+	if(_dsHttp->get_autodownload())
 	{
 
 		QUrl url = QUrl::fromEncoded("http://www.google.de");
@@ -92,12 +94,12 @@ void DataSourceManager::callback_inet_connection_update()
 
 void DataSourceManager::callback_http_finished()
 {
-	_tilesManager->set_inet(true);
+	_dsHttp->set_inet(true);
 }
 
 void DataSourceManager::callback_no_inet()
 {
-	_tilesManager->set_inet(false);
+	_dsHttp->set_inet(false);
 }
 
 void DataSourceManager::slotRequestFinished(QNetworkReply *reply)
