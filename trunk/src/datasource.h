@@ -22,7 +22,7 @@
 
 #include <QObject>
 
-#include "tilemanagement.h"
+#include "tile.h"
 
 class DataSource : public QObject
 {
