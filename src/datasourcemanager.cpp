@@ -43,9 +43,8 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	_networkManager = new QNetworkAccessManager(this);
 	connect(_networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
 
-	_tilesManager = new TileDownload(this);
-
 	_dsFile = new fileTileMgr(this);
+	_tilesManager = new TileDownload(_dsFile, this);
 }
 
 DataSourceManager::~DataSourceManager()

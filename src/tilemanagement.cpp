@@ -33,11 +33,11 @@
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 
 
-QImage *fileTileMgr::loadMapTile(Tile mytile)
+QImage *fileTileMgr::loadMapTile(Tile *mytile)
 {
     /* load tile or download it */
     QImage *img = new QImage();
-    QString filename = get_tilename(mytile._x, mytile._y, mytile._z, mytile._path);
+	QString filename = get_tilename(mytile->_x, mytile->_y, mytile->_z, mytile->_path);
 
     if(img)
         img->load(filename);
@@ -48,7 +48,21 @@ QImage *fileTileMgr::loadMapTile(Tile mytile)
         return NULL;
 }
 
-QString get_tilename(int x, int y, int z, QString path)
+int fileTileMgr::saveMapTile(QImage *img, Tile *mytile)
+{
+	QString filename = get_tilename(mytile->_x, mytile->_y, mytile->_z, mytile->_path);
+	QFile file(filename);
+
+	if(!file.exists() && file.open(QIODevice::WriteOnly))
+	{
+		img->save(&file,"png");
+		file.close();
+		return true;
+	}
+	return false;
+}
+
+QString fileTileMgr::get_tilename(int x, int y, int z, QString path)
 {
 	return path.arg(z).arg(x).arg("/").arg(y).arg(".png");
 }

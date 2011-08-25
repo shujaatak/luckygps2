@@ -46,9 +46,12 @@ class fileTileMgr : public DataSource
 
 public:
 	fileTileMgr(QObject *parent = 0) : DataSource(parent) {};
-	// virtual ~fileTileMgr() {};
 
-	virtual QImage *loadMapTile(Tile mytile);
+	virtual QImage *loadMapTile(Tile *mytile);
+	virtual int saveMapTile(QImage *img, Tile *mytile);
+
+private:
+	QString get_tilename(int x, int y, int zoom, QString path);
 
 signals:
 
@@ -56,7 +59,6 @@ public slots:
 
 };
 
-QString get_tilename(int x, int y, int zoom, QString path);
 QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);
 TileList *get_necessary_tiles(int pixel_x, int pixel_y, int zoom, int width, int height, QString path, TileInfo &info);
 QString get_scale(double lat, double lon, double lon2, int *width, int units /* metrical or imperial */, int length);
