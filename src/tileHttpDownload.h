@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TILEDOWNLOAD_H
-#define TILEDOWNLOAD_H
+#ifndef TILEHTTPDOWNLOAD_H
+#define TILEHTTPDOWNLOAD_H
 
 #include <QFile>
 #include <QMutex>
@@ -32,43 +32,27 @@
 #include <cmath>
 
 
-class TileDownload : public QObject
+class TileHttpDownload : public DataSource
 {
 
 	Q_OBJECT
 
 public:
-	TileDownload(DataSource *ds, QObject *parent = 0);
-    ~TileDownload();
+	TileHttpDownload(DataSource *ds, QObject *parent = 0);
+	~TileHttpDownload();
 
-	void dlGetTiles(TileListP tileList);
-	void dlGetTiles();
+	virtual QImage *loadMapTile(const Tile *mytile);
 
-	bool get_inet(){ return _inet; }
+	// void dlGetTiles(TileListP tileList);
+	// TODO void dlGetTiles();
 
-	void set_inet(bool value)
-	{
-		if(!_autodownload)
-		{
-			_inet = 0;
-			return;
-		}
-
-		/* If internet connection is up again, start downloading missing tiles again */
-		if((value != _inet) && value)
-			dlGetTiles();
-
-		_inet = value;
-	}
-
-	bool get_autodownload() { return _autodownload; }
-	void set_autodownload(bool value) { _autodownload = value; if(_inet && !_autodownload) _inet = 0; }
-
+#if 0
+	// not used
 	int dlTilesMissing()
 	{
 		return _dlTilesLeft.length() + _dlTilesTodo.length();
 	}
-
+#endif
 
  private:
 	/* data sink: Where to write the downloaded images */
@@ -85,16 +69,10 @@ public:
 	/* Tiles which couldn't go into the queue because it was full */
 	TileListP _dlTilesTodo;
 
-	/* True if internet connection available */
-	bool _inet;
-
-	/* false if using internet is not allowed */
-	bool _autodownload;
-
 private slots:
 	/* Download Manager callback function */
 	void dlDownloadFinished(QNetworkReply *reply);
 
 };
 
-#endif // TILEDOWNLOAD_H
+#endif // TILEHTTPDOWNLOAD_H

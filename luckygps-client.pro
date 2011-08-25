@@ -10,7 +10,7 @@ SOURCES += ./src/main.cpp \
 	./src/tabs_update.cpp \
 	./src/mapwidget.cpp \
 	./src/convertunits.cpp \
-	./src/tiledownload.cpp \
+	./src/tileHttpDownload.cpp \
 	./src/mapnikthread.cpp \
 	./src/settings_update.cpp \
 	./src/customwidgets.cpp \
@@ -23,11 +23,11 @@ SOURCES += ./src/main.cpp \
 	./src/sqlite3.c \
 	./src/datasourcemanager.cpp \
 	./src/datasource.cpp \
-    src/filetilemanager.cpp
+	./src/filetilemanager.cpp
 HEADERS += ./src/mainwindow.h \
 	./src/mapwidget.h \
 	./src/convertunits.h \
-	./src/tiledownload.h \
+	./src/tileHttpDownload.h \
 	./src/mapnikthread.h \
 	./src/tile.h \
 	./src/sqlite3.h \

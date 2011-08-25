@@ -34,6 +34,28 @@ public:
 	virtual QImage *loadMapTile(const Tile *mytile) = 0;
 	virtual int saveMapTile(QImage *img, const Tile *mytile) { return false; }
 
+	/* Internet settings available for all children classes */
+	bool get_inet(){ return _inet; }
+	void set_inet(bool value)
+	{
+		if(!_autodownload)
+		{
+			_inet = 0;
+			return;
+		}
+
+		/* If internet connection is up again, start downloading missing tiles again */
+		// TODO if((value != _inet) && value)
+		//	dlGetTiles();
+		// TODO: use callback here to inform classes that internet status changed?
+
+		_inet = value;
+	}
+
+	/* Sometimes it is not allowed to use the internet */
+	bool get_autodownload() { return _autodownload; }
+	void set_autodownload(bool value) { _autodownload = value; if(get_inet() && !get_autodownload()) set_inet(0); }
+
 private:
 	/* Flags to describe what operations are possible on this data source */
 	enum dsAccessFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
@@ -42,6 +64,12 @@ private:
 	/* Flags to describe what kind of data source this is */
 	// num dsTypeFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
 	// dsTypeFlags accessFlag;
+
+	/* True if internet connection available */
+	bool _inet;
+
+	/* false if using internet is not allowed */
+	bool _autodownload;
 
 signals:
 
