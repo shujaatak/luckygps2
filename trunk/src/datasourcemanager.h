@@ -56,6 +56,12 @@ public:
 	/* Tiles Manager */
 	// TileDownload *_tilesManager;
 
+	void set_autodownload(bool value)
+	{
+		if(_dsHttp)
+			_dsHttp->set_autodownload(value);
+	}
+
 private:
 
 	QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);

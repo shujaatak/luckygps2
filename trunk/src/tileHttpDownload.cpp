@@ -63,9 +63,15 @@ QImage *TileHttpDownload::loadMapTile(const Tile *mytile)
 		dir.mkpath(newtile->_path.arg(newtile->_z).arg(newtile->_x).arg("").arg("").arg(""));
 
 	if((_dlTilesLeft.length() + _dlTilesTodo.length() > MAX_TILES_GET) || !get_inet())
+	{
+		qDebug("append tile");
 		_dlTilesTodo.append(newtile);
+	}
 	else
+	{
+		qDebug("queue tile");
 		dlQueueTile(newtile);
+	}
 
 	return NULL;
 }

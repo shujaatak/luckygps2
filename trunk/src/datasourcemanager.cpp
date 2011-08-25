@@ -79,9 +79,10 @@ DataSourceManager::~DataSourceManager()
 
 void DataSourceManager::callback_inet_connection_update()
 {
+	qDebug("callback_inet_connection_update");
 	if(_dsHttp->get_autodownload())
 	{
-
+		qDebug("get_autodownload=true");
 		QUrl url = QUrl::fromEncoded("http://www.google.de");
 		QNetworkRequest request(url);
 		QNetworkReply *reply = _networkManager->get(request);

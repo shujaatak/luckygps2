@@ -4135,12 +4135,6 @@
    <extends>QLineEdit</extends>
    <header location="global">customwidgets.h</header>
   </customwidget>
-  <customwidget>
-   <class>GLMapWidget</class>
-   <extends>QFrame</extends>
-   <header location="global">glmapwidget.h</header>
-   <container>1</container>
-  </customwidget>
  </customwidgets>
  <resources>
   <include location="luckygps.qrc"/>

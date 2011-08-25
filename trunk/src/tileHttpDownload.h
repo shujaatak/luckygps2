@@ -55,9 +55,6 @@ public:
 #endif
 
  private:
-	/* data sink: Where to write the downloaded images */
-	DataSource *_ds;
-
 	/* Queue tile for retreiving */
 	void dlQueueTile(Tile *tile);
 
