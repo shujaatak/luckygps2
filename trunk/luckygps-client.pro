@@ -2,8 +2,7 @@
 # Project created by QtCreator 2009-11-03T16:33:44
 # -------------------------------------------------
 QT += network \
-        xml  \
-        opengl
+        xml
 TARGET = luckygps
 TEMPLATE = app
 SOURCES += ./src/main.cpp \
@@ -21,7 +20,6 @@ SOURCES += ./src/main.cpp \
 	./src/nmea0183.cpp \
 	./src/plugin_helpers.cpp \
 	./src/routing.cpp \
-	./src/glmapwidget.cpp \
 	./src/spatialite.c \
 	./src/sqlite3.c \
 	./src/datasourcemanager.cpp \
@@ -44,7 +42,6 @@ HEADERS += ./src/mainwindow.h \
 	./src/gpsd.h \
 	./src/routing.h \
 	./src/route_description.h \
-	./src/glmapwidget.h \
 	./src/datasourcemanager.h \
 	./src/datasource.h
 FORMS += ./src/mainwindow.ui

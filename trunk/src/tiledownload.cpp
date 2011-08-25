@@ -23,6 +23,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QFile>
+#include <QImageReader>
 
 
 #ifdef Q_CC_MSVC
@@ -32,9 +33,11 @@
 /* Get a maximum of 10 tiles parallel */
 #define MAX_TILES_GET 10
 
-TileDownload::TileDownload(QObject *parent)
+TileDownload::TileDownload(DataSource *ds, QObject *parent)
 	: QObject(parent)
 {
+	_ds = ds;
+
 	_autodownload = true;
 
 	_dlManager = new QNetworkAccessManager(this);
@@ -118,16 +121,11 @@ void TileDownload::dlDownloadFinished(QNetworkReply *reply)
 	}
 	else
 	{
+		/* Save downloaded file */
 		if(downloadedTile)
 		{
-			QString filename = get_tilename(downloadedTile->_x, downloadedTile->_y, downloadedTile->_z, downloadedTile->_path);
-			QFile file(filename);
-
-			if(!file.exists() && file.open(QIODevice::WriteOnly))
-			{
-				file.write(reply->readAll());
-				file.close();
-			}
+			QImage img = QImageReader(reply->readAll()).read();
+			_ds->saveMapTile(&img, downloadedTile);
 		}
 	}
 

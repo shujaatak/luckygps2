@@ -27,11 +27,10 @@
 #include <QThread>
 
 #include "customwidgets.h"
-#include "tile.h"
+#include "datasource.h"
 
 #include <cmath>
 
-QString get_tilename(int x, int y, int z, QString path);
 
 class TileDownload : public QObject
 {
@@ -39,7 +38,7 @@ class TileDownload : public QObject
 	Q_OBJECT
 
 public:
-	TileDownload(QObject *parent = 0);
+	TileDownload(DataSource *ds, QObject *parent = 0);
     ~TileDownload();
 
 	void dlGetTiles(TileListP tileList);
@@ -71,6 +70,9 @@ public:
 
 
  private:
+	/* data sink: Where to write the downloaded images */
+	DataSource *_ds;
+
 	/* Queue tile for retreiving */
 	void dlQueueTile(Tile *tile);
 
