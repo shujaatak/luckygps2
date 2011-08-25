@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QDebug>
 #include <QFile>
 #include <QHttp>
 #include <QIODevice>
@@ -50,6 +51,9 @@ QImage *fileTileMgr::loadMapTile(const Tile *mytile)
 
 int fileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 {
+	if(!img || img->isNull())
+		return false;
+
 	QString filename = get_tilename(mytile->_x, mytile->_y, mytile->_z, mytile->_path);
 	QFile file(filename);
 
@@ -57,6 +61,7 @@ int fileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 	{
 		img->save(&file,"png");
 		file.close();
+
 		return true;
 	}
 	return false;
