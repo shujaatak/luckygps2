@@ -31,8 +31,8 @@ class DataSource : public QObject
 public:
 	DataSource(QObject *parent = 0){}
 
-	virtual QImage *loadMapTile(Tile *mytile) = 0;
-	virtual int saveMapTile(QImage *img, Tile *mytile) { return false; }
+	virtual QImage *loadMapTile(const Tile *mytile) = 0;
+	virtual int saveMapTile(QImage *img, const Tile *mytile) { return false; }
 
 private:
 	/* Flags to describe what operations are possible on this data source */
