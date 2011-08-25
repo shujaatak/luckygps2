@@ -25,7 +25,7 @@
 #include <QString>
 
 #include "convertunits.h"
-#include "mapwidget.h" /* MissingTilesList */
+#include "tile.h"
 
 #include <cmath>
 

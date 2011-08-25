@@ -15,10 +15,11 @@
 
 #include "routing.h" // this headers needs to be first because of the MAX macro defined later
 #include "customwidgets.h"
-#include "datasourcemanager.h"
 #include "gpsd.h"
 #include "track.h"
 #include "gpsd.h"
+
+#include "datasourcemanager.h"
 
 
 namespace Ui

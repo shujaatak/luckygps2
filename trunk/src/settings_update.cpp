@@ -113,7 +113,7 @@ bool MainWindow::loadSettings(gps_settings_t *settings, bool reset, bool startup
             ui->label_map_path->setText(label_map_path);
             map_id = sqlite3_column_int(st, 4);
             ui->cb_map_autodownload->setChecked(sqlite3_column_int(st, 6));
-			ui->map->_tilesManager->set_autodownload(sqlite3_column_int(st, 6));
+			_dsm->_tilesManager->set_autodownload(sqlite3_column_int(st, 6));
 
 			/* ---------------- */
 			/* general settings */
@@ -148,7 +148,7 @@ bool MainWindow::loadSettings(gps_settings_t *settings, bool reset, bool startup
 			/* -------------- */
             /* cache settings */
 			/* -------------- */
-			_dsm->set_cache_size(sqlite3_column_int(st, 5));
+			_dsm->setCacheSize(sqlite3_column_int(st, 5));
             ui->settings_cache_spinbox->setValue(sqlite3_column_int(st, 5));
             on_settings_cache_spinbox_valueChanged(sqlite3_column_int(st, 5));
         }
@@ -170,9 +170,9 @@ bool MainWindow::loadSettings(gps_settings_t *settings, bool reset, bool startup
             if(map_id == sqlite3_column_int(st, 3))
             {
                 /* apply settings */
-                ui->map->set_path(ui->label_map_path->text() + "/" + QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(st, 2)),sqlite3_column_bytes(st, 2) / sizeof(char)) + "/%1/%2%3%4%5");
-                ui->map->set_url(QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(st, 1)),sqlite3_column_bytes(st, 1) / sizeof(char)));
-                ui->cb_map_source->setCurrentIndex(map_id - 1);
+				_dsm->setPath(ui->label_map_path->text() + "/" + QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(st, 2)),sqlite3_column_bytes(st, 2) / sizeof(char)) + "/%1/%2%3%4%5");
+				_dsm->setUrl(QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(st, 1)),sqlite3_column_bytes(st, 1) / sizeof(char)));
+				ui->cb_map_source->setCurrentIndex(map_id - 1);
             }
         }
         sqlite3_finalize(st);
@@ -208,7 +208,7 @@ bool MainWindow::loadSettings(gps_settings_t *settings, bool reset, bool startup
                 settings->stopbits = sqlite3_column_int(st, 6);
                 settings->flow = sqlite3_column_int(st, 7);
 
-                set_gps_settings(*settings);
+				setGpsSettings(*settings);
 
                 if(_gpsd && reset)
                 {
@@ -224,7 +224,7 @@ bool MainWindow::loadSettings(gps_settings_t *settings, bool reset, bool startup
 }
 
 /* save GUI settings into database */
-bool MainWindow::save_settings()
+bool MainWindow::saveSettings()
 {
     sqlite3_stmt *stmt = NULL;
 
@@ -332,7 +332,7 @@ bool MainWindow::save_settings()
 
     /* gps_settings */
     gps_settings_t settings;
-    get_gps_settings(settings);
+	getGpsSettings(settings);
 
     /* ------------------------------ */
     /* gpsd settings */

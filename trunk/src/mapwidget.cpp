@@ -23,10 +23,8 @@
 #include <QTextLayout>
 #include <QtDebug>
 
-#include "mainwindow.h"
 #include "mapwidget.h"
 #include "mapnikthread.h"
-#include "route.h"
 #include "tilemanagement.h"
 
 #include <climits>
@@ -103,7 +101,7 @@ MapWidget::MapWidget(QWidget *parent)
 	_mapStyle = 0;
 	_painterImg = NULL;
 	_mapRedrawCounter = 0;
-	_dsm = NULL;
+	// _dsm = NULL;
 
 	_rsImage = QImage(":/icons/start-bg.png");
 	_rfImage = QImage(":/icons/finish-bg.png");
@@ -135,24 +133,6 @@ MapWidget::~MapWidget()
 	delete _routing;
 }
 
-void MapWidget::slotRequestFinished(QNetworkReply *reply)
-{
-    if (reply->error() > 0)
-    {
-		QString message = "Error number = " + reply->errorString();
-		qDebug("%s\n", message.toAscii().constData());
-
-        callback_no_inet();
-    }
-    else
-    {
-        callback_http_finished();
-    }
-
-    reply->abort();
-    reply->deleteLater();
-}
-
 void MapWidget::callback_redraw()
 {
     update();
@@ -173,8 +153,8 @@ void MapWidget::callback_fullscreen_clicked()
 void MapWidget::paintEvent(QPaintEvent *event)
 {
 	/* Valid DataSourceManager is needed to draw a map */
-	if(!_dsm)
-		return;
+	//if(!_dsm)
+	//	return;
 
 	int toDrawX = event->rect().x();
 	int toDrawY = event->rect().y();
@@ -260,7 +240,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
     /* requested tile information */
 	TileInfo tile_info;
 
-	QImage *mapImg = _dsm->getImage(_x, _y, get_zoom(), width(), height()); // TODO
+	QImage *mapImg = NULL; //_dsm->getImage(_x, _y, get_zoom(), width(), height()); // TODO
     
 	if(mapImg)
     {
