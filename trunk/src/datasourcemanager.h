@@ -24,6 +24,7 @@
 #include <QObject>
 #include <QTimer>
 
+#include "datasource.h"
 #include "tiledownload.h"
 
 class DataSourceManager : public QObject
@@ -58,6 +59,13 @@ public:
 private:
 
 	QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);
+
+	/* TODO Array of data sources like cache, database, file, internet, mapnik, also support read/write access flags */
+	DataSource *_dsCache;
+	DataSource *_dsFile; /* can also be a database file, needs read/write access */
+	DataSource *_dsHttp;
+	DataSource *_dsMapnik;
+	// loadMapTile() -> try to read from cache -> try to read from db/file -> try to get from internet -> try to get from mapnik
 
 	/* MapWidget tile cache */
 	TileList _cache;

@@ -33,12 +33,7 @@
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 
 
-QString get_tilename(int x, int y, int z, QString path)
-{
-    return path.arg(z).arg(x).arg("/").arg(y).arg(".png");
-}
-
-QImage *getMap(Tile mytile)
+QImage *TileManagement::loadMapTile(Tile mytile)
 {
     /* load tile or download it */
     QImage *img = new QImage();
@@ -51,6 +46,11 @@ QImage *getMap(Tile mytile)
         return img;
     else
         return NULL;
+}
+
+QString get_tilename(int x, int y, int z, QString path)
+{
+	return path.arg(z).arg(x).arg("/").arg(y).arg(".png");
 }
 
 TileList *get_necessary_tiles(int pixel_x, int pixel_y, int zoom, int width, int height, QString path, TileInfo &info)

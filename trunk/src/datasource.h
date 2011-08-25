@@ -22,11 +22,26 @@
 
 #include <QObject>
 
-class datasource : public QObject
+#include "tilemanagement.h"
+
+class DataSource : public QObject
 {
     Q_OBJECT
+
 public:
-	explicit datasource(QObject *parent = 0);
+	explicit DataSource(QObject *parent = 0);
+
+	virtual QImage *loadMapTile(Tile mytile) = 0;
+	virtual int saveMapTile(Tile mytile) = 0;
+
+private:
+	/* Flags to describe what operations are possible on this data source */
+	enum dsAccessFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
+	dsAccessFlags accessFlag;
+
+	/* Flags to describe what kind of data source this is */
+	// num dsTypeFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
+	// dsTypeFlags accessFlag;
 
 signals:
 

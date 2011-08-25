@@ -45,6 +45,9 @@ public:
 	MapWidget(QWidget *parent = 0);
 	~MapWidget();
 
+	/* Data source manager needs to be set before paint() */
+	void setDSM(DataSourceManager *dsm) { _dsm = dsm; }
+
 	/* access to private variables */
 	int get_zoom() { return _zoom; }
 	QPoint get_pos() { return QPoint(_x,_y); }
