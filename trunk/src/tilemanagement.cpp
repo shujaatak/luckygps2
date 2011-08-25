@@ -33,7 +33,7 @@
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 
 
-QImage *fileTileMgr::loadMapTile(Tile *mytile)
+QImage *fileTileMgr::loadMapTile(const Tile *mytile)
 {
     /* load tile or download it */
     QImage *img = new QImage();
@@ -48,7 +48,7 @@ QImage *fileTileMgr::loadMapTile(Tile *mytile)
         return NULL;
 }
 
-int fileTileMgr::saveMapTile(QImage *img, Tile *mytile)
+int fileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 {
 	QString filename = get_tilename(mytile->_x, mytile->_y, mytile->_z, mytile->_path);
 	QFile file(filename);

@@ -47,8 +47,8 @@ class fileTileMgr : public DataSource
 public:
 	fileTileMgr(QObject *parent = 0) : DataSource(parent) {};
 
-	virtual QImage *loadMapTile(Tile *mytile);
-	virtual int saveMapTile(QImage *img, Tile *mytile);
+	virtual QImage *loadMapTile(const Tile *mytile);
+	virtual int saveMapTile(QImage *img, const Tile *mytile);
 
 private:
 	QString get_tilename(int x, int y, int zoom, QString path);
