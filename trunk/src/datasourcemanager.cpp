@@ -21,7 +21,7 @@
 #include <QPainter>
 
 #include "datasourcemanager.h"
-#include "tilemanagement.h"
+#include "filetilemanager.h"
 
 DataSourceManager::DataSourceManager(QObject *parent)
 	: QObject(parent)

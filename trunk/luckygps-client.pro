@@ -9,7 +9,6 @@ SOURCES += ./src/main.cpp \
 	./src/mainwindow.cpp \
 	./src/tabs_update.cpp \
 	./src/mapwidget.cpp \
-	./src/tilemanagement.cpp \
 	./src/convertunits.cpp \
 	./src/tiledownload.cpp \
 	./src/mapnikthread.cpp \
@@ -23,10 +22,10 @@ SOURCES += ./src/main.cpp \
 	./src/spatialite.c \
 	./src/sqlite3.c \
 	./src/datasourcemanager.cpp \
-	./src/datasource.cpp
+	./src/datasource.cpp \
+    src/filetilemanager.cpp
 HEADERS += ./src/mainwindow.h \
 	./src/mapwidget.h \
-	./src/tilemanagement.h \
 	./src/convertunits.h \
 	./src/tiledownload.h \
 	./src/mapnikthread.h \
@@ -43,7 +42,8 @@ HEADERS += ./src/mainwindow.h \
 	./src/routing.h \
 	./src/route_description.h \
 	./src/datasourcemanager.h \
-	./src/datasource.h
+	./src/datasource.h \
+    src/filetilemanager.h
 FORMS += ./src/mainwindow.ui
 # CODECFORTR = UTF-8
 TRANSLATIONS =	./translations/luckygps_de.ts \

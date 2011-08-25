@@ -30,7 +30,7 @@
 
 
 #include "customwidgets.h"
-#include "tilemanagement.h"
+#include "filetilemanager.h"
 
 #include <cmath>
 
