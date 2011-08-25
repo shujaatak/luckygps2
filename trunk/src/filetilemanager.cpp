@@ -34,7 +34,7 @@
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 
 
-QImage *fileTileMgr::loadMapTile(const Tile *mytile)
+QImage *FileTileMgr::loadMapTile(const Tile *mytile)
 {
     /* load tile or download it */
     QImage *img = new QImage();
@@ -42,17 +42,24 @@ QImage *fileTileMgr::loadMapTile(const Tile *mytile)
 
     if(img)
         img->load(filename);
+	else
+		return NULL;
 
-    if(img && !img->isNull())
+	if(!img->isNull())
         return img;
     else
+	{
+		delete img;
         return NULL;
+	}
 }
 
-int fileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
+int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 {
 	if(!img || img->isNull())
+	{
 		return false;
+	}
 
 	QString filename = get_tilename(mytile->_x, mytile->_y, mytile->_z, mytile->_path);
 	QFile file(filename);
@@ -67,7 +74,7 @@ int fileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 	return false;
 }
 
-QString fileTileMgr::get_tilename(int x, int y, int z, QString path)
+QString FileTileMgr::get_tilename(int x, int y, int z, QString path)
 {
 	return path.arg(z).arg(x).arg("/").arg(y).arg(".png");
 }

@@ -23,7 +23,8 @@ SOURCES += ./src/main.cpp \
 	./src/sqlite3.c \
 	./src/datasourcemanager.cpp \
 	./src/datasource.cpp \
-	./src/filetilemanager.cpp
+	./src/filetilemanager.cpp \
+    src/sqliteTileManager.cpp
 HEADERS += ./src/mainwindow.h \
 	./src/mapwidget.h \
 	./src/convertunits.h \
@@ -43,7 +44,8 @@ HEADERS += ./src/mainwindow.h \
 	./src/route_description.h \
 	./src/datasourcemanager.h \
 	./src/datasource.h \
-    src/filetilemanager.h
+    src/filetilemanager.h \
+    src/sqliteTileManager.h
 FORMS += ./src/mainwindow.ui
 # CODECFORTR = UTF-8
 TRANSLATIONS =	./translations/luckygps_de.ts \
