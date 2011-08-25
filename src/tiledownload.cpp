@@ -21,6 +21,7 @@
 #include "tilemanagement.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QImageReader>
@@ -124,7 +125,7 @@ void TileDownload::dlDownloadFinished(QNetworkReply *reply)
 		/* Save downloaded file */
 		if(downloadedTile)
 		{
-			QImage img = QImageReader(reply->readAll()).read();
+			QImage img = QImageReader(reply).read();
 			_ds->saveMapTile(&img, downloadedTile);
 		}
 	}
