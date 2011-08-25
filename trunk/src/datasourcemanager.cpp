@@ -21,6 +21,7 @@
 #include <QPainter>
 
 #include "datasourcemanager.h"
+#include "tilemanagement.h"
 
 DataSourceManager::DataSourceManager(QObject *parent)
 	: QObject(parent)
@@ -168,7 +169,7 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 	QImage *mapImg = NULL;
 
 	/* generate list of tiles which are needed for the current x, y and zoom level */
-	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width(), height(), _mapPath, tile_info);
+	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width, height, _mapPath, tile_info);
 
 	/* check if the same tile rect is requested as the last time */
 	if(_mapImg && !_gotMissingTiles &&
