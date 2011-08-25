@@ -44,6 +44,8 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	connect(_networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
 
 	_tilesManager = new TileDownload(this);
+
+	_dsFile = new fileTileMgr(this);
 }
 
 DataSourceManager::~DataSourceManager()
@@ -70,6 +72,8 @@ DataSourceManager::~DataSourceManager()
 	delete _networkManager;
 
 	delete _tilesManager;
+
+	delete _dsFile;
 }
 
 void DataSourceManager::callback_inet_connection_update()
@@ -140,7 +144,7 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 			if(NULL)
 				img = NULL; //_tilesManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
 			else
-				img = loadMapTile(requested_tiles->at(i));
+				img = _dsFile->loadMapTile(requested_tiles->at(i));
 
 			if(img)
 			{

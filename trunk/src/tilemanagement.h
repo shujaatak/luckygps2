@@ -39,15 +39,16 @@
 #define M_PI 3.14159265358979323846
 #endif /* !M_PI */
 
-class TileManagement : public DataSource
+class fileTileMgr : public DataSource
 {
 
 	Q_OBJECT
 
 public:
-	TileManagement(QObject *parent = 0) : DataSource(parent) {};
+	fileTileMgr(QObject *parent = 0) : DataSource(parent) {};
+	// virtual ~fileTileMgr() {};
 
-	QImage *loadMapTile(Tile mytile);
+	virtual QImage *loadMapTile(Tile mytile);
 
 signals:
 
