@@ -27,6 +27,8 @@
 #include "convertunits.h"
 #include "tile.h"
 
+#include "datasource.h"
+
 #include <cmath>
 
 #ifndef M_LN2
@@ -37,9 +39,23 @@
 #define M_PI 3.14159265358979323846
 #endif /* !M_PI */
 
+class TileManagement : public DataSource
+{
+
+	Q_OBJECT
+
+public:
+	TileManagement(QObject *parent = 0) : DataSource(parent) {};
+
+	QImage *loadMapTile(Tile mytile);
+
+signals:
+
+public slots:
+
+};
 
 QString get_tilename(int x, int y, int zoom, QString path);
-QImage *getMap(Tile mytile);
 QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny);
 TileList *get_necessary_tiles(int pixel_x, int pixel_y, int zoom, int width, int height, QString path, TileInfo &info);
 QString get_scale(double lat, double lon, double lon2, int *width, int units /* metrical or imperial */, int length);

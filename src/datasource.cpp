@@ -19,7 +19,7 @@
 
 #include "datasource.h"
 
-datasource::datasource(QObject *parent) :
+DataSource::DataSource(QObject *parent) :
     QObject(parent)
 {
 }

@@ -140,7 +140,7 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 			if(NULL)
 				img = NULL; //_tilesManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
 			else
-				img = getMap(requested_tiles->at(i));
+				img = loadMapTile(requested_tiles->at(i));
 
 			if(img)
 			{

@@ -981,6 +981,7 @@ void MapWidget::set_zoom(int zoom)
 void MapWidget::generate_tiles(int x, int y, int zoom, int w, int h)
 {
 #if 0
+	// TODO
     /* requested tile information */
     TileInfo tile_info;
 

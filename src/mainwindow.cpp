@@ -156,12 +156,15 @@ MainWindow::MainWindow(QWidget *parent, int local)
 		sqlite3_exec(_db, "PRAGMA cache_size=10000;", 0, NULL, 0);
 	}
 
-	/* needs to be initialized before loadSettings() */
+	/* Needs to be initialized before loadSettings() */
 	_dsm = new DataSourceManager();
 
 	/* load GUI standard settings from luckygps.sqlite database */
 	gps_settings_t settings;
 	loadSettings(&settings, 0, 1); /* TODO: check return value */
+
+	/* Assign data source to map widget */
+	ui->map->setDSM(_dsm);
 
 	int ret = ui->map->_routing->init(getDataHome(_local));
 	if(ret < 0)
