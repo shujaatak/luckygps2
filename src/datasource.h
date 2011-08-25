@@ -26,13 +26,13 @@
 
 class DataSource : public QObject
 {
-    Q_OBJECT
+   Q_OBJECT
 
 public:
-	explicit DataSource(QObject *parent = 0);
+	DataSource(QObject *parent = 0){}
 
 	virtual QImage *loadMapTile(Tile mytile) = 0;
-	virtual int saveMapTile(Tile mytile) = 0;
+	virtual int saveMapTile(Tile mytile) { return false; }
 
 private:
 	/* Flags to describe what operations are possible on this data source */

@@ -19,7 +19,9 @@
 
 #include "datasource.h"
 
+#if 0
 DataSource::DataSource(QObject *parent) :
     QObject(parent)
 {
 }
+#endif

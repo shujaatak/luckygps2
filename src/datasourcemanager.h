@@ -66,6 +66,7 @@ private:
 	DataSource *_dsHttp;
 	DataSource *_dsMapnik;
 	// loadMapTile() -> try to read from cache -> try to read from db/file -> try to get from internet -> try to get from mapnik
+	// if(img)  if (img NOT from cache)write to cache if(img not from db) write to db/(file?)
 
 	/* MapWidget tile cache */
 	TileList _cache;

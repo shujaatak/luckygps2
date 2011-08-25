@@ -33,7 +33,7 @@
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 
 
-QImage *TileManagement::loadMapTile(Tile mytile)
+QImage *fileTileMgr::loadMapTile(Tile mytile)
 {
     /* load tile or download it */
     QImage *img = new QImage();
