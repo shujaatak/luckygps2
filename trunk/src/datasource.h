@@ -38,25 +38,22 @@ public:
 	bool get_inet(){ return _inet; }
 	void set_inet(bool value)
 	{
-			if(!_autodownload)
-			{
-					_inet = 0;
-					return;
-			}
+		if(!_autodownload)
+		{
+			_inet = 0;
+			return;
+		}
 
-			/* If internet connection is up again, start downloading missing tiles again */
-			// if((value != _inet) && value)
-			// 		dlGetTiles();
+		/* If internet connection is up again, start downloading missing tiles again */
+		// if((value != _inet) && value)
+		// 		dlGetTiles();
 
-			_inet = value;
+		_inet = value;
 	}
 
 	/* Sometimes it is not allowed to use the internet */
 	bool get_autodownload() { return _autodownload; }
-	void set_autodownload(bool value) { _autodownload = value; if(_inet && !_autodownload) _inet = 0;
-
-	/* data sink: Where to write the downloaded images */
-	DataSource *_ds;
+	void set_autodownload(bool value) { _autodownload = value; if(_inet && !_autodownload) _inet = 0;}
 
 private:
 	/* Flags to describe what operations are possible on this data source */

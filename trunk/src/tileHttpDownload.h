@@ -66,6 +66,9 @@ public:
 	/* Tiles which couldn't go into the queue because it was full */
 	TileListP _dlTilesTodo;
 
+	/* data sink: Where to write the downloaded images */
+	DataSource *_ds;
+
 private slots:
 	/* Download Manager callback function */
 	void dlDownloadFinished(QNetworkReply *reply);
