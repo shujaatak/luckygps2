@@ -38,7 +38,7 @@ QString get_tilename(int x, int y, int z, QString path)
     return path.arg(z).arg(x).arg("/").arg(y).arg(".png");
 }
 
-QImage *get_map(Tile mytile)
+QImage *getMap(Tile mytile)
 {
     /* load tile or download it */
     QImage *img = new QImage();
