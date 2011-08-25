@@ -25,7 +25,7 @@
 
 #include "mapwidget.h"
 #include "mapnikthread.h"
-#include "tilemanagement.h"
+#include "filetilemanager.h"
 
 #include <climits>
 #include <cmath>

@@ -54,6 +54,7 @@ public:
 			return;
 		}
 
+		/* If internet connection is up again, start downloading missing tiles again */
 		if((value != _inet) && value)
 			dlGetTiles();
 

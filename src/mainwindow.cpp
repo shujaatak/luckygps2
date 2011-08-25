@@ -22,7 +22,7 @@
 
 #include "convertunits.h"
 #include "import_export.h"
-#include "tilemanagement.h"
+#include "filetilemanager.h"
 #include "system_helpers.h"
 
 #include <QDesktopWidget>

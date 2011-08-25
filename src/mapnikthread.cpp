@@ -23,7 +23,7 @@
 #include <QFileInfo>
 
 #include "mapnikthread.h"
-#include "tilemanagement.h"
+#include "filetilemanager.h"
 
 
 #ifdef WITH_MAPNIK

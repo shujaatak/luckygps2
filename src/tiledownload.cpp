@@ -18,7 +18,7 @@
  */
 
 #include "tiledownload.h"
-#include "tilemanagement.h"
+#include "filetilemanager.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -72,6 +72,7 @@ void TileDownload::dlGetTiles(TileListP tileList)
 	}
 }
 
+/* If internet connection is up again, put missing tiles into download queue again */
 void TileDownload::dlGetTiles()
 {
 	for(int i = 0; i < _dlTilesTodo.length(); i++)

@@ -25,7 +25,7 @@
 #include <QPainter>
 #include <QPixmap>
 
-#include "tilemanagement.h"
+#include "filetilemanager.h"
 
 #include <stdio.h>
 

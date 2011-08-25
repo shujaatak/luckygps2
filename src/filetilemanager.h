@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TILEMANAGEMENT_H
-#define TILEMANAGEMENT_H
+#ifndef FILETILEMANAGER_H
+#define FILETILEMANAGER_H
 
 #include <QImage>
 #include <QPixmap>
@@ -63,4 +63,4 @@ QImage *fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, Til
 TileList *get_necessary_tiles(int pixel_x, int pixel_y, int zoom, int width, int height, QString path, TileInfo &info);
 QString get_scale(double lat, double lon, double lon2, int *width, int units /* metrical or imperial */, int length);
 
-#endif // TILEMANAGEMENT_H
+#endif // FILETILEMANAGER_H
