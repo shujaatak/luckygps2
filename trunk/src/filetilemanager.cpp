@@ -89,7 +89,7 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 		int numColor = magImg.totalColors();
 		numColor = std::max(std::min(numColor, 255), 3);
 		numColor = pow(2, ceil(log(numColor)/log(2))) / 2;
-		qDebug(QString::number(numColor).toAscii().constData());
+		// qDebug(QString::number(numColor).toAscii().constData());
 
 		/* Choose compression algorithm */
 		magImg.quality(90);
