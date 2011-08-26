@@ -102,12 +102,11 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 		magImg.depth(8);
 		magImg.quantize();
 
+		/* Save image as indexed 8-bit png */
 		magImg.magick("PNG8");
 		magImg.write(&tmpPng);
 
 		file.write((const char *)tmpPng.data(), tmpPng.length());
-
-		// img->save(&file,"png");
 		file.close();
 
 		return true;
