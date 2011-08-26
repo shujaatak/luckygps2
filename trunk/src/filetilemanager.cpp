@@ -18,6 +18,7 @@
  */
 
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QHttp>
 #include <QIODevice>
@@ -60,6 +61,12 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 	{
 		return false;
 	}
+
+	/* create path if it does not exist */
+	QDir dir;
+	dir.setPath(mytile->_path.arg(mytile->_z).arg(mytile->_x).arg("").arg("").arg(""));
+	if(!dir.exists())
+		dir.mkpath(mytile->_path.arg(mytile->_z).arg(mytile->_x).arg("").arg("").arg(""));
 
 	QString filename = get_tilename(mytile->_x, mytile->_y, mytile->_z, mytile->_path);
 	QFile file(filename);
