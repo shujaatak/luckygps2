@@ -40,6 +40,7 @@ TileHttpDownload::TileHttpDownload(DataSource *ds, QObject *parent)
 	_ds = ds;
 
 	set_autodownload(true);
+	set_inet(true);
 
 	_dlManager = new QNetworkAccessManager(this);
 	connect(_dlManager, SIGNAL(finished(QNetworkReply*)), SLOT(dlDownloadFinished(QNetworkReply*)));
