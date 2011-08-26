@@ -128,7 +128,7 @@ linux-g++ {
 
 	QMAKE_CXXFLAGS_RELEASE -= -O2
 	QMAKE_CXXFLAGS_RELEASE += -O3 \
-		 -Wno-unused-function
+		 -Wno-unused-function `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
         DEFINES += WITH_MAPNIK=1
 
@@ -137,7 +137,7 @@ linux-g++ {
 	# INCLUDEPATH += /usr/include/geos
 	# -lgeos_c -lproj
 
-	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik
+	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik `GraphicsMagick++-config --cppflags --libs`
 	desktop.path += /usr/share/applications
 	desktop.files += ./luckygps.desktop
 
