@@ -65,12 +65,10 @@ QImage *TileHttpDownload::loadMapTile(const Tile *mytile)
 
 	if((_dlTilesLeft.length() + _dlTilesTodo.length() > MAX_TILES_GET) || !get_inet())
 	{
-		qDebug("append tile");
 		_dlTilesTodo.append(newtile);
 	}
 	else
 	{
-		qDebug("queue tile");
 		dlQueueTile(newtile);
 	}
 
