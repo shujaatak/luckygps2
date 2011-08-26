@@ -22,7 +22,6 @@
 
 #include <QApplication>
 #include <QDebug>
-#include <QDir>
 #include <QFile>
 #include <QImageReader>
 
@@ -55,13 +54,6 @@ QImage *TileHttpDownload::loadMapTile(const Tile *mytile)
 {
 	Tile *newtile = new Tile(*mytile, NULL);
 	delete mytile;
-
-	/* create path if it does not exist */
-	QDir dir;
-
-	dir.setPath(newtile->_path.arg(newtile->_z).arg(newtile->_x).arg("").arg("").arg(""));
-	if(!dir.exists())
-		dir.mkpath(newtile->_path.arg(newtile->_z).arg(newtile->_x).arg("").arg("").arg(""));
 
 	if((_dlTilesLeft.length() + _dlTilesTodo.length() > MAX_TILES_GET) || !get_inet())
 	{
