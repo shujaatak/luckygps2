@@ -84,13 +84,19 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 		Magick::Blob tmpPng(ba.constData(), ba.size());
 		Magick::Image magImg(tmpPng);
 
+		int numColor = magImg.totalColors();
+		numColor = std::max(std::min(numColor, 255), 3);
+		numColor = pow(2, ceil(log(numColor)/log(2))) / 2;
+		qDebug(QString::number(numColor).toAscii().constData());
+
 		magImg.quality(90);
 
-		magImg.quantizeColors( 128 );
+		magImg.quantizeColors( numColor );
 		magImg.quantizeDither(false);
-		// magImg.quantizeTreeDepth(1);
+		magImg.quantizeColorSpace(Magick::YUVColorspace);
+		magImg.quantizeTreeDepth(9);
 		magImg.depth(8);
-		magImg.quantize( );
+		magImg.quantize();
 
 		magImg.magick("PNG8");
 		magImg.write(&tmpPng);
