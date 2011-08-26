@@ -81,16 +81,20 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 		img->save(&buffer, "PNG"); // writes image into ba in PNG format
 		buffer.close();
 
+		/* Load PNG into GraphicsMagick */
 		Magick::Blob tmpPng(ba.constData(), ba.size());
 		Magick::Image magImg(tmpPng);
 
+		/* Adaptive color reducion, depending on how much colors are in the image */
 		int numColor = magImg.totalColors();
 		numColor = std::max(std::min(numColor, 255), 3);
 		numColor = pow(2, ceil(log(numColor)/log(2))) / 2;
 		qDebug(QString::number(numColor).toAscii().constData());
 
+		/* Choose compression algorithm */
 		magImg.quality(90);
 
+		/* Reduce colors */
 		magImg.quantizeColors( numColor );
 		magImg.quantizeDither(false);
 		magImg.quantizeColorSpace(Magick::YUVColorspace);
