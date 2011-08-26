@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QBuffer>
 #include <QDebug>
+#include <QImage>
 
 #include "sqliteTileManager.h"
 
@@ -36,11 +38,16 @@ SQLiteTileMgr::~SQLiteTileMgr()
 bool SQLiteTileMgr::LoadDatabase(QString path)
 {
 	QString filename = path + "/map.sqlite";
-	qDebug(filename.toUtf8().constData());
 
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{
 		qDebug() << "Cannot open " << filename.toUtf8().constData();
+
+		if(_db)
+		{
+			sqlite3_close(_db);
+			_db = NULL;
+		}
 
 		return false;
 	}
@@ -52,8 +59,15 @@ bool SQLiteTileMgr::LoadDatabase(QString path)
 		if(sqlite3_exec(_db, sql.toUtf8().constData(), 0, NULL, &sql_err) != SQLITE_OK)
 		{
 			sql = sql + " error: " + sql_err;
-			qDebug(sql.toUtf8().constData());
+			// qDebug(sql.toUtf8().constData());
 			sqlite3_free (sql_err);
+
+			if(_db)
+			{
+				sqlite3_close(_db);
+				_db = NULL;
+			}
+
 			return false;
 		}
 		return true;
@@ -63,7 +77,6 @@ bool SQLiteTileMgr::LoadDatabase(QString path)
 bool SQLiteTileMgr::CreateDatabase(QString path)
 {
 	QString filename = path + "/map.sqlite";
-	qDebug(filename.toUtf8().constData());
 
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{
@@ -74,7 +87,7 @@ bool SQLiteTileMgr::CreateDatabase(QString path)
 	else
 	{
 		char *sql_err = NULL;
-		QString sql = "CREATE TABLE tiles (zoom_level INTEGER, tile_column INTEGER, tile_row INTEGER, tile_data BLOB);";
+		QString sql = "CREATE TABLE tiles (zoom_level INTEGER NOT NULL, tile_column INTEGER NOT NULL, tile_row INTEGER NOT NULL, tile_data BLOB, PRIMARY KEY(zoom_level, tile_column, tile_row));";
 		if(sqlite3_exec(_db, sql.toUtf8().constData(), 0, NULL, &sql_err) != SQLITE_OK)
 		{
 			sql = sql + " error: " + sql_err;
@@ -93,9 +106,12 @@ QImage *SQLiteTileMgr::loadMapTile(const Tile *mytile)
 	QImage *img = NULL;
 	sqlite3_stmt *stmt = NULL;
 
+	QString path = mytile->_path;
+	path.truncate(path.indexOf("%1"));
+
 	if(!_db)
 	{
-		if(!LoadDatabase(mytile->_path))
+		if(!LoadDatabase(path))
 			return NULL;
 	}
 
@@ -125,9 +141,12 @@ int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 		return false;
 	}
 
-	if(!_db && !LoadDatabase(mytile->_path))
+	QString path = mytile->_path;
+	path.truncate(path.indexOf("%1"));
+
+	if(!_db && !LoadDatabase(path))
 	{
-		if(!CreateDatabase(mytile->_path))
+		if(!CreateDatabase(path))
 		{
 			return false;
 		}
@@ -135,8 +154,8 @@ int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 
 	sqlite3_stmt *stmt = NULL;
 	char *sql_err = NULL;
-	QString sql = "INSERT INTO tiles VALUES(%1, %2, %3, ?);";
-	sql.arg(mytile->_z).arg(mytile->_x).arg(mytile->_y);
+	QString sql = "INSERT OR IGNORE INTO tiles VALUES(%1, %2, %3, ?);";
+	sql = sql.arg(mytile->_z).arg(mytile->_x).arg(mytile->_y);
 
 	if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) != SQLITE_OK)
 	{
@@ -145,7 +164,14 @@ int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 		sqlite3_finalize(stmt);
 		return false;
 	}
-	if(sqlite3_bind_blob(stmt, 1, img->bits(), img->byteCount(), NULL) != SQLITE_OK)
+
+	QByteArray ba;
+	QBuffer buffer(&ba);
+	buffer.open(QIODevice::WriteOnly);
+	img->save(&buffer, "PNG"); // writes image into ba in PNG format
+	buffer.close();
+
+	if(sqlite3_bind_blob(stmt, 1, ba.constData(), ba.size(), NULL) != SQLITE_OK)
 	{
 		qDebug("Could not bind argument #1.");
 		sqlite3_finalize(stmt);
