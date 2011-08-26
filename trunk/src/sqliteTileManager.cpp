@@ -22,18 +22,18 @@
 #include "sqliteTileManager.h"
 
 
-SQLiteTileManager::SQLiteTileManager()
+SQLiteTileMgr::SQLiteTileMgr(QObject *parent) : DataSource(parent)
 {
 	_db = NULL;
 }
 
-SQLiteTileManager::~SQLiteTileManager()
+SQLiteTileMgr::~SQLiteTileMgr()
 {
 	if(_db)
 		sqlite3_close(_db);
 }
 
-bool SQLiteTileManager::LoadDatabase(QString path)
+bool SQLiteTileMgr::LoadDatabase(QString path)
 {
 	QString filename = path + "/map.sqlite";
 	qDebug(filename.toUtf8().constData());
@@ -60,7 +60,7 @@ bool SQLiteTileManager::LoadDatabase(QString path)
 	}
 }
 
-bool SQLiteTileManager::CreateDatabase(QString path)
+bool SQLiteTileMgr::CreateDatabase(QString path)
 {
 	QString filename = path + "/map.sqlite";
 	qDebug(filename.toUtf8().constData());
@@ -88,7 +88,7 @@ bool SQLiteTileManager::CreateDatabase(QString path)
 	}
 }
 
-QImage *SQLiteTileManager::loadMapTile(const Tile *mytile)
+QImage *SQLiteTileMgr::loadMapTile(const Tile *mytile)
 {
 	QImage *img = NULL;
 	sqlite3_stmt *stmt = NULL;
@@ -118,7 +118,7 @@ QImage *SQLiteTileManager::loadMapTile(const Tile *mytile)
 	return img;
 }
 
-int SQLiteTileManager::saveMapTile(QImage *img, const Tile *mytile)
+int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 {
 	if(!img || img->isNull())
 	{

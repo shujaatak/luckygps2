@@ -30,13 +30,13 @@
 #include "datasource.h"
 
 
-class SQLiteTileManager : public DataSource
+class SQLiteTileMgr : public DataSource
 {
 	Q_OBJECT
 
 public:
-    SQLiteTileManager();
-	~SQLiteTileManager();
+	SQLiteTileMgr(QObject *parent = 0);
+	~SQLiteTileMgr();
 
 	virtual QImage *loadMapTile(const Tile *mytile);
 	virtual int saveMapTile(QImage *img, const Tile *mytile);
