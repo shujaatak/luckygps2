@@ -26,6 +26,8 @@
 #include "plugin_helpers.h"
 #include "system_helpers.h"
 
+#include <Magick++.h>
+
 Q_IMPORT_PLUGIN(contractionhierarchiesclient);
 Q_IMPORT_PLUGIN(gpsgridclient);
 Q_IMPORT_PLUGIN(unicodetournamenttrieclient);
@@ -39,6 +41,8 @@ Q_IMPORT_PLUGIN(unicodetournamenttrie);
 
 int main(int argc, char *argv[])
 {
+	Magick::InitializeMagick(*argv);
+
 	QCoreApplication *a = (argc == 1) ? new QApplication(argc, argv) : new QCoreApplication(argc, argv);
 
 	if(a)

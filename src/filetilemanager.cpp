@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QBuffer>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -29,6 +30,7 @@
 #include "filetilemanager.h"
 
 #include <stdio.h>
+#include <Magick++.h>
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -73,7 +75,29 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 
 	if(!file.exists() && file.open(QIODevice::WriteOnly))
 	{
-		img->save(&file,"png");
+		QByteArray ba;
+		QBuffer buffer(&ba);
+		buffer.open(QIODevice::WriteOnly);
+		img->save(&buffer, "PNG"); // writes image into ba in PNG format
+		buffer.close();
+
+		Magick::Blob tmpPng(ba.constData(), ba.size());
+		Magick::Image magImg(tmpPng);
+
+		magImg.quality(90);
+
+		magImg.quantizeColors( 128 );
+		magImg.quantizeDither(false);
+		// magImg.quantizeTreeDepth(1);
+		magImg.depth(8);
+		magImg.quantize( );
+
+		magImg.magick("PNG8");
+		magImg.write(&tmpPng);
+
+		file.write((const char *)tmpPng.data(), tmpPng.length());
+
+		// img->save(&file,"png");
 		file.close();
 
 		return true;
