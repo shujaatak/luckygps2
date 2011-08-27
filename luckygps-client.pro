@@ -55,7 +55,7 @@ DEFINES +=	SQLITE_ENABLE_RTREE=1 \
 			SQLITE_ENABLE_FTS3 OMIT_PROJ=1
 
 INCLUDEPATH += ./routing ./src
-LIBS += -L./routing/bin/plugins_client -lcontractionhierarchiesclient -lgpsgridclient -lunicodetournamenttrieclient -lmbtilesmanagerclient \
+LIBS += -L./routing/bin/plugins_client -lcontractionhierarchiesclient -lgpsgridclient -lunicodetournamenttrieclient \
 		-L./routing/bin/plugins_preprocessor -losmimporter -lcontractionhierarchies -lgpsgrid -lunicodetournamenttrie
 
 win32 {
@@ -135,7 +135,6 @@ linux-g++ {
 	# Disabled at the moment
 	# geos lib for linux* platform
 	# INCLUDEPATH += /usr/include/geos
-	# -lgeos_c -lproj
 
 	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik `GraphicsMagick++-config --cppflags --libs`
 	desktop.path += /usr/share/applications

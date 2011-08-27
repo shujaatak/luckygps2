@@ -5,4 +5,4 @@ gg.file = gpsgrid/gpsgridclient.pro
 osmr.file = osmrenderer/osmrendererclient.pro
 mr.file = osmrenderer/mapnikrendererclient.pro
 utt.file = unicodetournamenttrie/unicodetournamenttrieclient.pro
-mb.file = mbtilesmanager/mbtilesmanagerclient.pro
+mb.file =
