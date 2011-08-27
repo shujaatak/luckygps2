@@ -33,7 +33,6 @@
 Q_IMPORT_PLUGIN(contractionhierarchiesclient);
 Q_IMPORT_PLUGIN(gpsgridclient);
 Q_IMPORT_PLUGIN(unicodetournamenttrieclient);
-Q_IMPORT_PLUGIN(mbtilesmanagerclient);
 
 Q_IMPORT_PLUGIN(osmimporter);
 Q_IMPORT_PLUGIN(contractionhierarchies);
