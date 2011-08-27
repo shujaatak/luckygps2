@@ -118,11 +118,6 @@ MapWidget::MapWidget(QWidget *parent)
     _redrawTimer.start(2000);
 
 	_routing = new Routing();
-#ifdef WITH_MAPNIK
-	MapnikThread *tmpmap = new MapnikThread();
-	tmpmap->createTile(24209, 42382, 17);
-	delete tmpmap;
-#endif
 }
 
 MapWidget::~MapWidget()

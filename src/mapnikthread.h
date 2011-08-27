@@ -20,12 +20,14 @@
 #ifndef MAPNIKTHREAD_H
 #define MAPNIKTHREAD_H
 
-#include <QThread>
+// #include <QThread>
 
-#include "tile.h"
+#include "datasource.h"
+
+
+#ifdef WITH_MAPNIK
 
 /* Mapnik include */
-#ifdef WITH_MAPNIK
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/coord.hpp>
 #include <mapnik/datasource_cache.hpp>
@@ -38,26 +40,35 @@
 #include <mapnik/projection.hpp>
 
 using namespace mapnik;
-#endif
 
 
-class MapnikThread : public QObject
+class MapnikThread : public DataSource
 {
     Q_OBJECT
 
 public:
-    MapnikThread();
-
-#ifdef WITH_MAPNIK
-public:
+	MapnikThread(DataSource *ds, QObject *parent = 0);
     ~MapnikThread();
 
-    void createTile(int x, int y, int zoom);
+	virtual QImage *loadMapTile(const Tile *mytile);
 
 private:
     Map *_map;
     projection _proj;
-#endif
+
+	/* data sink: Where to write the downloaded images */
+	DataSource *_ds;
 };
+
+#else
+class MapnikThread : public DataSource
+{
+	Q_OBJECT
+
+public:
+	MapnikThread() {};
+	virtual QImage *loadMapTile(const Tile *mytile) { return NULL; }
+};
+#endif // #ifdef WITH_MAPNIK
 
 #endif // MAPNIKTHREAD_H

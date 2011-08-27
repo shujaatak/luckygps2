@@ -27,9 +27,11 @@
 
 
 #ifdef WITH_MAPNIK
-MapnikThread::MapnikThread()
+MapnikThread::MapnikThread(DataSource *ds, QObject *parent) : DataSource(parent)
 {
-    QString mapnikDir("/home/daniel/mapnik_files");
+	_ds = ds;
+
+	QString mapnikDir("/home/daniel/mapnik_files");
 
     /* Register fonts */
     QDir fontDir = mapnikDir + "/dejavu-fonts-ttf-2.33/ttf/";
@@ -117,19 +119,19 @@ MapnikThread::~MapnikThread()
         delete _map;
 }
 
-void MapnikThread::createTile(int x, int y, int zoom)
+QImage *MapnikThread::loadMapTile(const Tile *mytile)
 {
     /* Calculate pixel positions of bottom-left & top-right */
-    int p0_x = x * TILE_SIZE;
-    int p0_y = (y + 1) * TILE_SIZE;
-    int p1_x = (x + 1) * TILE_SIZE;
-    int p1_y = y * TILE_SIZE;
+	int p0_x = mytile->_x * TILE_SIZE;
+	int p0_y = (mytile->_y + 1) * TILE_SIZE;
+	int p1_x = (mytile->_x + 1) * TILE_SIZE;
+	int p1_y = mytile->_y * TILE_SIZE;
 
     /* convert pixel to lat/lon degree */
-    double lon_0 = rad_to_deg(pixel_to_longitude(zoom, p0_x));
-    double lat_0 = rad_to_deg(pixel_to_latitude(zoom, p0_y));
-    double lon_1 = rad_to_deg(pixel_to_longitude(zoom, p1_x));
-    double lat_1 = rad_to_deg(pixel_to_latitude(zoom, p1_y));
+	double lon_0 = rad_to_deg(pixel_to_longitude(mytile->_z, p0_x));
+	double lat_0 = rad_to_deg(pixel_to_latitude(mytile->_z, p0_y));
+	double lon_1 = rad_to_deg(pixel_to_longitude(mytile->_z, p1_x));
+	double lat_1 = rad_to_deg(pixel_to_latitude(mytile->_z, p1_y));
 
     _proj.forward(lon_0, lat_0);
     _proj.forward(lon_1, lat_1);
@@ -144,10 +146,6 @@ void MapnikThread::createTile(int x, int y, int zoom)
     render.apply();
 
     save_to_file(img.data(), "/home/daniel/test.png", "png");
-}
-
-#else
-MapnikThread::MapnikThread()
-{
+	// TODO _ds->saveMapTile(&img, downloadedTile);
 }
 #endif
