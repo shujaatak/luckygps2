@@ -130,7 +130,7 @@ linux-g++ {
 	QMAKE_CXXFLAGS_RELEASE += -O3 \
 		 -Wno-unused-function `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
-        DEFINES += WITH_MAPNIK=1
+	DEFINES += WITH_MAPNIK=1 WITH_IMAGEMAGICK=1
 
 	# Disabled at the moment
 	# geos lib for linux* platform

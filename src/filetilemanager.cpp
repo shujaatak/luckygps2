@@ -30,7 +30,10 @@
 #include "filetilemanager.h"
 
 #include <stdio.h>
+
+#ifdef WITH_IMAGEMAGICK
 #include <Magick++.h>
+#endif
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -75,6 +78,8 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 
 	if(!file.exists() && file.open(QIODevice::WriteOnly))
 	{
+
+#ifdef WITH_IMAGEMAGICK
 		QByteArray ba;
 		QBuffer buffer(&ba);
 		buffer.open(QIODevice::WriteOnly);
@@ -107,6 +112,9 @@ int FileTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 		magImg.write(&tmpPng);
 
 		file.write((const char *)tmpPng.data(), tmpPng.length());
+#else
+		img->save(&file,"png");
+#endif
 		file.close();
 
 		return true;
