@@ -47,6 +47,14 @@ DataSourceManager::DataSourceManager(QObject *parent)
 
 	_dsFile = new SQLiteTileMgr(this); // new FileTileMgr(this);
 	_dsHttp = new TileHttpDownload(_dsFile, this);
+
+#if 0
+#ifdef WITH_MAPNIK
+	MapnikThread *tmpmap = new MapnikThread();
+	tmpmap->createTile(24209, 42382, 17);
+	delete tmpmap;
+#endif
+#endif
 }
 
 DataSourceManager::~DataSourceManager()
