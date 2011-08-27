@@ -26,7 +26,9 @@
 #include "plugin_helpers.h"
 #include "system_helpers.h"
 
+#ifdef WITH_IMAGEMAGICK
 #include <Magick++.h>
+#endif
 
 Q_IMPORT_PLUGIN(contractionhierarchiesclient);
 Q_IMPORT_PLUGIN(gpsgridclient);
@@ -41,7 +43,9 @@ Q_IMPORT_PLUGIN(unicodetournamenttrie);
 
 int main(int argc, char *argv[])
 {
+#ifdef WITH_IMAGEMAGICK
 	Magick::InitializeMagick(*argv);
+#endif
 
 	QCoreApplication *a = (argc == 1) ? new QApplication(argc, argv) : new QCoreApplication(argc, argv);
 
