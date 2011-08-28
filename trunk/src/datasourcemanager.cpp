@@ -178,30 +178,48 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 	return paintImg;
 }
 
-QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int height, TileInfo &tile_info)
+QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int height, TileInfo &tile_info, bool outlineMap)
 {
 	TileList missingTiles;
 	QImage *mapImg = NULL;
+
+	QImage **cachedImg = NULL;
+	TileList *cache = NULL;
+	int *cacheSize = NULL;
+
+	/* Change cache in dependancy of requested map typ (normal or outline/overview map) */
+	if(!outlineMap)
+	{
+		cache = &_cache;
+		cacheSize = &_cacheSize;
+		cachedImg = &_mapImg;
+	}
+	else
+	{
+		cache = &_outlineCache;
+		cacheSize = &_outlineCacheSize;
+		cachedImg = &_outlineMapImg;
+	}
 
 	/* generate list of tiles which are needed for the current x, y and zoom level */
 	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width, height, _mapPath, tile_info);
 
 	/* check if the same tile rect is requested as the last time */
-	if(_mapImg && !_gotMissingTiles &&
+	if(!outlineMap && _mapImg && !_gotMissingTiles &&
 	   _tileInfo.min_tile_x== tile_info.min_tile_x &&
 	   _tileInfo.min_tile_y== tile_info.min_tile_y &&
 	   _tileInfo.max_tile_x== tile_info.max_tile_x &&
 	   _tileInfo.max_tile_y== tile_info.max_tile_y)
 	{
-		mapImg = _mapImg;
+		mapImg = *cachedImg;
 	}
 	else
 	{
 
 		/* Let's center the coordinates here using width + height of map widget */
-		mapImg = fill_tiles_pixel(requested_tiles, &missingTiles, &_cache, tile_info.nx, tile_info.ny);
-		delete _mapImg;
-		_mapImg = mapImg;
+		mapImg = fill_tiles_pixel(requested_tiles, &missingTiles, cache, tile_info.nx, tile_info.ny);
+		delete *cachedImg;
+		*cachedImg = mapImg;
 	}
 
 	memcpy(&_tileInfo, &tile_info, sizeof(TileInfo));
@@ -213,9 +231,9 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 		_gotMissingTiles = false;
 
 	/* check tile cache for MAX items */
-	while(_cache.length() > _cacheSize)
+	while(cache->length() > *cacheSize)
 	{
-		Tile mytile = _cache.takeFirst();
+		Tile mytile = cache->takeFirst();
 		if(mytile._img)
 			delete mytile._img;
 	}
@@ -226,9 +244,6 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 
 	/* request missing tiles from internet/renderer */
 	{
-		/* put tile into missing tiles (thread) list */
-		TileListP tileList;
-
 		for(int i = 0; i < missingTiles.length(); i++)
 			_dsHttp->loadMapTile(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mapPath, _mapUrl));
 	}
