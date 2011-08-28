@@ -223,7 +223,7 @@ void MapnikSource::save(int numThread, QImage *img, Tile *tile)
 	_isRendering[numThread] = false;
 
 	if(!_dlTilesTodo.empty())
-		loadMapTile(_dlTilesTodo.takeFirst());
+		loadMapTile(_dlTilesTodo.takeLast());
 }
 
 #endif
