@@ -21,6 +21,12 @@
 #include <QDebug>
 #include <QImage>
 
+#ifdef WITH_IMAGEMAGICK
+#include <Magick++.h>
+#endif
+
+#include <cmath>
+
 #include "sqliteTileManager.h"
 
 
@@ -171,12 +177,42 @@ int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 	img->save(&buffer, "PNG"); // writes image into ba in PNG format
 	buffer.close();
 
+#ifdef WITH_IMAGEMAGICK
+	/* Load PNG into GraphicsMagick */
+	Magick::Blob tmpPng(ba.constData(), ba.size());
+	Magick::Image magImg(tmpPng);
+
+	/* Adaptive color reducion, depending on how much colors are in the image */
+	int numColor = magImg.totalColors();
+	numColor = std::max(std::min(numColor, 255), 3);
+	numColor = pow(2, ceil(log(numColor)/log(2))) / 2;
+	// qDebug(QString::number(numColor).toAscii().constData());
+
+	/* Choose compression algorithm */
+	magImg.quality(90);
+
+	/* Reduce colors */
+	magImg.quantizeColors( numColor );
+	magImg.quantizeDither(false);
+	magImg.quantizeColorSpace(Magick::YUVColorspace);
+	magImg.quantizeTreeDepth(9);
+	magImg.depth(8);
+	magImg.quantize();
+
+	/* Save image as indexed 8-bit png */
+	magImg.magick("PNG8");
+	magImg.write(&tmpPng);
+
+	if(sqlite3_bind_blob(stmt, 1, (const char *)tmpPng.data(), tmpPng.length(), NULL) != SQLITE_OK)
+#else
 	if(sqlite3_bind_blob(stmt, 1, ba.constData(), ba.size(), NULL) != SQLITE_OK)
+#endif
 	{
 		qDebug("Could not bind argument #1.");
 		sqlite3_finalize(stmt);
 		return false;
 	}
+
 	if(sqlite3_step(stmt) != SQLITE_DONE)
 	{
 		qDebug("Could not step (execute) stmt.");
