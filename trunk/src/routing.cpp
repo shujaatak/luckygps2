@@ -216,7 +216,7 @@ bool Routing::calculateRoute(Route &route, int units)
 	getInstructions(route, &icons, units);
 
 	{
-		QFile file("e:\\test.txt");
+		QFile file("/home/daniel/test.txt");
 		if (file.open(QIODevice::ReadWrite))
 		{
 			QTextStream stream(&file);
