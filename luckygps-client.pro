@@ -127,8 +127,8 @@ linux-g++ {
 	SOURCES += ./src/gpsd_linux.cpp
 
 	QMAKE_CXXFLAGS_RELEASE -= -O2
-	QMAKE_CXXFLAGS_RELEASE += -O3 \
-		 -Wno-unused-function `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
+	QMAKE_CXXFLAGS_RELEASE += -O3 -Wno-unused-function `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
+	QMAKE_CXXFLAGS_DEBUG += `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
 	DEFINES += WITH_MAPNIK=1 WITH_IMAGEMAGICK=1
 
