@@ -30,6 +30,7 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 
 ContractionHierarchies::ContractionHierarchies()
 {
+	m_settings.blockSize = 12;
 }
 
 ContractionHierarchies::~ContractionHierarchies()
