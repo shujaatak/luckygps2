@@ -35,7 +35,7 @@ public:
 	explicit DataSourceManager(QObject *parent = 0);
 	~DataSourceManager();
 
-	QImage *getImage(int x, int y, int zoom, int width, int height, TileInfo &tile_info);
+	QImage *getImage(int x, int y, int zoom, int width, int height, TileInfo &tile_info, bool outlineMap);
 
 	void setCacheSize(int cacheSize)
 	{

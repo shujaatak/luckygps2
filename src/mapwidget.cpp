@@ -233,7 +233,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
 
     /* requested tile information */
 	TileInfo tile_info;
-	QImage *mapImg = _dsm->getImage(_x, _y, get_zoom(), width(), height(), tile_info);
+	QImage *mapImg = _dsm->getImage(_x, _y, get_zoom(), width(), height(), tile_info, false);
     
 	if(mapImg)
     {
@@ -513,18 +513,13 @@ void MapWidget::paintEvent(QPaintEvent *event)
 		painter.setPen(pen);
 	}
 
-#if 0
 	/* draw overview map */
 	if(get_zoom() > 7)
 	{
-		TileInfo tile_info;
-		QImage *outlineMapImg = NULL;
 		int w = width() / 6;
 		int h = height() / 6;
-
 		int zoom = get_zoom() - 4;
 		float factor = exp(zoom * M_LN2) / exp(get_zoom() * M_LN2);
-
 		float x = ((_x + width()/2) * factor) - w/2;
 		float y = ((_y + height()/2) * factor) - h/2;
 
@@ -536,28 +531,9 @@ void MapWidget::paintEvent(QPaintEvent *event)
 			w = tmp;
 		}
 
-		/* generate list of tiles which are needed for the current x, y and zoom level */
-		TileList *requested_tiles = get_necessary_tiles(x, y, zoom, w, h, _mappath, tile_info);
-
-		/* Let's center the coordinates here using width + height of map widget */
-		outlineMapImg = fill_tiles_pixel(requested_tiles, &missingTiles, &_outlineCache, tile_info.nx, tile_info.ny);
-		delete _outlineMapImg;
-		_outlineMapImg = outlineMapImg;
-
-		delete requested_tiles;
-
-		if(missingTiles.length() > 0)
-			_gotMissingTiles = true;
-		else
-			_gotMissingTiles = false;
-
-		/* check tile cache for MAX items */
-		while(_outlineCache.length() > _outlineCacheSize)
-		{
-			Tile mytile = _outlineCache.takeFirst();
-			if(mytile._img)
-				delete mytile._img;
-		}
+		/* requested tile information */
+		TileInfo tile_info;
+		QImage *mapImg = _dsm->getImage(x, y, zoom, w, h, tile_info, true);
 
 		/* update overview map */
 		QList<QObject*> childs = this->children();
@@ -566,7 +542,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
 			if(childs[i]->objectName() == "overviewMapFrame")
 			{
 				MapOverviewWidget *mw = (MapOverviewWidget *)childs[i];
-				mw->update_overviewMap(_outlineMapImg, _x, _y, width(), height(), -tile_info.offset_tile_x, -tile_info.offset_tile_y, w, h, factor);
+				mw->update_overviewMap(mapImg, _x, _y, width(), height(), -tile_info.offset_tile_x, -tile_info.offset_tile_y, w, h, factor);
 				break;
 			}
 		}
@@ -585,8 +561,6 @@ void MapWidget::paintEvent(QPaintEvent *event)
 			}
 		}
 	}
-#endif
-
 
     /* prepare half transparent information area on the top */
 	painter.setOpacity(0.8627); /* a = 220 */
