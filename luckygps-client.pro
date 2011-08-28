@@ -127,16 +127,19 @@ linux-g++ {
 	SOURCES += ./src/gpsd_linux.cpp
 
 	QMAKE_CXXFLAGS_RELEASE -= -O2
-	QMAKE_CXXFLAGS_RELEASE += -O3 -Wno-unused-function `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
-	QMAKE_CXXFLAGS_DEBUG += `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
+	QMAKE_CXXFLAGS_RELEASE += -O3 -Wno-unused-function
+	# `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
+	# QMAKE_CXXFLAGS_DEBUG += `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
-	DEFINES += WITH_MAPNIK=1 WITH_IMAGEMAGICK=1
+	DEFINES += WITH_MAPNIK=1
+	# Disable Graphicsmagick for now until libpng bugs/Crashes are solved (png.c 1369) --> WITH_IMAGEMAGICK=1
 
 	# Disabled at the moment
 	# geos lib for linux* platform
 	# INCLUDEPATH += /usr/include/geos
 
-	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik `GraphicsMagick++-config --cppflags --libs`
+	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik
+	# `GraphicsMagick++-config --cppflags --libs`
 	desktop.path += /usr/share/applications
 	desktop.files += ./luckygps.desktop
 

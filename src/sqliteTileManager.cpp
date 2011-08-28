@@ -183,21 +183,27 @@ int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 	Magick::Image magImg(tmpPng);
 
 	/* Adaptive color reducion, depending on how much colors are in the image */
-	int numColor = magImg.totalColors();
-	numColor = std::max(std::min(numColor, 255), 3);
+	unsigned int numColor = magImg.totalColors();
+	numColor = std::max(std::min(numColor, 255), 2);
 	numColor = pow(2, ceil(log(numColor)/log(2))) / 2;
 	// qDebug(QString::number(numColor).toAscii().constData());
 
 	/* Choose compression algorithm */
 	magImg.quality(90);
 
+	qDebug(QString::number(numColor).toAscii().constData());
+	qDebug(QString::number(magImg.totalColors()).toAscii().constData());
+
 	/* Reduce colors */
-	magImg.quantizeColors( numColor );
-	magImg.quantizeDither(false);
-	magImg.quantizeColorSpace(Magick::YUVColorspace);
-	magImg.quantizeTreeDepth(9);
-	magImg.depth(8);
-	magImg.quantize();
+	if(numColor > 0 && numColor < magImg.totalColors())
+	{
+		magImg.quantizeColors( numColor );
+		magImg.quantizeDither(false);
+		magImg.quantizeColorSpace(Magick::YUVColorspace);
+		magImg.quantizeTreeDepth(9);
+		magImg.depth(8);
+		magImg.quantize();
+	}
 
 	/* Save image as indexed 8-bit png */
 	magImg.magick("PNG8");
