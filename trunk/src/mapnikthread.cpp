@@ -27,7 +27,7 @@
 
 
 #ifdef WITH_MAPNIK
-MapnikThread::MapnikThread(DataSource *ds, QObject *parent) : DataSource(parent)
+MapnikSource::MapnikSource(DataSource *ds, QObject *parent) : DataSource(parent)
 {
 	_ds = ds;
 
@@ -110,42 +110,59 @@ MapnikThread::MapnikThread(DataSource *ds, QObject *parent) : DataSource(parent)
     _map->set_buffer_size(128);
 
     /* Google srid=900913 projection used for rendering */
-    _proj = projection("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over");
+	_proj = new projection("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over");
 }
 
-MapnikThread::~MapnikThread()
+MapnikSource::~MapnikSource()
 {
-    if(_map)
+	if(_map)
         delete _map;
+	if(_proj)
+		delete _proj;
 }
 
-QImage *MapnikThread::loadMapTile(const Tile *mytile)
+QImage *MapnikSource::loadMapTile(const Tile *mytile)
 {
-    /* Calculate pixel positions of bottom-left & top-right */
-	int p0_x = mytile->_x * TILE_SIZE;
-	int p0_y = (mytile->_y + 1) * TILE_SIZE;
-	int p1_x = (mytile->_x + 1) * TILE_SIZE;
-	int p1_y = mytile->_y * TILE_SIZE;
+	Tile *newtile = new Tile(*mytile, NULL);
+	delete mytile;
 
-    /* convert pixel to lat/lon degree */
-	double lon_0 = rad_to_deg(pixel_to_longitude(mytile->_z, p0_x));
-	double lat_0 = rad_to_deg(pixel_to_latitude(mytile->_z, p0_y));
-	double lon_1 = rad_to_deg(pixel_to_longitude(mytile->_z, p1_x));
-	double lat_1 = rad_to_deg(pixel_to_latitude(mytile->_z, p1_y));
+	/* Calculate pixel positions of bottom-left & top-right */
+	int p0_x = newtile->_x * TILE_SIZE;
+	int p0_y = (newtile->_y + 1) * TILE_SIZE;
+	int p1_x = (newtile->_x + 1) * TILE_SIZE;
+	int p1_y = newtile->_y * TILE_SIZE;
 
-    _proj.forward(lon_0, lat_0);
-    _proj.forward(lon_1, lat_1);
+	/* convert pixel to lat/lon degree */
+	double lon_0 = rad_to_deg(pixel_to_longitude(newtile->_z, p0_x));
+	double lat_0 = rad_to_deg(pixel_to_latitude(newtile->_z, p0_y));
+	double lon_1 = rad_to_deg(pixel_to_longitude(newtile->_z, p1_x));
+	double lat_1 = rad_to_deg(pixel_to_latitude(newtile->_z, p1_y));
 
-    /* calculate bounding box for the tile */
-    Envelope<double> box = Envelope<double>(lon_0, lat_0, lon_1, lat_1);
-    _map->zoomToBox(box);
+	_proj->forward(lon_0, lat_0);
+	_proj->forward(lon_1, lat_1);
 
-    /* Render image with default Agg renderer */
-    Image32 img = Image32(TILE_SIZE, TILE_SIZE);
-    agg_renderer<Image32> render(*_map, img);
-    render.apply();
+	/* calculate bounding box for the tile */
+	Envelope<double> box = Envelope<double>(lon_0, lat_0, lon_1, lat_1);
+	_map->zoomToBox(box);
 
-    save_to_file(img.data(), "/home/daniel/test.png", "png");
-	// TODO _ds->saveMapTile(&img, downloadedTile);
+	/* Render image with default Agg renderer */
+	Image32 img = Image32(TILE_SIZE, TILE_SIZE);
+	agg_renderer<Image32> render(*_map, img);
+	render.apply();
+
+	/* TODO: speed this up! */
+	QImage tmpImg = QImage((uchar*)img.raw_data(), _map->getWidth(), _map->getHeight(), QImage::Format_ARGB32);
+	// Need to switch r and b channel
+	QImage *image = new QImage(tmpImg.rgbSwapped());
+
+	_ds->saveMapTile(image, newtile);
 }
+
+void MapnikSource::save(QImage *img, Tile *tile)
+{
+	_ds->saveMapTile(img, tile);
+	delete img;
+	delete tile;
+}
+
 #endif

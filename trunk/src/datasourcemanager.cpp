@@ -23,6 +23,7 @@
 #include "datasourcemanager.h"
 #include "filetilemanager.h"
 #include "sqliteTileManager.h"
+#include "mapnikthread.h"
 
 
 DataSourceManager::DataSourceManager(QObject *parent)
@@ -46,7 +47,7 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	connect(_networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
 
 	_dsFile = new SQLiteTileMgr(this); // new FileTileMgr(this);
-	_dsHttp = new TileHttpDownload(_dsFile, this);
+	_dsHttp = new MapnikSource(_dsFile, this); // MapnikSource TileHttpDownload
 
 #if 0
 #ifdef WITH_MAPNIK
