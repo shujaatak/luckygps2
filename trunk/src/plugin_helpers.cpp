@@ -28,6 +28,7 @@
 #include "interfaces/iimporter.h"
 #include "interfaces/ipreprocessor.h"
 
+
 /* not sure for what I still need "settingsFile" -- TODO dg */
 bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int local)
 {
