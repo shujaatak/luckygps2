@@ -196,6 +196,8 @@ QImage *MapnikSource::loadMapTile(const Tile *mytile)
 			_isRendering[i] = true;
 			// emit(renderTile(newtile));
 			QMetaObject::invokeMethod( mapnikThread[i], "renderTile", Q_ARG( void *, newtile ) );
+
+			break;
 		}
 
 	return NULL;
