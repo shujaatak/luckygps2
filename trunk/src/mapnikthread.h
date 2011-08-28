@@ -41,6 +41,26 @@
 
 using namespace mapnik;
 
+#define NUM_THREADS 1
+
+class MapnikThread : public QObject
+{
+	Q_OBJECT
+
+public:
+	MapnikThread(int numThread, QObject *parent = 0);
+	~MapnikThread();
+
+private:
+	Map *_map;
+	projection *_proj;
+	int _numThread;
+
+private slots:
+	void renderTile(void *mytile);
+signals:
+	void finished(int numThread, QImage *img, Tile *tile);
+};
 
 class MapnikSource : public DataSource
 {
@@ -55,19 +75,20 @@ public:
 	/* Tiles for render */
 	TileListP _dlTilesTodo;
 
-
 private:
-    Map *_map;
-	projection *_proj;
+	QThread thread[NUM_THREADS];
+	MapnikThread *mapnikThread[NUM_THREADS];
 
 	/* data sink: Where to write the downloaded images */
 	DataSource *_ds;
 
+	bool _isRendering[NUM_THREADS];
+
 
 private slots:
-	void save(QImage *img, Tile *tile);
+	void save(int numThread, QImage *img, Tile *tile);
 signals:
-	void workReady(Tile *);
+	void renderTile(Tile *);
 };
 
 #else

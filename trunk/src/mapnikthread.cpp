@@ -27,103 +27,105 @@
 
 
 #ifdef WITH_MAPNIK
-MapnikSource::MapnikSource(DataSource *ds, QObject *parent) : DataSource(parent)
+
+MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 {
-	_ds = ds;
+	/* Unique thread number */
+	_numThread = numThread;
 
 	QString mapnikDir("/home/daniel/mapnik_files");
 
-    /* Register fonts */
-    QDir fontDir = mapnikDir + "/dejavu-fonts-ttf-2.33/ttf/";
-    QFileInfoList fileList = fontDir.entryInfoList(QStringList("*.ttf"), QDir::Files);
-    if(fileList.length() > 0)
-        for(int i = 0; i < fileList.length(); i++)
-        {
-            freetype_engine::register_font(fileList[i].filePath().toStdString());
-            qDebug() << "Register font: " << fileList[i].filePath();
-        }
+	/* Register fonts */
+	QDir fontDir = mapnikDir + "/dejavu-fonts-ttf-2.33/ttf/";
+	QFileInfoList fileList = fontDir.entryInfoList(QStringList("*.ttf"), QDir::Files);
+	if(fileList.length() > 0)
+		for(int i = 0; i < fileList.length(); i++)
+		{
+			freetype_engine::register_font(fileList[i].filePath().toStdString());
+			qDebug() << "Register font: " << fileList[i].filePath();
+		}
 
-    /* Register plugins */
-    datasource_cache::instance()->register_datasources("/usr/lib/mapnik/0.7/input/");
-
-
-    /* ------------------------------- */
-    /*    Adjust xml style template    */
-    /* ------------------------------- */
-
-    /* Load xml style template */
-    QFile file("/home/daniel/mapnik_files/luckygps-default.template");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-            return;
-    QTextStream in(&file);
-    in.setCodec("UTF-8");
-    in.setAutoDetectUnicode(true);
-    QString xml = in.readAll();
-    file.close();
-
-    /* Replace path variables in template */
-    // later use %1 with .arg()?
-
-    QString symbols_path("/home/daniel/mapnik_files/symbols/");
-    QString symbolsString("%(symbols)s");
-    size_t index = xml.indexOf(symbolsString);
-    xml.replace(index, symbolsString.length(), symbols_path);
-
-    QString srs("&srs4326");
-    QString srsString("%(osm2pgsql_projection)s");
-    index = xml.indexOf(srsString);
-    xml.replace(index, srsString.length(), srs);
-
-    QString wb_path("/home/daniel/mapnik_files/world_boundaries/");
-    QString wbString("%(world_boundaries)s");
-    index = xml.indexOf(wbString);
-    xml.replace(index, wbString.length(), wb_path);
-
-    QString prefix("world");
-    QString prefixString("%(prefix)s");
-    index = xml.indexOf(prefixString);
-    xml.replace(index, prefixString.length(), prefix);
-    xml.replace(prefixString, prefix);
+	/* Register plugins */
+	datasource_cache::instance()->register_datasources("/usr/lib/mapnik/0.7/input/");
 
 
-    QString dbSettings("<Parameter name=\"type\">sqlite</Parameter>\n\
-                       <Parameter name=\"file\">/home/daniel/alberta.sqlite</Parameter>\n\
-                       <Parameter name=\"key_field\">rowid</Parameter>\n\
-                       <Parameter name=\"geometry_field\">way</Parameter>\n\
-                       <Parameter name=\"wkb_format\">spatialite</Parameter>\n\
-                       <Parameter name=\"estimate_extent\">false</Parameter>\n\
-                       <Parameter name=\"extent\">180.0,89.0,-180.0,-89.0</Parameter>\n\
-                       <Parameter name=\"use_spatial_index\">true</Parameter>");
-    QString dbSettingsString("%(datasource_settings)s");
-    xml.replace(dbSettingsString, dbSettings);
+	/* ------------------------------- */
+	/*    Adjust xml style template    */
+	/* ------------------------------- */
 
-    /* ------------------------------- */
+	/* Load xml style template */
+	QFile file("/home/daniel/mapnik_files/luckygps-default.template");
+	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+			return;
+	QTextStream in(&file);
+	in.setCodec("UTF-8");
+	in.setAutoDetectUnicode(true);
+	QString xml = in.readAll();
+	file.close();
+
+	/* Replace path variables in template */
+	// later use %1 with .arg()?
+
+	QString symbols_path("/home/daniel/mapnik_files/symbols/");
+	QString symbolsString("%(symbols)s");
+	size_t index = xml.indexOf(symbolsString);
+	xml.replace(index, symbolsString.length(), symbols_path);
+
+	QString srs("&srs4326");
+	QString srsString("%(osm2pgsql_projection)s");
+	index = xml.indexOf(srsString);
+	xml.replace(index, srsString.length(), srs);
+
+	QString wb_path("/home/daniel/mapnik_files/world_boundaries/");
+	QString wbString("%(world_boundaries)s");
+	index = xml.indexOf(wbString);
+	xml.replace(index, wbString.length(), wb_path);
+
+	QString prefix("world");
+	QString prefixString("%(prefix)s");
+	index = xml.indexOf(prefixString);
+	xml.replace(index, prefixString.length(), prefix);
+	xml.replace(prefixString, prefix);
 
 
-    /* Create Mapnik map */
-    _map = new Map(256,256);
+	QString dbSettings("<Parameter name=\"type\">sqlite</Parameter>\n\
+					   <Parameter name=\"file\">/home/daniel/alberta.sqlite</Parameter>\n\
+					   <Parameter name=\"key_field\">rowid</Parameter>\n\
+					   <Parameter name=\"geometry_field\">way</Parameter>\n\
+					   <Parameter name=\"wkb_format\">spatialite</Parameter>\n\
+					   <Parameter name=\"estimate_extent\">false</Parameter>\n\
+					   <Parameter name=\"extent\">180.0,89.0,-180.0,-89.0</Parameter>\n\
+					   <Parameter name=\"use_spatial_index\">true</Parameter>");
+	QString dbSettingsString("%(datasource_settings)s");
+	xml.replace(dbSettingsString, dbSettings);
 
-    /* load map settings */
-    load_map_string(*_map, xml.toStdString());
+	/* ------------------------------- */
 
-    /* Copied from osm2pgsql for better label placement */
-    _map->set_buffer_size(128);
 
-    /* Google srid=900913 projection used for rendering */
+	/* Create Mapnik map */
+	_map = new Map(256,256);
+
+	/* load map settings */
+	load_map_string(*_map, xml.toStdString());
+
+	/* Copied from osm2pgsql for better label placement */
+	_map->set_buffer_size(128);
+
+	/* Google srid=900913 projection used for rendering */
 	_proj = new projection("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over");
 }
 
-MapnikSource::~MapnikSource()
+MapnikThread::~MapnikThread()
 {
 	if(_map)
-        delete _map;
+		delete _map;
 	if(_proj)
 		delete _proj;
 }
 
-QImage *MapnikSource::loadMapTile(const Tile *mytile)
+void MapnikThread::renderTile(void *mytile)
 {
-	Tile *newtile = new Tile(*mytile, NULL);
+	Tile *newtile = new Tile(*((Tile *)mytile), NULL);
 	delete mytile;
 
 	/* Calculate pixel positions of bottom-left & top-right */
@@ -155,14 +157,57 @@ QImage *MapnikSource::loadMapTile(const Tile *mytile)
 	// Need to switch r and b channel
 	QImage *image = new QImage(tmpImg.rgbSwapped());
 
-	_ds->saveMapTile(image, newtile);
+	emit finished(_numThread, image, newtile);
 }
 
-void MapnikSource::save(QImage *img, Tile *tile)
+MapnikSource::MapnikSource(DataSource *ds, QObject *parent) : DataSource(parent)
+{
+	_ds = ds;
+
+	for(int i = 0; i < NUM_THREADS; i++)
+	{
+		_isRendering[i] = false;
+
+		mapnikThread[i] = new MapnikThread(i);
+		mapnikThread[i]->moveToThread(&thread[i]);
+
+		// connect signals
+		// connect(this, SIGNAL(renderTile(Tile *)), mapnikThread[i], SLOT(renderTile(Tile *)));
+		connect(mapnikThread[i], SIGNAL(finished(int, QImage *, Tile *)), this, SLOT(save(int, QImage *, Tile *)));
+		connect(&thread[i], SIGNAL(quit()), mapnikThread[i], SLOT(deleteLater()));
+		thread[i].start();
+	}
+}
+
+MapnikSource::~MapnikSource()
+{
+	for(int i = 0; i < NUM_THREADS; i++)
+		thread[i].quit();
+}
+
+QImage *MapnikSource::loadMapTile(const Tile *mytile)
+{
+	Tile *newtile = new Tile(*mytile, NULL);
+	delete mytile;
+
+	for(int i = 0; i < NUM_THREADS; i++)
+		if(!_isRendering[i])
+		{
+			_isRendering[i] = true;
+			// emit(renderTile(newtile));
+			QMetaObject::invokeMethod( mapnikThread[i], "renderTile", Q_ARG( void *, newtile ) );
+		}
+
+	return NULL;
+}
+
+void MapnikSource::save(int numThread, QImage *img, Tile *tile)
 {
 	_ds->saveMapTile(img, tile);
 	delete img;
 	delete tile;
+
+	_isRendering[numThread] = false;
 }
 
 #endif
