@@ -41,7 +41,7 @@
 
 using namespace mapnik;
 
-#define NUM_THREADS 1
+#define NUM_THREADS 2
 
 class MapnikThread : public QObject
 {

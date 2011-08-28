@@ -171,8 +171,7 @@ MapnikSource::MapnikSource(DataSource *ds, QObject *parent) : DataSource(parent)
 		mapnikThread[i] = new MapnikThread(i);
 		mapnikThread[i]->moveToThread(&thread[i]);
 
-		// connect signals
-		// connect(this, SIGNAL(renderTile(Tile *)), mapnikThread[i], SLOT(renderTile(Tile *)));
+		// connect thread signals
 		connect(mapnikThread[i], SIGNAL(finished(int, QImage *, Tile *)), this, SLOT(save(int, QImage *, Tile *)));
 		connect(&thread[i], SIGNAL(quit()), mapnikThread[i], SLOT(deleteLater()));
 		thread[i].start();
@@ -182,7 +181,13 @@ MapnikSource::MapnikSource(DataSource *ds, QObject *parent) : DataSource(parent)
 MapnikSource::~MapnikSource()
 {
 	for(int i = 0; i < NUM_THREADS; i++)
-		thread[i].quit();
+	{
+		if(thread[i].isRunning())
+		{
+			thread[i].quit();
+			thread[i].wait();
+		}
+	}
 }
 
 QImage *MapnikSource::loadMapTile(const Tile *mytile)
@@ -190,15 +195,21 @@ QImage *MapnikSource::loadMapTile(const Tile *mytile)
 	Tile *newtile = new Tile(*mytile, NULL);
 	delete mytile;
 
+	bool assigned = false;
+
 	for(int i = 0; i < NUM_THREADS; i++)
 		if(!_isRendering[i])
 		{
 			_isRendering[i] = true;
-			// emit(renderTile(newtile));
 			QMetaObject::invokeMethod( mapnikThread[i], "renderTile", Q_ARG( void *, newtile ) );
+
+			assigned = true;
 
 			break;
 		}
+
+	if(!assigned)
+		_dlTilesTodo.append(newtile);
 
 	return NULL;
 }
@@ -210,6 +221,9 @@ void MapnikSource::save(int numThread, QImage *img, Tile *tile)
 	delete tile;
 
 	_isRendering[numThread] = false;
+
+	if(!_dlTilesTodo.empty())
+		loadMapTile(_dlTilesTodo.takeFirst());
 }
 
 #endif
