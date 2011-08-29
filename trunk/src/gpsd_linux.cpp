@@ -98,7 +98,6 @@ bool gpsd::gpsd_update_settings(gps_settings_t &settings)
     return gps_connect();
 }
 
-
 void gpsd::callback_gpsd_read()
 {
     int bytes_available = (int)(_socket.bytesAvailable());

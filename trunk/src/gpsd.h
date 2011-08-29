@@ -32,6 +32,11 @@
 #include "qextserialport.h"
 #endif
 
+#ifdef GPS_DEBUG
+#include "route.h"
+#endif
+
+
 typedef struct gps_settings_t
 {
     QString host;
@@ -59,38 +64,61 @@ public:
     bool gpsd_update_settings(gps_settings_t &settings);
 
 	void gpsd_get_data(nmeaGPS *tgpsdata)  { memcpy(tgpsdata, &_gpsData, sizeof(nmeaGPS)); }
-    void gpsd_get_settings(gps_settings_t *tgpssettings)  { memcpy(tgpssettings, &_gpsSettings, sizeof(gps_settings_t)); }
+	void gpsd_get_settings(gps_settings_t *tgpssettings)  { memcpy(tgpssettings, &_gpsSettings, sizeof(gps_settings_t)); }
 
+#ifndef GPS_DEBUG
 #ifdef Q_OS_LINUX
-    QTcpSocket *gpsd_get_socket() { return &_socket; }
+	QTcpSocket *gpsd_get_socket() { return &_socket; }
+#endif
+#else
+	Route *_route;
 #endif
 
 public slots:
     bool gps_connect();
 
 private:
-#ifdef Q_OS_LINUX
-    QTcpSocket _socket;
-#endif
 
-#ifdef Q_OS_WIN
-    QextSerialPort* _port;
-    bool _niceRead;
-    QTimer _readTimer;
-#endif
+#ifdef GPS_DEBUG
+
+	/* debug interface with bogus coordinates */
+	QTimer _readTimer;
+	unsigned int _count;
+	unsigned int _routeIndex;
+	float _deltaLat;
+	float _deltaLon;
+#else
+
+	#ifdef Q_OS_LINUX
+
+		QTcpSocket _socket;
+
+	#endif // Q_OS_LINUX
+
+	#ifdef Q_OS_WIN
+
+		QextSerialPort* _port;
+		bool _niceRead;
+		QTimer _readTimer;
+
+	#endif // Q_OS_WIN
+
+#endif // GPS_DEBUG
 
 	nmeaGPS _gpsData;
 
-    gps_settings_t _gpsSettings;
+	gps_settings_t _gpsSettings;
 
 private slots:
     /* callbacks for gps management*/
     void callback_gpsd_read();
 
+#ifndef GPS_DEBUG
 #ifdef Q_OS_WIN
-    void callback_gpsd_error();
+	void callback_gpsd_error();
 #else
-    void callback_gpsd_error(QAbstractSocket::SocketError socketError);
+	void callback_gpsd_error(QAbstractSocket::SocketError socketError);
+#endif
 #endif
 
 signals:
@@ -98,8 +126,9 @@ signals:
      void no_gps();
 };
 
+#ifndef GPS_DEBUG
 #ifdef Q_OS_WIN
 QStringList gps_get_portnames();
 #endif
-
+#endif
 #endif // GPSD_H
