@@ -45,6 +45,9 @@ public:
 
 	void descriptions(Route &route, IRouter* router, QStringList* icons, QVector< IRouter::Node > pathNodes, QVector< IRouter::Edge > pathEdges, int units, int maxSeconds = INT_MAX)
 	{
+		// TODO: calc label in dependance of driving speed?
+
+
 		/* Information of current edge */
 		struct EdgeInfo info;
 

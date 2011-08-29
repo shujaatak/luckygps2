@@ -183,7 +183,7 @@ void MainWindow::callback_tab_statistics_update()
 
 
 	/* update route */
-	if(ui->map->_route.points.length() > 0 /* && gpsdata.valid */)
+	if(ui->map->_route.active && ui->map->_route.points.length() > 0 /* && gpsdata.valid */)
 	{
 		Route &route = ui->map->_route;
 
@@ -198,32 +198,7 @@ void MainWindow::callback_tab_statistics_update()
 		route.getCurrentPosOnRoute(gpsdata.latitude, gpsdata.longitude);
 
 		RoutePoint &point = route.points[route.pos];
-		if((route.pos >= route.points.length() - 1) && (ui->routeFrameBottom->maximumHeight() > 0))
-		{
-			/* hide route label */
-			int left, right, top, bottom;
-			/*
-			ui->routeLayoutBottom->getContentsMargins(&left, &top, &right, &bottom);
-			ui->routeLayoutBottom->setContentsMargins(left, 0, right, bottom);
-			*/
-
-			ui->routeFrameBottom->setMinimumHeight(0);
-			ui->routeFrameBottom->setMaximumHeight(0);
-		}
-		else if(ui->routeFrameBottom->maximumHeight() == 0)
-		{
-			/* enlarge route label */
-			int left, right, top, bottom;
-			/*
-			ui->routeLayoutBottom->getContentsMargins(&left, &top, &right, &bottom);
-			ui->routeLayoutBottom->setContentsMargins(left, 4, right, bottom);
-			*/
-
-			ui->routeFrameBottom->setMinimumHeight(0);
-			ui->routeFrameBottom->setMaximumHeight(100);
-		}
-
-		if(route.points[route.pos].nextDesc >= 0)
+		if(route.points.length() > 0 && (point.nextDesc >= 0 || point.desc.length() > 0))
 		{
 			/* Car is on edge driving to this point with a description */
 			RoutePoint *nextpoint = NULL;
@@ -235,6 +210,7 @@ void MainWindow::callback_tab_statistics_update()
 
 			// TODO: calc edge distance lengths in advance from nodes
 			{
+				RoutePoint *nextpoint2 = NULL;
 				QStringList icons;
 				QStringList labels;
 				double distance = ABS(fast_distance_deg(gpsdata.latitude, gpsdata.longitude, point.latitude, point.longitude));
@@ -242,14 +218,25 @@ void MainWindow::callback_tab_statistics_update()
 				/* Only add remaining street length if car is not already on final edge */
 				if(nextpoint != &point)
 					distance += point.length;
-
 				distance *= 1000.0;
 
-				RoutePoint *nextpoint2 = &route.points[nextpoint->nextDesc];
+				if(nextpoint->nextDesc >= 0)
+					nextpoint2 = &route.points[nextpoint->nextDesc];
+				else
+				{
+					if(distance < 20)
+					{
+						route.active = false;
+					}
+				}
+
 				ui->map->_routing->getInstructions(nextpoint, nextpoint2, distance, &labels, &icons, ui->map->get_unit());
 
 				if(!labels.empty())
 					ui->label_route_text->setText(labels.last());
+
+				qDebug(QString::number(distance).toAscii().constData());
+				qDebug("");
 			}
 
 			if(nextpoint->nextDesc >= 0)
@@ -259,11 +246,35 @@ void MainWindow::callback_tab_statistics_update()
 			else
 				ui->label_route_text2->setText("");
 
+			/* Draw driving directions text box */
+			if(!route.points.length() &&  (ui->routeFrameBottom->maximumHeight() > 0))
+			{
+				ui->routeFrameBottom->setMinimumHeight(0);
+				ui->routeFrameBottom->setMaximumHeight(0);
+			}
+			else if(ui->routeFrameBottom->maximumHeight() == 0)
+			{
+				/* enlarge route label */
+				ui->label_route_icon2->show();
+				ui->label_route_text2->show();
+				ui->routeFrameBottom->setMinimumHeight(0);
+				ui->routeFrameBottom->setMaximumHeight(100);
+			}
+			else if(!ui->label_route_text2->text().length()) // only show one text field
+			{
+				ui->label_route_icon2->hide();
+				ui->label_route_text2->hide();
+			}
 		}
 		else
 		{
-			/* TODO: Emergency plan if car is e.g. in a tunnel */
+			// if NOT (route.points.length() > 0 && (point.nextDesc >= 0 || point.desc.length() > 0))
 		}
+
+	}
+	else
+	{
+		/* TODO: Emergency plan if car is e.g. in a tunnel */
 	}
 
 	ui->map->update();
