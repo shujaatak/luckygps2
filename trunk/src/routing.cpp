@@ -217,7 +217,7 @@ bool Routing::calculateRoute(Route &route, int units)
 
 	{
 		QFile file("/home/daniel/test.txt");
-		if (file.open(QIODevice::ReadWrite))
+		if (file.open(QIODevice::WriteOnly))
 		{
 			QTextStream stream(&file);
 
@@ -236,7 +236,8 @@ bool Routing::calculateRoute(Route &route, int units)
 				stream << "exitNumber: " << point.exitNumber << endl;
 				stream << "exitLink: " << point.exitLink << endl;
 				stream << "enterLink: " << point.enterLink << endl;
-				stream << "lastType: " << point.lastType << endl << endl;
+				stream << "lastType: " << point.lastType << endl;
+				stream << "length: " << point.length << endl << endl;
 
 			}
 
