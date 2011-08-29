@@ -91,6 +91,8 @@ public:
 		bb[3] = MAX(bb[3], point.latitude);		/* max y */
 
         points.append(point);
+
+		active = true;
     }
 
     void init()
@@ -101,6 +103,7 @@ public:
 
         name = "";
         pos = 0;
+		active = false;
 
 		bb[0] = bb[1] = DBL_MAX;
 		bb[2] = bb[3] = -DBL_MAX;
@@ -148,6 +151,7 @@ public:
 	double	dist;			/* distance until next turn			*/
 	double	bb[4];			/* bounding box of segment			*/
 	int		zoom;
+	bool	active;			/* is route active/fnished?			*/
 };
 
 #endif // ROUTE_H
