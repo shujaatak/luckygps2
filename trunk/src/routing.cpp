@@ -429,10 +429,11 @@ void Routing::getInstructions(Route &route, QStringList* icons, int units)
 	_descGenerator->descriptions(route, _router, icons, route.pathNodes, route.pathEdges, units); // maxSeconds
 }
 
-void Routing::getInstructions(const RoutePoint *rp, RoutePoint *nextRp, double distance, QStringList* labels, QStringList* icons, int units)
+void Routing::getInstructions(RoutePoint *rp, RoutePoint *nextRp, double distance, QStringList* labels, QStringList* icons, int units)
 {
 	if(!_init)
 		return;	
 
-	_descGenerator->describe(rp->name, rp->nextName, rp->direction, distance, icons, labels, rp->exitNumber, rp->lastType, units, nextRp ? 0 : 1, rp->exitLink);
+	DescriptionGenerator::descInfo desc = {rp->name, rp->nextName, rp->direction, distance, icons, labels, rp->exitNumber, rp->lastType, units, nextRp ? 0 : 1, rp->exitLink};
+	_descGenerator->describe(desc);
 }

@@ -44,7 +44,7 @@ class RoutePoint
 public:
     RoutePoint(): latitude(0), longitude(0), nextDesc(-1) {}
     RoutePoint(double lat, double lon)
-		: latitude(lat), longitude(lon), nextDesc(-1), enterLink(0), exitLink(0), exitNumber(0), direction(0)
+		: latitude(lat), longitude(lon), nextDesc(-1), exitNumber(0), direction(0), enterLink(0), exitLink(0)
     {
         latitude_rad = deg_to_rad(lat);
         longitude_rad = deg_to_rad(lon);
