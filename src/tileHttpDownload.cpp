@@ -123,7 +123,13 @@ void TileHttpDownload::dlDownloadFinished(QNetworkReply *reply)
 		/* Save downloaded file */
 		if(downloadedTile)
 		{
-			QImage img = QImageReader(reply).read();
+			QImageReader *iread = new QImageReader();
+			iread->setAutoDetectImageFormat(false);
+			iread->setFormat("PNG");
+			iread->setDevice(reply);
+			QImage img = iread->read();
+			delete iread;
+
 			_ds->saveMapTile(&img, downloadedTile);
 		}
 	}
