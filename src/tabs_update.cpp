@@ -190,12 +190,17 @@ void MainWindow::callback_tab_statistics_update()
 		// -------------------------------------------------
 		//DEBUG
 		// -------------------------------------------------
-		gpsdata.latitude = route.points[0].latitude;
-		gpsdata.longitude = route.points[0].longitude;
+		// gpsdata.latitude = route.points[0].latitude;
+		// gpsdata.longitude = route.points[0].longitude;
 		// -------------------------------------------------
 
 		// update route.pos
 		route.getCurrentPosOnRoute(gpsdata.latitude, gpsdata.longitude);
+
+
+		// A = INDEX OUT OF RANGE CRASH
+		// B = YOU HAVE REACHED THE DESTINATION, aber man muss erst noch hinfahren, man hat nur die Zielstraße erreicht...
+
 
 		if(route.points[route.pos].nextDesc >= 0)
 		{

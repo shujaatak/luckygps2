@@ -24,7 +24,7 @@ SOURCES += ./src/main.cpp \
 	./src/datasourcemanager.cpp \
 	./src/datasource.cpp \
 	./src/filetilemanager.cpp \
-    src/sqliteTileManager.cpp
+	src/sqliteTileManager.cpp
 HEADERS += ./src/mainwindow.h \
 	./src/mapwidget.h \
 	./src/convertunits.h \
@@ -124,14 +124,15 @@ win32 {
 }
 
 linux-g++ {
-	SOURCES += ./src/gpsd_linux.cpp
+	SOURCES += ./src/gpsd_debug.cpp
+	# ./src/gpsd_linux.cpp
 
 	QMAKE_CXXFLAGS_RELEASE -= -O2
 	QMAKE_CXXFLAGS_RELEASE += -O3 -Wno-unused-function
 	# `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 	# QMAKE_CXXFLAGS_DEBUG += `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
-	DEFINES += WITH_MAPNIK=1
+	DEFINES += WITH_MAPNIK=1 GPS_DEBUG=1
 	# Disable Graphicsmagick for now until libpng bugs/Crashes are solved (png.c 1369) --> WITH_IMAGEMAGICK=1
 
 	# Disabled at the moment
