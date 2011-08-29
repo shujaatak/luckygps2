@@ -40,7 +40,7 @@ public:
 	bool gpsEntered(QString text, int idType);
 
 	bool calculateRoute(Route &route, int units);
-	void getInstructions(const RoutePoint *rp, RoutePoint *nextRp, double distance, QStringList* labels, QStringList* icons, int units);
+	void getInstructions(RoutePoint *rp, RoutePoint *nextRp, double distance, QStringList* labels, QStringList* icons, int units);
 
 	void setPos(double lat, double lon, int idType) { _pos[idType][0] = lat; _pos[idType][1] = lon; }
 	void resetPos(int idType) { _pos[idType][0] = _pos[idType][1] = 0.0; }

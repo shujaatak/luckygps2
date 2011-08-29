@@ -20,6 +20,20 @@ public:
 	{
 	}
 
+	typedef struct {
+		QString &name;
+		QString &nextName;
+		int direction;
+		int distance;
+		QStringList* icons;
+		QStringList* labels;
+		int exitNumber;
+		QString &lastType;
+		int units;
+		int lastPoint;
+		int exitLink;
+	} descInfo;
+
 	struct EdgeInfo {
 		unsigned int nameID;
 		unsigned int typeID;
@@ -30,6 +44,7 @@ public:
 		int exitNumber;
 		int enterLink;
 		int exitLink;
+		bool link; /* motorway_link, primary_link, etc. */
 	} EdgeInfo;
 
 	void reset(struct EdgeInfo &info)
@@ -41,6 +56,7 @@ public:
 		info.branchingPossible = 0;
 		info.enterLink = 0;
 		info.exitLink = 0;
+		info.link = 0;
 	}
 
 	void descriptions(Route &route, IRouter* router, QStringList* icons, QVector< IRouter::Node > pathNodes, QVector< IRouter::Edge > pathEdges, int units, int maxSeconds = INT_MAX)
@@ -111,6 +127,7 @@ public:
 							break;
 						}
 					}
+					info.link = 1;
 					info.exitLink = 1;
 					breakDescription = true;
 				}
@@ -176,7 +193,8 @@ public:
 				point.enterLink = info.enterLink;
 				point.exitLink = info.exitLink;
 
-				describe(info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 0, point.exitLink);
+				descInfo desc = {info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 0, point.exitLink};
+				describe(desc);
 
 				point.desc = labels.last();
 				point.direction = info.direction;
@@ -217,8 +235,8 @@ public:
 						}
 
 						qDebug() << "Found traffic circle to adapt description info.";
-
-						describe(tmpPoint->name, tmpPoint->nextName, tmpPoint->direction, tmpPoint2->length*1000.0, icons, &labels, tmpPoint->exitNumber, tmpPoint->lastType, units, 0, tmpPoint->exitLink);
+						descInfo desc = {tmpPoint->name, tmpPoint->nextName, tmpPoint->direction, tmpPoint2->length*1000.0, icons, &labels, tmpPoint->exitNumber, tmpPoint->lastType, units, 0, tmpPoint->exitLink};
+						describe(desc);
 						tmpPoint->desc = labels.last();
 					}
 				}
@@ -260,7 +278,8 @@ public:
 			point.enterLink = info.enterLink;
 			point.exitLink = info.exitLink;
 
-			describe(info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 1, point.exitLink);
+			descInfo desc = {info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 1, point.exitLink};
+			describe(desc);
 
 			point.desc = labels.last();
 			point.direction = info.direction;
@@ -342,221 +361,109 @@ public:
 		}
 	}
 
-	void describe(const QString &name, const QString &nextName, int direction, double distance, QStringList* icons, QStringList* labels, int exitNumber, QString lastType, int units, int lastPoint, int exitLink)
+	void describe(descInfo &desc)
 	{
-		QString tDistance;
+		bool distClose = false; /* true if(desc.distance <= 3000 && desc.distance >= 50) */
+		QString continueStr; /* "Continue on .... for", "Continue for" */
+		QString distStr; /* Used for distance strings like "500m", "2km", "300ft" */
+		QString directionStr; /* "turn left", "turn right", etc. */
+		QString linkStr; /* ramps, exits */
+		QString trCircStr; /* Traffic circles: "Take the 1. exit in the traffic circle." */
 
-		/* don't display any distance when entering a traffic circle */
-		if(exitLink && exitNumber != 0)
-			distance = 0.0;
+		/* Don't display any distance when entering a traffic circle */
+		if(desc.exitLink && desc.exitNumber != 0)
+			desc.distance = 0.0;
 
-		if(distance >= 50.0)
-		{
-			if(units == 0) /* metrical */
-			{
-				if(distance < 100)
-					tDistance = QString("%1m").arg((int) distance);
-				else if(distance < 1000)
-					tDistance = QString("%1m").arg((int) distance / 10 * 10);
-				else if(distance < 10000)
-					tDistance = QString("%1.%2km").arg((int) distance / 1000).arg(((int) distance / 100) % 10);
-				else
-					tDistance = QString("%1km").arg((int) distance / 1000);
-			}
-			else if(units == 1) /* imperial */
-			{
-				double unit_conversion = 5280.0/1.6093444;
-
-				double tmpDistance = unit_conversion * distance;
-
-				if(distance < 100)
-					tDistance = QString("%1ft").arg((int) tmpDistance);
-				else if(distance < 1000)
-					tDistance = QString("%1ft").arg((int) tmpDistance / 10 * 10);
-				else if(distance < 10000)
-					tDistance = QString::number(tmpDistance / 5280.0, 'f', 1) + "m";
-				else
-					tDistance = QString("%1m").arg((int)(tmpDistance / 5280.0));
-			}
-		}
+		/* Use units (imperial/metrical) if distance is greater than 50 meters */
+		if(desc.distance >= 50.0)
+			distStr = getDistStr(desc);
 
 		/* Display "Continue" messages only if distance to next "action" is more than 3km */
-		if(distance > 3000.0)
+		/* continueStr needs distStr added to the end */
+		if(desc.distance > 3000.0)
 		{
-			icons->push_back(":/images/directions/forward.png");
-			if(!name.isEmpty())
-				labels->push_back(("Continue on " + name + " for " + tDistance + "."));
-			else
-				labels->push_back(("Continue for " + tDistance + "."));
+			continueStr = getContinueStr(desc);
 		}
-		else if(distance <= 3000 && distance >= 50)
+		else if(desc.distance <= 3000 && desc.distance >= 50)
 		{
-			labels->push_back(QString("In %2 ").arg(tDistance));
+			desc.labels->push_back(QString("In %2 ").arg(distStr));
 
-			if(lastPoint)
-			{
-				labels->back() += QString("you have reached the destination.");
-				return;
-			}
-
-			if(exitNumber != 0)
-			{
-				icons->push_back(QString(":/images/directions/roundabout_exit%1.png").arg(exitNumber));
-				labels->back() += QString("take the %1. exit in the traffic circle.").arg(exitNumber);
-				return;
-			}
-
-			switch(direction)
-			{
-				case 0:
-					break;
-				case 1:
-					{
-						icons->push_back(":/images/directions/slightly_right.png");
-						labels->back() +=("keep slightly right");
-						break;
-					}
-				case 2:
-				case 3:
-					{
-						icons->push_back(":/images/directions/right.png");
-						labels->back() +=("turn right");
-						break;
-					}
-				case -1:
-					{
-						icons->push_back(":/images/directions/slightly_left.png");
-						labels->back() +=("keep slightly left");
-						break;
-					}
-				case -2:
-				case -3:
-					{
-						icons->push_back(":/images/directions/left.png");
-						labels->back() +=("turn left");
-						break;
-					}
-			}
-			if(direction != 0)
-			{
-				if(!nextName.isEmpty())
-					labels->back() += " into " + nextName + ".";
-				else
-					labels->back() += ".";
-
-				return;
-			}
-
-			if(lastType == "motorway_link")
-			{
-				if(direction == 0)
-				{
-					icons->push_back(":/images/directions/forward.png");
-										// labels->push_back("");
-				}
-				if(!nextName.isEmpty())
-					labels->back() += "take the ramp towards " + nextName + ".";
-				else
-					labels->back() += "take the ramp.";
-			}
-			else if(lastType == "primary_link")
-			{
-				if(direction == 0)
-				{
-					icons->push_back(":/images/directions/forward.png");
-					// labels->push_back("");
-				}
-				if(!nextName.isEmpty())
-					labels->back() += "take the exit to " + nextName + ".";
-				else
-					labels->back() += "take the exit.";
-			}
+			distClose = true;
 		}
 		else
 		{
-			labels->push_back("");
+			desc.labels->push_back("");
+		}
 
-			if(lastPoint)
+			/* Destination point gets special handling */
+			if(desc.lastPoint)
 			{
-				labels->back() += QString("You have reached the destination.");
+				desc.labels->back() += QString("you have reached the destination.");
 				return;
 			}
 
-			if(exitNumber != 0)
+			/* Special handling of traffic circles */
+			if(desc.exitNumber != 0)
 			{
-				icons->push_back(QString(":/images/directions/roundabout_exit%1.png").arg(exitNumber));
-				labels->back() += QString("Take the %1. exit in the traffic circle.").arg(exitNumber);
-
-				qDebug() << "Traffic Circle next name: " << name << ", NextName: " << nextName;
-
+				trCircStr = getTrCircStr(desc);
+				desc.labels->back() += trCircStr;
 				return;
 			}
 
-			switch(direction)
+			/* "turn left", "turn right", etc. */
+			directionStr = getdirectionStr(desc);
+
+			/* Special handling of links */
+			if(desc.lastType.endsWith("_link"))
 			{
-				case 0:
-					break;
-				case 1:
-					{
-						icons->push_back(":/images/directions/slightly_right.png");
-						labels->back() += "Keep slightly right";
-						break;
-					}
-				case 2:
-				case 3:
-					{
-						icons->push_back(":/images/directions/right.png");
-						labels->back() += "Turn right";
-						break;
-					}
-				case -1:
-					{
-						icons->push_back(":/images/directions/slightly_left.png");
-						labels->back() += "Keep slightly left";
-						break;
-					}
-				case -2:
-				case -3:
-					{
-						icons->push_back(":/images/directions/left.png");
-						labels->back() += "Turn left";
-						break;
-					}
+				linkStr = getLinkStr(desc);
+				desc.labels->back() += linkStr;
+				return;
 			}
-			if(direction != 0)
+		}
+
+
+			/* Destination point gets special handling */
+			if(desc.lastPoint)
 			{
-				if(!nextName.isEmpty())
-					labels->back() += " into " + nextName + ".";
-				else
-					labels->back() += ".";
+				desc.labels->back() += QString("You have reached the destination.");
+				return;
+			}
+
+			/* Special handling of traffic circles */
+			if(desc.exitNumber != 0)
+			{
+				trCircStr = getTrCircStr(desc);
+				if(trCircStr.length() > 0)
+					trCircStr[0] = trCircStr[0].toUpper();
+				desc.labels->back() += trCircStr;
 
 				return;
 			}
 
-			if(lastType == "motorway_link")
+			/* "turn left", "turn right", etc. */
+			directionStr = getdirectionStr(desc);
+			if(directionStr.length() > 0) // still need to convert first char to uppercase
+				directionStr[0] = directionStr[0].toUpper();
+
+			/* Special handling of links */
+			if(desc.lastType.endsWith("_link"))
 			{
-				if(direction == 0)
-				{
-					icons->push_back(":/images/directions/forward.png");
-					// labels->push_back("");
-				}
-				if(!nextName.isEmpty())
-					labels->back() += "Take the ramp towards " + nextName + ".";
-				else
-					labels->back() += "Take the ramp.";
+				linkStr = getLinkStr(desc);
+				// still need to convert first char to uppercase
+				if(linkStr.length() > 0)
+					linkStr[0] = linkStr[0].toUpper();
+				desc.labels->back() += linkStr;
+				return;
 			}
-			else if(lastType == "primary_link")
-			{
-				if(direction == 0)
-				{
-					icons->push_back(":/images/directions/forward.png");
-					// labels->push_back("");
-				}
-				if(!nextName.isEmpty())
-					labels->back() += "Take the exit to " + nextName + ".";
-				else
-					labels->back() += "Take the exit.";
-			}
+		}
+
+		if(desc.direction != 0)
+		{
+			if(!desc.nextName.isEmpty())
+				desc.labels->back() += " into " + desc.nextName + ".";
+			else
+				desc.labels->back() += ".";
 		}
 	}
 
@@ -577,6 +484,136 @@ public:
 		info.branchingPossible = edge.branchingPossible;
 		info.direction = 0;
 		info.exitNumber = (info.type == "roundabout") ? 1 : 0;
+	}
+
+	QString getTrCircStr(descInfo &desc)
+	{
+		QString trCircStr = "";
+
+		desc.icons->push_back(QString(":/images/directions/roundabout_exit%1.png").arg(desc.exitNumber));
+		trCircStr = QString("take the %1. exit in the traffic circle.").arg(desc.exitNumber);
+		return trCircStr;
+	}
+
+	QString getLinkStr(descInfo &desc)
+	{
+		QString linkStr = "";
+
+		if(desc.lastType == "motorway_link")
+		{
+			if(desc.direction == 0)
+			{
+				desc.icons->push_back(":/images/directions/forward.png");
+									// labels->push_back("");
+			}
+			if(!desc.nextName.isEmpty())
+				linkStr = "take the ramp towards " + desc.nextName + ".";
+			else
+				linkStr = "take the ramp.";
+
+			return linkStr;
+		}
+		else if(desc.lastType == "primary_link")
+		{
+			if(desc.direction == 0)
+			{
+				desc.icons->push_back(":/images/directions/forward.png");
+				// labels->push_back("");
+			}
+			if(!desc.nextName.isEmpty())
+				linkStr = "take the exit to " + desc.nextName + ".";
+			else
+				linkStr = "take the exit.";
+
+			return linkStr;
+		}
+	}
+
+	QString getdirectionStr(descInfo &desc)
+	{
+		QString directionStr = "";
+
+		switch(desc.direction)
+		{
+			case 0:
+				break;
+			case 1:
+				{
+					desc.icons->push_back(":/images/directions/slightly_right.png");
+					 directionStr = "keep slightly right";
+					break;
+				}
+			case 2:
+			case 3:
+				{
+					desc.icons->push_back(":/images/directions/right.png");
+					directionStr = "turn right";
+					break;
+				}
+			case -1:
+				{
+					desc.icons->push_back(":/images/directions/slightly_left.png");
+					directionStr = "keep slightly left";
+					break;
+				}
+			case -2:
+			case -3:
+				{
+					desc.icons->push_back(":/images/directions/left.png");
+					directionStr = "turn left";
+					break;
+				}
+		}
+
+		return directionStr;
+	}
+
+	QString getContinueStr(descInfo &desc)
+	{
+		QString continueStr = "";
+
+		desc.icons->push_back(":/images/directions/forward.png");
+		if(!desc.name.isEmpty())
+			continueStr = "Continue on " + desc.name + " for ";
+		else
+			continueStr = "Continue for ";
+
+		return continueStr;
+	}
+
+	/* Create distance string in metrical and imperial units */
+	QString getDistStr(descInfo &desc)
+	{
+		QString distStr = "";
+
+		if(desc.units == 0) /* metrical */
+		{
+			if(desc.distance < 100)
+				distStr = QString("%1m").arg((int) desc.distance);
+			else if(desc.distance < 1000)
+				distStr = QString("%1m").arg((int) desc.distance / 10 * 10);
+			else if(desc.distance < 10000)
+				distStr = QString("%1.%2km").arg((int) desc.distance / 1000).arg(((int) desc.distance / 100) % 10);
+			else
+				distStr = QString("%1km").arg((int) desc.distance / 1000);
+		}
+		else if(desc.units == 1) /* imperial */
+		{
+			double unit_conversion = 5280.0/1.6093444;
+
+			double tmpDistance = unit_conversion * desc.distance;
+
+			if(desc.distance < 100)
+				distStr = QString("%1ft").arg((int) tmpDistance);
+			else if(desc.distance < 1000)
+				distStr = QString("%1ft").arg((int) tmpDistance / 10 * 10);
+			else if(desc.distance < 10000)
+				distStr = QString::number(tmpDistance / 5280.0, 'f', 1) + "m";
+			else
+				distStr = QString("%1m").arg((int)(tmpDistance / 5280.0));
+		}
+
+		return distStr;
 	}
 };
 
