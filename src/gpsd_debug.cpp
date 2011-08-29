@@ -65,7 +65,7 @@ void gpsd::callback_gpsd_read()
 	_gpsData.latitude = 0;
 	_gpsData.longitude = 0;
 
-	if(_route && _route->points.length() > _routeIndex + 1)
+	if(_route && _route->points.length() > _routeIndex + 2)
 	{
 
 		if(_count == MAX_SECONDS)

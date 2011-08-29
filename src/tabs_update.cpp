@@ -231,10 +231,11 @@ void MainWindow::callback_tab_statistics_update()
 				ui->routeFrameBottom->setMaximumHeight(100);
 			}
 
-			const RoutePoint &nextpoint = route.points[point.nextDesc]; // CRASH!
+			const RoutePoint &nextpoint = route.points[point.nextDesc];
 
 			// TODO: dynamically calculate distances to next "action" and fill them into the description text
 			// TODO: Don't use distance but distance on edge and compare distance on current edge and next edge
+			// YOU HAVE REACHED THE DESTINATION - wechselt immer hin und her zwischen "noch abbiegen"
 
 			// TODO: calc edge distance lengths in advance from nodes
 			{
@@ -245,8 +246,9 @@ void MainWindow::callback_tab_statistics_update()
 
 				RoutePoint *tmpPoint = NULL;
 
-				if(nextpoint.nextDesc)
+				if(nextpoint.nextDesc >= 0)
 					tmpPoint = &(route.points[nextpoint.nextDesc]);
+				// TODO only 1 field is needed OR let the last entry be "you have reached the destination"
 
 				ui->map->_routing->getInstructions(&nextpoint, tmpPoint, distance, &labels, &icons, ui->map->get_unit());
 
