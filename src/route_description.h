@@ -364,6 +364,7 @@ public:
 	void describe(descInfo &desc)
 	{
 		bool distClose = false; /* true if(desc.distance <= 3000 && desc.distance >= 50) */
+		bool needReturn = false; /* true if special cases don't need end of sentense */
 		QString continueStr; /* "Continue on .... for", "Continue for" */
 		QString distStr; /* Used for distance strings like "500m", "2km", "300ft" */
 		QString directionStr; /* "turn left", "turn right", etc. */
@@ -383,11 +384,12 @@ public:
 		if(desc.distance > 3000.0)
 		{
 			continueStr = getContinueStr(desc);
+			desc.labels->push_back(continueStr + distStr);
+			return;
 		}
 		else if(desc.distance <= 3000 && desc.distance >= 50)
 		{
 			desc.labels->push_back(QString("In %2 ").arg(distStr));
-
 			distClose = true;
 		}
 		else
@@ -395,69 +397,50 @@ public:
 			desc.labels->push_back("");
 		}
 
-			/* Destination point gets special handling */
-			if(desc.lastPoint)
-			{
-				desc.labels->back() += QString("you have reached the destination.");
-				return;
-			}
-
-			/* Special handling of traffic circles */
-			if(desc.exitNumber != 0)
-			{
-				trCircStr = getTrCircStr(desc);
-				desc.labels->back() += trCircStr;
-				return;
-			}
-
-			/* "turn left", "turn right", etc. */
-			directionStr = getdirectionStr(desc);
-
-			/* Special handling of links */
-			if(desc.lastType.endsWith("_link"))
-			{
-				linkStr = getLinkStr(desc);
-				desc.labels->back() += linkStr;
-				return;
-			}
+		/* Destination point gets special handling */
+		if(!needReturn && desc.lastPoint)
+		{
+			desc.labels->back() += QString("you have reached the destination.");
+			needReturn = true;
 		}
 
-
-			/* Destination point gets special handling */
-			if(desc.lastPoint)
-			{
-				desc.labels->back() += QString("You have reached the destination.");
-				return;
-			}
-
-			/* Special handling of traffic circles */
-			if(desc.exitNumber != 0)
-			{
-				trCircStr = getTrCircStr(desc);
-				if(trCircStr.length() > 0)
-					trCircStr[0] = trCircStr[0].toUpper();
-				desc.labels->back() += trCircStr;
-
-				return;
-			}
-
-			/* "turn left", "turn right", etc. */
-			directionStr = getdirectionStr(desc);
-			if(directionStr.length() > 0) // still need to convert first char to uppercase
-				directionStr[0] = directionStr[0].toUpper();
-
-			/* Special handling of links */
-			if(desc.lastType.endsWith("_link"))
-			{
-				linkStr = getLinkStr(desc);
-				// still need to convert first char to uppercase
-				if(linkStr.length() > 0)
-					linkStr[0] = linkStr[0].toUpper();
-				desc.labels->back() += linkStr;
-				return;
-			}
+		/* Special handling of traffic circles */
+		if(!needReturn && desc.exitNumber != 0)
+		{
+			trCircStr = getTrCircStr(desc);
+			desc.labels->back() += trCircStr;
+			needReturn = true;
 		}
 
+		/* "turn left", "turn right", etc. */
+		if(!needReturn)
+		{
+			directionStr = getdirectionStr(desc);
+		}
+
+		/* Special handling of links */
+		if(!needReturn && desc.lastType.endsWith("_link"))
+		{
+			linkStr = getLinkStr(desc);
+			desc.labels->back() += linkStr;
+			needReturn = true;
+		}
+
+		/* First character need to be in uppercase */
+		if(!distClose)
+		{
+			if(desc.labels->back().length() > 0) // still need to convert first char to uppercase
+				desc.labels->back()[0] = desc.labels->back()[0].toUpper();
+		}
+
+		/* Special cases want to early exit */
+		if(needReturn)
+			return;
+
+		/* Add direction string */
+		desc.labels->back() += directionStr;
+
+		/* if a direction string is given --> end the sentense */
 		if(desc.direction != 0)
 		{
 			if(!desc.nextName.isEmpty())
