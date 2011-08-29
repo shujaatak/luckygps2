@@ -197,68 +197,64 @@ void MainWindow::callback_tab_statistics_update()
 		// update route.pos
 		route.getCurrentPosOnRoute(gpsdata.latitude, gpsdata.longitude);
 
+		RoutePoint &point = route.points[route.pos];
+		if((route.pos >= route.points.length() - 1) && (ui->routeFrameBottom->maximumHeight() > 0))
+		{
+			/* hide route label */
+			int left, right, top, bottom;
+			/*
+			ui->routeLayoutBottom->getContentsMargins(&left, &top, &right, &bottom);
+			ui->routeLayoutBottom->setContentsMargins(left, 0, right, bottom);
+			*/
 
-		// A = INDEX OUT OF RANGE CRASH
-		// B = YOU HAVE REACHED THE DESTINATION, aber man muss erst noch hinfahren, man hat nur die Zielstraße erreicht...
+			ui->routeFrameBottom->setMinimumHeight(0);
+			ui->routeFrameBottom->setMaximumHeight(0);
+		}
+		else if(ui->routeFrameBottom->maximumHeight() == 0)
+		{
+			/* enlarge route label */
+			int left, right, top, bottom;
+			/*
+			ui->routeLayoutBottom->getContentsMargins(&left, &top, &right, &bottom);
+			ui->routeLayoutBottom->setContentsMargins(left, 4, right, bottom);
+			*/
 
+			ui->routeFrameBottom->setMinimumHeight(0);
+			ui->routeFrameBottom->setMaximumHeight(100);
+		}
 
 		if(route.points[route.pos].nextDesc >= 0)
 		{
-			const RoutePoint &point = route.points[route.pos];
+			/* Car is on edge driving to this point with a description */
+			RoutePoint *nextpoint = NULL;
 
-			if((route.pos >= route.points.length() - 1) && (ui->routeFrameBottom->maximumHeight() > 0))
-			{
-				/* hide route label */
-				int left, right, top, bottom;
-				/*
-				ui->routeLayoutBottom->getContentsMargins(&left, &top, &right, &bottom);
-				ui->routeLayoutBottom->setContentsMargins(left, 0, right, bottom);
-				*/
-
-				ui->routeFrameBottom->setMinimumHeight(0);
-				ui->routeFrameBottom->setMaximumHeight(0);
-			}
-			else if(ui->routeFrameBottom->maximumHeight() == 0)
-			{
-				/* enlarge route label */
-				int left, right, top, bottom;
-				/*
-				ui->routeLayoutBottom->getContentsMargins(&left, &top, &right, &bottom);
-				ui->routeLayoutBottom->setContentsMargins(left, 4, right, bottom);
-				*/
-
-				ui->routeFrameBottom->setMinimumHeight(0);
-				ui->routeFrameBottom->setMaximumHeight(100);
-			}
-
-			const RoutePoint &nextpoint = route.points[point.nextDesc];
-
-			// TODO: dynamically calculate distances to next "action" and fill them into the description text
-			// TODO: Don't use distance but distance on edge and compare distance on current edge and next edge
-			// YOU HAVE REACHED THE DESTINATION - wechselt immer hin und her zwischen "noch abbiegen"
+			if(point.desc.length() > 0)
+				nextpoint = &point;
+			else
+				nextpoint = &route.points[point.nextDesc];
 
 			// TODO: calc edge distance lengths in advance from nodes
 			{
 				QStringList icons;
 				QStringList labels;
-				double distance = point.length + ABS(fast_distance_deg(gpsdata.latitude, gpsdata.longitude, point.latitude, point.longitude));
+				double distance = ABS(fast_distance_deg(gpsdata.latitude, gpsdata.longitude, point.latitude, point.longitude));
+
+				/* Only add remaining street length if car is not already on final edge */
+				if(nextpoint != &point)
+					distance += point.length;
+
 				distance *= 1000.0;
 
-				RoutePoint *tmpPoint = NULL;
-
-				if(nextpoint.nextDesc >= 0)
-					tmpPoint = &(route.points[nextpoint.nextDesc]);
-				// TODO only 1 field is needed OR let the last entry be "you have reached the destination"
-
-				ui->map->_routing->getInstructions(&nextpoint, tmpPoint, distance, &labels, &icons, ui->map->get_unit());
+				RoutePoint *nextpoint2 = &route.points[nextpoint->nextDesc];
+				ui->map->_routing->getInstructions(nextpoint, nextpoint2, distance, &labels, &icons, ui->map->get_unit());
 
 				if(!labels.empty())
-					ui->label_route_text->setText(labels.last()); // nextpoint.desc
+					ui->label_route_text->setText(labels.last());
 			}
 
-			if(nextpoint.nextDesc >= 0)
+			if(nextpoint->nextDesc >= 0)
 			{
-				ui->label_route_text2->setText(route.points[nextpoint.nextDesc].desc);
+				ui->label_route_text2->setText(route.points[nextpoint->nextDesc].desc);
 			}
 			else
 				ui->label_route_text2->setText("");
