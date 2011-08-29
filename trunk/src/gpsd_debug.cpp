@@ -65,7 +65,7 @@ void gpsd::callback_gpsd_read()
 	_gpsData.latitude = 0;
 	_gpsData.longitude = 0;
 
-	if(_route && _route->points.length() > _routeIndex + 2)
+	if(_route)
 	{
 
 		if(_count == MAX_SECONDS)
@@ -76,19 +76,22 @@ void gpsd::callback_gpsd_read()
 			_routeIndex++;
 		}
 
-		if(_deltaLat == 0)
+		if(_route->points.length() > _routeIndex + 1)
 		{
-			_deltaLat = (_route->points[_routeIndex + 1].latitude - _route->points[_routeIndex].latitude) / MAX_SECONDS;
-		}
-		if(_deltaLon == 0)
-		{
-			_deltaLon = (_route->points[_routeIndex + 1].longitude - _route->points[_routeIndex].longitude) / MAX_SECONDS;
-		}
+			if(_deltaLat == 0)
+			{
+				_deltaLat = (_route->points[_routeIndex + 1].latitude - _route->points[_routeIndex].latitude) / MAX_SECONDS + 0.0000001;
+			}
+			if(_deltaLon == 0)
+			{
+				_deltaLon = (_route->points[_routeIndex + 1].longitude - _route->points[_routeIndex].longitude) / MAX_SECONDS + 0.0000001;
+			}
 
-		_gpsData.latitude = _route->points[_routeIndex].latitude + _count * _deltaLat;
-		_gpsData.longitude = _route->points[_routeIndex].longitude + _count * _deltaLon;
+			_gpsData.latitude = _route->points[_routeIndex].latitude + _count * _deltaLat;
+			_gpsData.longitude = _route->points[_routeIndex].longitude + _count * _deltaLon;
 
-		_count++;
+			_count++;
+		}
 	}
 
 	_gpsData.fix = 3;
