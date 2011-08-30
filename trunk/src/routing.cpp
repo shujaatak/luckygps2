@@ -237,6 +237,7 @@ bool Routing::calculateRoute(Route &route, int units)
 				stream << "exitLink: " << point.exitLink << endl;
 				stream << "enterLink: " << point.enterLink << endl;
 				stream << "lastType: " << point.lastType << endl;
+				stream << "type: " << point.type << endl;
 				stream << "length: " << point.length << endl << endl;
 
 			}
@@ -432,8 +433,8 @@ void Routing::getInstructions(Route &route, QStringList* icons, int units)
 void Routing::getInstructions(RoutePoint *rp, RoutePoint *nextRp, double distance, QStringList* labels, QStringList* icons, int units)
 {
 	if(!_init)
-		return;	
+		return;
 
-	DescriptionGenerator::descInfo desc = {rp->name, rp->nextName, rp->direction, distance, icons, labels, rp->exitNumber, rp->lastType, units, nextRp ? 0 : 1, rp->exitLink};
+	DescriptionGenerator::descInfo desc = {rp->name, rp->nextName, rp->direction, distance, icons, labels, rp->exitNumber, rp->lastType, units, nextRp ? 0 : 1, rp->exitLink, rp->enterLink, rp->type};
 	_descGenerator->describe(desc);
 }

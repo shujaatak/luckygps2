@@ -22,7 +22,7 @@
 #include <QIODevice>
 #include <QList>
 
-#define MAX_SECONDS 20
+#define MAX_SECONDS 10
 
 gpsd::gpsd(QObject *parent, gps_settings_t &settings) : QObject(parent)
 {

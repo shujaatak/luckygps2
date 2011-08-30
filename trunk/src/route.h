@@ -68,6 +68,7 @@ public:
 
 	/* Data to create an updated Description */
 	int exitNumber;
+	QString type;
 	QString lastType;
 	QString name;
 	QString nextName;

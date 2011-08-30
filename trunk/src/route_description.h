@@ -32,6 +32,8 @@ public:
 		int units;
 		int lastPoint;
 		int exitLink;
+		int enterLink;
+		QString &type;
 	} descInfo;
 
 	struct EdgeInfo {
@@ -44,7 +46,6 @@ public:
 		int exitNumber;
 		int enterLink;
 		int exitLink;
-		bool link; /* motorway_link, primary_link, etc. */
 	} EdgeInfo;
 
 	void reset(struct EdgeInfo &info)
@@ -56,7 +57,7 @@ public:
 		info.branchingPossible = 0;
 		info.enterLink = 0;
 		info.exitLink = 0;
-		info.link = 0;
+		info.enterLink = 0;
 	}
 
 	void descriptions(Route &route, IRouter* router, QStringList* icons, QVector< IRouter::Node > pathNodes, QVector< IRouter::Edge > pathEdges, int units, int maxSeconds = INT_MAX)
@@ -127,10 +128,17 @@ public:
 							break;
 						}
 					}
-					info.link = 1;
-					info.exitLink = 1;
+
 					breakDescription = true;
+
+					if(!info.type.endsWith("_link"))
+						info.enterLink = 1;
 				}
+			}
+			else if(!edgeType.endsWith("_link") && info.type.endsWith("_link"))
+			{
+				info.exitLink = 1;
+				info.enterLink = 0; // nbot necessary?
 			}
 
 			/* Support traffic circle: Generate description on entering/exit of a traffic circle */
@@ -192,8 +200,9 @@ public:
 
 				point.enterLink = info.enterLink;
 				point.exitLink = info.exitLink;
+				point.type = edgeType;
 
-				descInfo desc = {info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 0, point.exitLink};
+				descInfo desc = {info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 0, point.exitLink, point.enterLink, point.type};
 				describe(desc);
 
 				point.desc = labels.last();
@@ -235,7 +244,7 @@ public:
 						}
 
 						qDebug() << "Found traffic circle to adapt description info.";
-						descInfo desc = {tmpPoint->name, tmpPoint->nextName, tmpPoint->direction, tmpPoint2->length*1000.0, icons, &labels, tmpPoint->exitNumber, tmpPoint->lastType, units, 0, tmpPoint->exitLink};
+						descInfo desc = {tmpPoint->name, tmpPoint->nextName, tmpPoint->direction, tmpPoint2->length*1000.0, icons, &labels, tmpPoint->exitNumber, tmpPoint->lastType, units, 0, tmpPoint->exitLink, tmpPoint->enterLink, tmpPoint->type};
 						describe(desc);
 						tmpPoint->desc = labels.last();
 					}
@@ -257,8 +266,9 @@ public:
 		// if(seconds < maxSeconds)
 		{
 			QStringList labels;
-			QString nextName;
+			QString nextName, nextType;
 			bool nameAvailable = router->GetName(&nextName, pathEdges.last().name);
+			bool typeAvailable = router->GetType(&nextType, pathEdges.last().type);
 			RoutePoint &point = route.points.last();
 			RoutePoint &oldPoint = route.points[descList.last()];
 			point.length = 0.0;
@@ -278,7 +288,7 @@ public:
 			point.enterLink = info.enterLink;
 			point.exitLink = info.exitLink;
 
-			descInfo desc = {info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 1, point.exitLink};
+			descInfo desc = {info.name, nextName, info.direction, oldPoint.length*1000.0, icons, &labels, info.exitNumber, info.type, units, 1, point.exitLink, point.enterLink, nextType};
 			describe(desc);
 
 			point.desc = labels.last();
@@ -287,6 +297,7 @@ public:
 			point.lastType = info.type;
 			point.name = info.name;
 			point.nextName = nextName;
+			point.type = nextType;
 		}
 
 		/* now fill additional information about e.g. descriptions */
@@ -363,7 +374,7 @@ public:
 
 	void describe(descInfo &desc)
 	{
-		bool distClose = false; /* true if(desc.distance <= 3000 && desc.distance >= 50) */
+		bool distClose = true; /* true if(desc.distance <= 3000 && desc.distance >= 50) */
 		bool needReturn = false; /* true if special cases don't need end of sentense */
 		QString continueStr; /* "Continue on .... for", "Continue for" */
 		QString distStr; /* Used for distance strings like "500m", "2km", "300ft" */
@@ -390,7 +401,7 @@ public:
 		else if(desc.distance <= 3000 && desc.distance >= 50)
 		{
 			desc.labels->push_back(QString("In %2 ").arg(distStr));
-			distClose = true;
+			distClose = false;
 		}
 		else
 		{
@@ -412,22 +423,24 @@ public:
 			needReturn = true;
 		}
 
-		/* "turn left", "turn right", etc. */
-		if(!needReturn)
-		{
-			directionStr = getdirectionStr(desc);
-		}
-
 		/* Special handling of links */
-		if(!needReturn && desc.lastType.endsWith("_link"))
+		if(!needReturn && (desc.lastType.endsWith("_link") ||
+				(desc.type.endsWith("_link"))))
 		{
 			linkStr = getLinkStr(desc);
 			desc.labels->back() += linkStr;
 			needReturn = true;
 		}
 
+		/* "turn left", "turn right", etc. */
+		if(!needReturn)
+		{
+			directionStr = getdirectionStr(desc);
+			desc.labels->back() += directionStr;
+		}
+
 		/* First character need to be in uppercase */
-		if(!distClose)
+		if(distClose)
 		{
 			if(desc.labels->back().length() > 0) // still need to convert first char to uppercase
 				desc.labels->back()[0] = desc.labels->back()[0].toUpper();
@@ -436,9 +449,6 @@ public:
 		/* Special cases want to early exit */
 		if(needReturn)
 			return;
-
-		/* Add direction string */
-		desc.labels->back() += directionStr;
 
 		/* if a direction string is given --> end the sentense */
 		if(desc.direction != 0)
@@ -482,34 +492,29 @@ public:
 	{
 		QString linkStr = "";
 
-		if(desc.lastType == "motorway_link")
+		if(desc.enterLink)
 		{
-			if(desc.direction == 0)
-			{
-				desc.icons->push_back(":/images/directions/forward.png");
-									// labels->push_back("");
-			}
 			if(!desc.nextName.isEmpty())
 				linkStr = "take the ramp towards " + desc.nextName + ".";
 			else
 				linkStr = "take the ramp.";
-
-			return linkStr;
 		}
-		else if(desc.lastType == "primary_link")
+		else if(desc.exitLink)
 		{
-			if(desc.direction == 0)
-			{
-				desc.icons->push_back(":/images/directions/forward.png");
-				// labels->push_back("");
-			}
 			if(!desc.nextName.isEmpty())
 				linkStr = "take the exit to " + desc.nextName + ".";
 			else
 				linkStr = "take the exit.";
-
-			return linkStr;
 		}
+
+		if(desc.direction == 0)
+		{
+			desc.icons->push_back(":/images/directions/forward.png");
+								// labels->push_back("");
+		}
+
+		return linkStr;
+
 	}
 
 	QString getdirectionStr(descInfo &desc)
