@@ -132,13 +132,23 @@ public:
 					breakDescription = true;
 
 					if(!info.type.endsWith("_link"))
-						info.enterLink = 1;
+					{
+						QString oldEdge = info.type; /* e.g. "primary" */
+						QStringList splitNewEdge = edgeType.split("_"); /* e.g. "primary_link" */
+						if(splitNewEdge.length() > 1 && (oldEdge.toLower() == splitNewEdge[0].toLower()))
+							 info.enterLink = 1;
+						else
+							info.exitLink = 1;
+					}
+					else
+					{
+						// Not supported yet
+						// When switching links with differtent names, ideally would be something like:
+						// "Hold left"
+
+						breakDescription = false;
+					}
 				}
-			}
-			else if(!edgeType.endsWith("_link") && info.type.endsWith("_link"))
-			{
-				info.exitLink = 1;
-				info.enterLink = 0; // nbot necessary?
 			}
 
 			/* Support traffic circle: Generate description on entering/exit of a traffic circle */
@@ -424,8 +434,9 @@ public:
 		}
 
 		/* Special handling of links */
-		if(!needReturn && (desc.lastType.endsWith("_link") ||
-				(desc.type.endsWith("_link"))))
+		if(!needReturn &&
+				((!desc.lastType.endsWith("_link") && (desc.type.endsWith("_link"))) ||
+				 (desc.lastType.endsWith("_link") && (desc.type.endsWith("_link")))))
 		{
 			linkStr = getLinkStr(desc);
 			desc.labels->back() += linkStr;
