@@ -31,7 +31,7 @@ static QString printStringTable( QStringList table, int width = 2, QString heade
 {
 	if ( table.size() % width != 0 ) {
 		qWarning() << "printTable: table size does not match width";
-		return false;
+		return QString("");
 	}
 	assert( width > 0 );
 

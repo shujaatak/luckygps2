@@ -54,10 +54,19 @@ void OSMImporter::setRequiredTags( IEntityReader *reader )
 	list.push_back( "place" );
 	list.push_back( "population" );
 	list.push_back( "barrier" );
+
 	for ( int i = 0; i < m_settings.languageSettings.size(); i++ )
 		list.push_back( m_settings.languageSettings[i] );
+
 	for ( int i = 0; i < m_profile.accessList.size(); i++ )
 		list.push_back( m_profile.accessList[i] );
+
+	list.push_back("addr:housenumber");
+	list.push_back("addr:street");
+	list.push_back("addr:postcode");
+	list.push_back("addr:city");
+	list.push_back("addr:country");
+
 	for ( int i = 0; i < m_profile.nodeModificators.size(); i++ ) {
 		int index = list.indexOf( m_profile.nodeModificators[i].key );
 		if ( index == -1 ) {
@@ -66,10 +75,6 @@ void OSMImporter::setRequiredTags( IEntityReader *reader )
 		}
 		m_nodeModificatorIDs.push_back( index );
 	}
-	list.push_back("addr:housenumber");
-	list.push_back("addr:street");
-	list.push_back("addr:city");
-	list.push_back("addr:country");
 	reader->setNodeTags( list );
 
 	list.clear();
@@ -346,9 +351,14 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 					m_statistics.numberOfPlaces++;
 				}
 
-				if( node.housenumber >= 0)
+				if( node.housenumber.length() > 0)
 				{
-					hnData << inputNode.coordinate.latitude << inputNode.coordinate.longitude << node.city << node.streetname << node.housenumber;
+					if(node.city.isEmpty())
+						node.city = "-1";
+					if(node.country.isEmpty())
+						node.country = "-1";
+
+					hnData << inputNode.coordinate.latitude << inputNode.coordinate.longitude << node.housenumber << node.streetname << node.postcode << node.city << node.country;
 				}
 
 				continue;
@@ -1298,7 +1308,8 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 	node->penalty = 0;
 	node->access = true;
 	node->accessPriority = m_profile.accessList.size();
-	node->housenumber = -1;
+	node->housenumber.clear();
+	node->postcode = -1;
 	node->streetname.clear();
 	node->city.clear();
 	node->country.clear();
@@ -1364,31 +1375,36 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 		key -= m_profile.accessList.size();
 		if ( key == 0) /* addr:housenumber */
 		{
-			bool ok;
-			node->housenumber = value.toInt(&ok);
+			node->housenumber = value;
 		}
 		else if ( key == 1) /* addr:street */
 		{
 			node->streetname = value;
 		}
-		else if ( key == 2) /* addr:city */
+		else if ( key == 2) /* addr:postcode */
+		{
+			bool ok;
+			node->postcode = value.toInt(&ok);
+		}
+		else if ( key == 3) /* addr:city */
 		{
 			/* not supported yet */
 			node->city = value;
 		}
-		else if ( key == 3) /* addr:country */
+		else if ( key == 4) /* addr:country */
 		{
 			/* not supported yet */
 			node->country = value;
 		}
 
-		/* possible stuff: addr:postcode */
+		/* UNSED: m_profile.nodeModificators */
 	}
 
-	/* addr:housenumbers fix: use only nodes where a street name is given */
-	if(node->streetname.length() == 0)
+	/* addr:housenumbers fix: use only nodes where a street name and a city identifier (name/postcode) is given */
+	if(node->streetname.length() == 0 || (node->city.length() == 0 && node->postcode == -1))
 	{
-		node->housenumber = 0;
+		node->housenumber.clear();
+		node->postcode = -1;
 		node->city.clear();
 		node->country.clear();
 	}
