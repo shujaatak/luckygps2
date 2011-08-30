@@ -152,6 +152,11 @@ protected:
 
 		bool access;
 		int accessPriority;
+
+		unsigned int housenumber;
+		QString streetname; /* street name */
+		QString city;
+		QString country;
 	};
 
 	struct Restriction {
