@@ -51,8 +51,6 @@ osmAdressManager::osmAdressManager()
 
 bool osmAdressManager::Preprocess(QString dataDir)
 {
-	return true;
-
 	QDataStream hnData;
 	QFile hnFile( "/tmp/OSM Importer_hn" ); /* house numbers filename + "_hn"  */
 	if ( !hnFile.open(QIODevice::ReadOnly) )
@@ -109,7 +107,6 @@ bool osmAdressManager::Preprocess(QString dataDir)
 				break;
 			}
 
-
 			sqlite3_bind_int(stmt, 1, osm_id);
 			sqlite3_bind_double(stmt, 2, lat);
 			sqlite3_bind_double(stmt, 3, lon);
@@ -135,11 +132,6 @@ bool osmAdressManager::Preprocess(QString dataDir)
 
 		qDebug() << "Imported adress nodes: " << count;
 
-		// read 100 nodes into memory
-
-		// save into db
-
-
 
 		// TODO: add interpolations
 		// TODO: add housenumbers from buildings/areas
@@ -149,7 +141,26 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	return true;
 }
 
+bool osmAdressManager::getHousenumbers(QString street)
+{
+	sqlite3 *_db;
+	QString filename = "/home/daniel/hn.sqlite";
+	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
+	{
+		qDebug() << "Cannot open " << filename.toUtf8().constData();
 
+		if(_db)
+		{
+			sqlite3_close(_db);
+			_db = NULL;
+		}
+
+		return false;
+	}
+	else
+	{
+	}
+}
 
 
 
