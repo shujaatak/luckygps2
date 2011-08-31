@@ -542,7 +542,7 @@ void MainWindow::on_button_calc_route_clicked()
 {
 	if(ui->map->_routing->checkPos())
 	{
-		bool ret = ui->map->_routing->calculateRoute(ui->map->_route, ui->map->get_unit());
+		bool ret = ui->map->_routing->calculateRoute(ui->map->_route, ui->map->get_unit(), ui->editRoutingStartHn->text(), ui->editRoutingDestHn->text());
 		if(ret)
 		{
 			/* get zoom which covers whole route + center it + deactivate autocenter */

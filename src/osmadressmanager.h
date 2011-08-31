@@ -40,7 +40,7 @@ public:
 	osmAdressManager();
 
 	bool Preprocess(QString dataDir);
-	bool getHousenumbers(QString streetname, QList<HouseNumber> &hnList, IAddressLookup *addressLookupPlugins, size_t placeID);
+	static bool getHousenumbers(QString streetname, QList<HouseNumber> &hnList, IAddressLookup *addressLookupPlugins, size_t placeID);
 
 
 };

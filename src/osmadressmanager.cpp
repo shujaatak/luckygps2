@@ -209,13 +209,17 @@ bool osmAdressManager::getHousenumbers(QString streetname, QList<HouseNumber> &h
 	gpsMax.latitude += 0.001 * correctionLat;
 	gpsMax.longitude += 0.001 * correctionLon;
 
-	QString sql = "SELECT housenumber, latitude, longitude FROM hn WHERE street=? ";
+	QString sql = "SELECT housenumber, lat, lon FROM hn WHERE street=? ";
 	sql += "AND hn.osm_id IN (SELECT osm_id FROM hn_idx WHERE minLat>=%1 AND maxLat<=%2 AND minLon>=%3 AND maxLon<=%4);";
 
 	sql = sql.arg(gpsMin.latitude).arg(gpsMax.latitude).arg(gpsMin.longitude).arg(gpsMax.longitude);
 
+	qDebug() << sql;
+
 	if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) == SQLITE_OK)
 	{
+		sqlite3_bind_text (stmt, 1, streetname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+
 		while(sqlite3_step(stmt) == SQLITE_ROW)
 		{
 			QString hn = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)),sqlite3_column_bytes(stmt, 0) / sizeof(char));
