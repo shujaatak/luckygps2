@@ -39,7 +39,7 @@ public:
 	bool suggestionClicked(QString text, int typeID);
 	bool gpsEntered(QString text, int idType);
 
-	bool calculateRoute(Route &route, int units);
+	bool calculateRoute(Route &route, int units, QString hnStart, QString hnDest);
 	void getInstructions(RoutePoint *rp, RoutePoint *nextRp, double distance, QStringList* labels, QStringList* icons, int units);
 
 	void setPos(double lat, double lon, int idType) { _pos[idType][0] = lat; _pos[idType][1] = lon; }
@@ -67,6 +67,9 @@ private:
 
 	size_t _startPlaceID;
 	size_t _destPlaceID;
+
+	QString _startStreet;
+	QString _destStreet;
 
 	bool _init;
 };

@@ -1941,7 +1941,7 @@
                                           <item>
                                            <widget class="QLineEdit" name="editRoutingStartHn">
                                             <property name="enabled">
-                                             <bool>false</bool>
+                                             <bool>true</bool>
                                             </property>
                                            </widget>
                                           </item>
@@ -2208,7 +2208,7 @@
                                           <item>
                                            <widget class="QLineEdit" name="editRoutingDestHn">
                                             <property name="enabled">
-                                             <bool>false</bool>
+                                             <bool>true</bool>
                                             </property>
                                            </widget>
                                           </item>

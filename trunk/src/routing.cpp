@@ -25,6 +25,9 @@
 #include <QFile>
 #include <QTextStream>
 
+#include "osmadressmanager.h"
+
+
 Routing::Routing()
 {
 	_gpsLookup = NULL,
@@ -190,10 +193,41 @@ int Routing::loadPlugins(QString dataDirectory)
 	return true;
 }
 
-bool Routing::calculateRoute(Route &route, int units)
+bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString hnDest)
 {
 	if(!_init)
 		return false;
+
+	/* HACK */
+	// Check if house number is given, too */
+	if(!hnStart.isEmpty())
+	{
+		QList<HouseNumber> hnList;
+		bool ret = osmAdressManager::getHousenumbers(_startStreet, hnList, _addressLookup, _startPlaceID);
+
+		if(ret && !hnList.isEmpty())
+		{
+			_pos[0][0] = hnList[0].latitude;
+			_pos[0][1] = hnList[0].longitude;
+
+			qDebug() << "Found house number! (start)";
+		}
+	}
+
+	if(!hnDest.isEmpty())
+	{
+		QList<HouseNumber> hnList;
+		bool ret = osmAdressManager::getHousenumbers(_destStreet, hnList, _addressLookup, _destPlaceID);
+
+		if(ret && !hnList.isEmpty())
+		{
+			_pos[1][0] = hnList[0].latitude;
+			_pos[1][1] = hnList[0].longitude;
+
+			qDebug() << "Found house number! (dest)";
+		}
+	}
+
 
 	double lookupRadius = 10000; // 10km should suffice for most applications
 	GPSCoordinate source(_pos[0][0], _pos[0][1]);
@@ -366,9 +400,15 @@ bool Routing::suggestionClicked(QString text, int typeID)
 		int m_placeID;
 
 		if(typeID == ID_START_STREET)
+		{
 			m_placeID = _startPlaceID;
+			_startStreet = text;
+		}
 		else
+		{
 			m_placeID = _destPlaceID;
+			_destStreet = text;
+		}
 
 		if (!addressLookup->GetStreetData(m_placeID, text, &segmentLength, &coordinates))
 			return false;
