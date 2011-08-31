@@ -83,6 +83,9 @@ bool osmAdressManager::Preprocess(QString dataDir)
 		/* prepare insertion query */
 		sqlite3_stmt *stmt = NULL;
 		QString sql = "INSERT OR IGNORE INTO hn VALUES(?, ?, ?, ?, ?, ?, ?, ?);";
+
+		sqlite3_exec (_db, "BEGIN;", NULL, NULL, NULL);
+
 		if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) != SQLITE_OK)
 		{
 			sql = "Could not prepare statement: " + sql;
@@ -100,12 +103,9 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			QString housenumber, streetname, city, country;
 
 			hnData >> osm_id >> lat >> lon >> housenumber >> streetname >> postcode >> city >> country;
-			qDebug() << osm_id << lat << lon << housenumber << streetname << postcode << city << country;
 
 			if ( hnData.status() == QDataStream::ReadPastEnd )
-			{
 				break;
-			}
 
 			sqlite3_bind_int(stmt, 1, osm_id);
 			sqlite3_bind_double(stmt, 2, lat);
@@ -129,6 +129,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 		}
 
 		sqlite3_finalize(stmt);
+		sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL);
 
 		qDebug() << "Imported adress nodes: " << count;
 

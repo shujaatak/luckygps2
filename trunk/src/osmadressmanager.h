@@ -29,6 +29,7 @@ public:
     osmAdressManager();
 
 	bool Preprocess(QString dataDir);
+	bool getHousenumbers(QString street);
 };
 
 #endif // OSMADRESSMANAGER_H
