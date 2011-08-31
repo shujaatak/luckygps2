@@ -117,6 +117,9 @@ bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int l
 	/* Address lookup */
 	result = addressLookupPlugins->Preprocess( importer, dataDir);
 
+	/* House number lookup */
+	result = hn->Preprocess(dataDir);
+
 	importer->DeleteTemporaryFiles();
 
 	return result;
