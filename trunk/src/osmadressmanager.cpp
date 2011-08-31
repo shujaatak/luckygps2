@@ -133,6 +133,10 @@ bool osmAdressManager::Preprocess(QString dataDir)
 
 		qDebug() << "Imported adress nodes: " << count;
 
+		/* Create RTree index */
+		sqlite3_exec(_db, "CREATE VIRTUAL TABLE hn_idx USING RTREE(osm_id, minLat, maxLat, minLon, maxLon);", 0, NULL, NULL);
+		sqlite3_exec(_db, "INSERT INTO hn_idx SELECT osm_id, lat, lat, lon, lon FROM hn;", 0, NULL, NULL);
+
 
 		// TODO: add interpolations
 		// TODO: add housenumbers from buildings/areas
