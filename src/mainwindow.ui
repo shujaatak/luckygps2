@@ -105,7 +105,7 @@
                 <string/>
                </property>
                <property name="icon">
-                <iconset resource="luckygps.qrc">
+                <iconset resource="../luckygps.qrc">
                  <normaloff>:/icons/icon-zoom-in-big.png</normaloff>:/icons/icon-zoom-in-big.png</iconset>
                </property>
                <property name="iconSize">
@@ -134,7 +134,7 @@
                 <string/>
                </property>
                <property name="icon">
-                <iconset resource="luckygps.qrc">
+                <iconset resource="../luckygps.qrc">
                  <normaloff>:/icons/icon-zoom-out-big.png</normaloff>:/icons/icon-zoom-out-big.png</iconset>
                </property>
                <property name="iconSize">
@@ -160,7 +160,7 @@
                 <string/>
                </property>
                <property name="icon">
-                <iconset resource="luckygps.qrc">
+                <iconset resource="../luckygps.qrc">
                  <normaloff>:/icons/icon-center-big.png</normaloff>:/icons/icon-center-big.png</iconset>
                </property>
                <property name="iconSize">
@@ -198,7 +198,7 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="MapWidget" name="map">
+              <widget class="MapWidget" name="map" native="true">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                  <horstretch>0</horstretch>
@@ -333,7 +333,7 @@
                             <string>...</string>
                            </property>
                            <property name="icon">
-                            <iconset resource="luckygps.qrc">
+                            <iconset resource="../luckygps.qrc">
                              <normaloff>:/icons/icon-zoom-in-big.png</normaloff>:/icons/icon-zoom-in-big.png</iconset>
                            </property>
                            <property name="iconSize">
@@ -365,7 +365,7 @@
                             <string>...</string>
                            </property>
                            <property name="icon">
-                            <iconset resource="luckygps.qrc">
+                            <iconset resource="../luckygps.qrc">
                              <normaloff>:/icons/icon-zoom-out-big.png</normaloff>:/icons/icon-zoom-out-big.png</iconset>
                            </property>
                            <property name="iconSize">
@@ -403,7 +403,7 @@
                             <string>C</string>
                            </property>
                            <property name="icon">
-                            <iconset resource="luckygps.qrc">
+                            <iconset resource="../luckygps.qrc">
                              <normaloff>:/icons/icon-center-big.png</normaloff>:/icons/icon-center-big.png</iconset>
                            </property>
                            <property name="iconSize">
@@ -490,7 +490,7 @@
                             <string>GPSTrack</string>
                            </property>
                            <property name="icon">
-                            <iconset resource="luckygps.qrc">
+                            <iconset resource="../luckygps.qrc">
                              <normaloff>:/icons/trackugps.png</normaloff>:/icons/trackugps.png</iconset>
                            </property>
                            <property name="iconSize">
@@ -528,7 +528,7 @@
                             <string>NAV</string>
                            </property>
                            <property name="icon">
-                            <iconset resource="luckygps.qrc">
+                            <iconset resource="../luckygps.qrc">
                              <normaloff>:/icons/navigation.png</normaloff>:/icons/navigation.png</iconset>
                            </property>
                            <property name="iconSize">
@@ -569,7 +569,7 @@
                             <string>CONFIG</string>
                            </property>
                            <property name="icon">
-                            <iconset resource="luckygps.qrc">
+                            <iconset resource="../luckygps.qrc">
                              <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
                            </property>
                            <property name="iconSize">
@@ -770,7 +770,7 @@
                               <string/>
                              </property>
                              <property name="pixmap">
-                              <pixmap resource="luckygps.qrc">:/icons/position-direction.png</pixmap>
+                              <pixmap resource="../luckygps.qrc">:/icons/position-direction.png</pixmap>
                              </property>
                             </widget>
                            </item>
@@ -832,7 +832,7 @@
                               <string/>
                              </property>
                              <property name="pixmap">
-                              <pixmap resource="luckygps.qrc">:/icons/position-direction.png</pixmap>
+                              <pixmap resource="../luckygps.qrc">:/icons/position-direction.png</pixmap>
                              </property>
                             </widget>
                            </item>
@@ -1041,6 +1041,9 @@
                             <bool>true</bool>
                            </property>
                            <layout class="QVBoxLayout" name="verticalLayout_21">
+                            <property name="leftMargin">
+                             <number>5</number>
+                            </property>
                             <item>
                              <layout class="QVBoxLayout" name="verticalLayout_7">
                               <property name="spacing">
@@ -1372,6 +1375,9 @@
                             <property name="spacing">
                              <number>6</number>
                             </property>
+                            <property name="leftMargin">
+                             <number>5</number>
+                            </property>
                             <property name="topMargin">
                              <number>9</number>
                             </property>
@@ -1485,6 +1491,9 @@
                             <bool>true</bool>
                            </property>
                            <layout class="QVBoxLayout" name="verticalLayout_24">
+                            <property name="leftMargin">
+                             <number>5</number>
+                            </property>
                             <item>
                              <layout class="QVBoxLayout" name="verticalLayout_6">
                               <property name="bottomMargin">
@@ -1521,7 +1530,7 @@
                                    <string/>
                                   </property>
                                   <property name="icon">
-                                   <iconset resource="luckygps.qrc">
+                                   <iconset resource="../luckygps.qrc">
                                     <normaloff>:/icons/youarehere.png</normaloff>:/icons/youarehere.png</iconset>
                                   </property>
                                  </widget>
@@ -1623,7 +1632,7 @@
                            </property>
                            <layout class="QVBoxLayout" name="verticalLayout_12">
                             <property name="leftMargin">
-                             <number>9</number>
+                             <number>5</number>
                             </property>
                             <property name="rightMargin">
                              <number>9</number>
@@ -1662,6 +1671,9 @@
                             <bool>true</bool>
                            </property>
                            <layout class="QVBoxLayout" name="verticalLayout_32">
+                            <property name="leftMargin">
+                             <number>5</number>
+                            </property>
                             <property name="rightMargin">
                              <number>9</number>
                             </property>
@@ -1725,7 +1737,7 @@
                              <number>6</number>
                             </property>
                             <property name="leftMargin">
-                             <number>9</number>
+                             <number>5</number>
                             </property>
                             <property name="topMargin">
                              <number>9</number>
@@ -1755,6 +1767,9 @@
                                 <string>Start</string>
                                </attribute>
                                <layout class="QVBoxLayout" name="verticalLayout_3">
+                                <property name="margin">
+                                 <number>5</number>
+                                </property>
                                 <item>
                                  <layout class="QHBoxLayout" name="horizontalLayout_46">
                                   <property name="bottomMargin">
@@ -1897,23 +1912,40 @@
                                          </widget>
                                         </item>
                                         <item>
-                                         <widget class="QLineEdit" name="editRoutingStartStreet">
-                                          <property name="enabled">
-                                           <bool>false</bool>
+                                         <layout class="QHBoxLayout" name="horizontalLayout_41">
+                                          <property name="spacing">
+                                           <number>0</number>
                                           </property>
-                                          <property name="sizePolicy">
-                                           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-                                            <horstretch>0</horstretch>
-                                            <verstretch>0</verstretch>
-                                           </sizepolicy>
+                                          <property name="topMargin">
+                                           <number>0</number>
                                           </property>
-                                          <property name="minimumSize">
-                                           <size>
-                                            <width>0</width>
-                                            <height>0</height>
-                                           </size>
-                                          </property>
-                                         </widget>
+                                          <item>
+                                           <widget class="QLineEdit" name="editRoutingStartStreet">
+                                            <property name="enabled">
+                                             <bool>false</bool>
+                                            </property>
+                                            <property name="sizePolicy">
+                                             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                                              <horstretch>0</horstretch>
+                                              <verstretch>0</verstretch>
+                                             </sizepolicy>
+                                            </property>
+                                            <property name="minimumSize">
+                                             <size>
+                                              <width>0</width>
+                                              <height>0</height>
+                                             </size>
+                                            </property>
+                                           </widget>
+                                          </item>
+                                          <item>
+                                           <widget class="QLineEdit" name="editRoutingStartHn">
+                                            <property name="enabled">
+                                             <bool>false</bool>
+                                            </property>
+                                           </widget>
+                                          </item>
+                                         </layout>
                                         </item>
                                        </layout>
                                       </item>
@@ -1977,7 +2009,7 @@
                                          <string/>
                                         </property>
                                         <property name="icon">
-                                         <iconset resource="luckygps.qrc">
+                                         <iconset resource="../luckygps.qrc">
                                           <normaloff>:/icons/youarehere.png</normaloff>:/icons/youarehere.png</iconset>
                                         </property>
                                        </widget>
@@ -2008,6 +2040,9 @@
                                 <string>Destination</string>
                                </attribute>
                                <layout class="QVBoxLayout" name="verticalLayout_5">
+                                <property name="margin">
+                                 <number>5</number>
+                                </property>
                                 <item>
                                  <layout class="QHBoxLayout" name="horizontalLayout_48">
                                   <property name="bottomMargin">
@@ -2144,23 +2179,40 @@
                                          </widget>
                                         </item>
                                         <item>
-                                         <widget class="QLineEdit" name="editRoutingDestStreet">
-                                          <property name="enabled">
-                                           <bool>false</bool>
+                                         <layout class="QHBoxLayout" name="horizontalLayout_47">
+                                          <property name="spacing">
+                                           <number>0</number>
                                           </property>
-                                          <property name="sizePolicy">
-                                           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-                                            <horstretch>0</horstretch>
-                                            <verstretch>0</verstretch>
-                                           </sizepolicy>
+                                          <property name="topMargin">
+                                           <number>0</number>
                                           </property>
-                                          <property name="minimumSize">
-                                           <size>
-                                            <width>0</width>
-                                            <height>0</height>
-                                           </size>
-                                          </property>
-                                         </widget>
+                                          <item>
+                                           <widget class="QLineEdit" name="editRoutingDestStreet">
+                                            <property name="enabled">
+                                             <bool>false</bool>
+                                            </property>
+                                            <property name="sizePolicy">
+                                             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                                              <horstretch>0</horstretch>
+                                              <verstretch>0</verstretch>
+                                             </sizepolicy>
+                                            </property>
+                                            <property name="minimumSize">
+                                             <size>
+                                              <width>0</width>
+                                              <height>0</height>
+                                             </size>
+                                            </property>
+                                           </widget>
+                                          </item>
+                                          <item>
+                                           <widget class="QLineEdit" name="editRoutingDestHn">
+                                            <property name="enabled">
+                                             <bool>false</bool>
+                                            </property>
+                                           </widget>
+                                          </item>
+                                         </layout>
                                         </item>
                                        </layout>
                                       </item>
@@ -2212,7 +2264,7 @@
                                          <string/>
                                         </property>
                                         <property name="icon">
-                                         <iconset resource="luckygps.qrc">
+                                         <iconset resource="../luckygps.qrc">
                                           <normaloff>:/icons/youarehere.png</normaloff>:/icons/youarehere.png</iconset>
                                         </property>
                                        </widget>
@@ -2363,7 +2415,16 @@
                             <bool>true</bool>
                            </property>
                            <layout class="QVBoxLayout" name="verticalLayout_26">
-                            <property name="margin">
+                            <property name="leftMargin">
+                             <number>5</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>9</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>9</number>
+                            </property>
+                            <property name="bottomMargin">
                              <number>9</number>
                             </property>
                             <item>
@@ -2636,6 +2697,9 @@
                                     <string>Device Settings</string>
                                    </property>
                                    <layout class="QVBoxLayout" name="verticalLayout_37">
+                                    <property name="leftMargin">
+                                     <number>5</number>
+                                    </property>
                                     <item>
                                      <layout class="QHBoxLayout" name="horizontalLayout_14">
                                       <item>
@@ -3092,7 +3156,7 @@
                                  <enum>QLayout::SetDefaultConstraint</enum>
                                 </property>
                                 <property name="leftMargin">
-                                 <number>9</number>
+                                 <number>5</number>
                                 </property>
                                 <property name="topMargin">
                                  <number>9</number>
@@ -3152,7 +3216,7 @@
                                      <string/>
                                     </property>
                                     <property name="icon">
-                                     <iconset resource="luckygps.qrc">
+                                     <iconset resource="../luckygps.qrc">
                                       <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                                     </property>
                                    </widget>
@@ -3316,7 +3380,7 @@
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_33">
                                 <property name="leftMargin">
-                                 <number>9</number>
+                                 <number>5</number>
                                 </property>
                                 <property name="topMargin">
                                  <number>9</number>
@@ -3463,7 +3527,7 @@
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_22">
                                 <property name="leftMargin">
-                                 <number>9</number>
+                                 <number>5</number>
                                 </property>
                                 <property name="topMargin">
                                  <number>9</number>
@@ -3514,7 +3578,7 @@
                                      <string/>
                                     </property>
                                     <property name="icon">
-                                     <iconset resource="luckygps.qrc">
+                                     <iconset resource="../luckygps.qrc">
                                       <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                                     </property>
                                    </widget>
@@ -3621,7 +3685,7 @@
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_34">
                                 <property name="leftMargin">
-                                 <number>9</number>
+                                 <number>5</number>
                                 </property>
                                 <property name="topMargin">
                                  <number>9</number>
@@ -3669,7 +3733,7 @@
                                      <string/>
                                     </property>
                                     <property name="icon">
-                                     <iconset resource="luckygps.qrc">
+                                     <iconset resource="../luckygps.qrc">
                                       <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                                     </property>
                                    </widget>
@@ -3715,7 +3779,7 @@
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_10">
                                 <property name="leftMargin">
-                                 <number>9</number>
+                                 <number>5</number>
                                 </property>
                                 <property name="topMargin">
                                  <number>9</number>
@@ -3752,6 +3816,9 @@
                                 <string>Units</string>
                                </property>
                                <layout class="QHBoxLayout" name="horizontalLayout_29">
+                                <property name="leftMargin">
+                                 <number>5</number>
+                                </property>
                                 <item>
                                  <layout class="QHBoxLayout" name="horizontalLayout_5">
                                   <property name="bottomMargin">
@@ -3795,7 +3862,7 @@
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_30">
                                 <property name="leftMargin">
-                                 <number>9</number>
+                                 <number>5</number>
                                 </property>
                                 <property name="topMargin">
                                  <number>9</number>
@@ -4135,9 +4202,14 @@
    <extends>QLineEdit</extends>
    <header location="global">customwidgets.h</header>
   </customwidget>
+  <customwidget>
+   <class>MapWidget</class>
+   <extends>QWidget</extends>
+   <header>mapwidget.h</header>
+  </customwidget>
  </customwidgets>
  <resources>
-  <include location="luckygps.qrc"/>
+  <include location="../luckygps.qrc"/>
  </resources>
  <connections/>
  <buttongroups>
