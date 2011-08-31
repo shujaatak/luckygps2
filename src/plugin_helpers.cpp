@@ -123,7 +123,7 @@ bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int l
 	result = hn->Preprocess(dataDir);
 	delete hn;
 
-	// importer->DeleteTemporaryFiles();
+	importer->DeleteTemporaryFiles();
 
 	return result;
 }
