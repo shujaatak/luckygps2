@@ -26,6 +26,13 @@
 #include "interfaces/igpslookup.h"
 #include "interfaces/irouter.h"
 
+class HouseNumber {
+public:
+	HouseNumber(QString hn, double lat, double lon) : housenumber(hn), latitude(lat), longitude(lon) {}
+	QString housenumber;
+	double latitude;
+	double longitude;
+};
 
 class osmAdressManager
 {
@@ -33,7 +40,9 @@ public:
 	osmAdressManager();
 
 	bool Preprocess(QString dataDir);
-	bool getHousenumbers(QString streetname, QStringList hnList, IAddressLookup *addressLookupPlugins, size_t placeID);
+	bool getHousenumbers(QString streetname, QList<HouseNumber> &hnList, IAddressLookup *addressLookupPlugins, size_t placeID);
+
+
 };
 
 #endif // OSMADRESSMANAGER_H

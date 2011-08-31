@@ -42,6 +42,7 @@ WHERE "addr:interpolation" is not null
 #include <QIODevice>
 #include <QStringList>
 
+#include "convertunits.h"
 #include "sqlite3.h"
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -152,10 +153,12 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	return true;
 }
 
-bool osmAdressManager::getHousenumbers(QString streetname, QStringList hnList, IAddressLookup *addressLookupPlugins, size_t placeID)
+bool osmAdressManager::getHousenumbers(QString streetname, QList<HouseNumber> &hnList, IAddressLookup *addressLookupPlugins, size_t placeID)
 {
 	sqlite3 *_db;
+	sqlite3_stmt *stmt = NULL;
 	QString filename = "/home/daniel/hn.sqlite";
+
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{
 		qDebug() << "Cannot open " << filename.toUtf8().constData();
@@ -192,9 +195,36 @@ bool osmAdressManager::getHousenumbers(QString streetname, QStringList hnList, I
 		gpsMin.longitude = MIN(gpsMin.longitude, gpsTmp.longitude);
 
 		/* Update maximum */
-		gpsMin.latitude = MAX(gpsMin.latitude, gpsTmp.latitude);
-		gpsMin.longitude = MAX(gpsMin.longitude, gpsTmp.longitude);
+		gpsMax.latitude = MAX(gpsMax.latitude, gpsTmp.latitude);
+		gpsMax.longitude = MAX(gpsMax.longitude, gpsTmp.longitude);
 
+	}
+
+	double correctionLat = (111132.954 - 559.822*cos(2.0 * deg_to_rad(gpsMin.latitude)) + 1.175*cos(4.0 * deg_to_rad(gpsMin.latitude)) -0.0023 * cos(6 * deg_to_rad(gpsMin.latitude)) ) / 111132.954;
+	double correctionLon = (111412.84 * cos(deg_to_rad(gpsMin.latitude*correctionLat)) -93.5 * cos(3 * deg_to_rad(gpsMin.latitude*correctionLat)) + 0.118 * cos(5.0 * deg_to_rad(gpsMin.latitude*correctionLat))) / 111412.84;
+
+	/* Search in 200 meters radius of street for house numbers */
+	gpsMin.latitude -= 0.001 * correctionLat; /* ~110 meters */
+	gpsMin.longitude -= 0.001 * correctionLon; /* ~110 meters, too */
+	gpsMax.latitude += 0.001 * correctionLat;
+	gpsMax.longitude += 0.001 * correctionLon;
+
+	QString sql = "SELECT housenumber, latitude, longitude FROM hn WHERE street=? ";
+	sql += "AND hn.osm_id IN (SELECT osm_id FROM hn_idx WHERE minLat>=%1 AND maxLat<=%2 AND minLon>=%3 AND maxLon<=%4);";
+
+	sql = sql.arg(gpsMin.latitude).arg(gpsMax.latitude).arg(gpsMin.longitude).arg(gpsMax.longitude);
+
+	if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) == SQLITE_OK)
+	{
+		while(sqlite3_step(stmt) == SQLITE_ROW)
+		{
+			QString hn = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)),sqlite3_column_bytes(stmt, 0) / sizeof(char));
+			double latitude = sqlite3_column_double(stmt, 1);
+			double longitude = sqlite3_column_double(stmt, 2);
+
+			hnList.append(HouseNumber(hn, latitude, longitude));
+		}
+		sqlite3_finalize(stmt);
 	}
 
 	// SELECT housenumber FROM hn where street=street
