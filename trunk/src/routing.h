@@ -50,6 +50,8 @@ public:
 
 	bool init(QString dataDirectory);
 
+	size_t getPlaceID(int typeID) { if(typeID == ID_START_CITY) return _startPlaceID; else return _destPlaceID; }
+
 private:
 	bool computeRoute(double* resultDistance, QVector< IRouter::Node >* resultNodes, QVector< IRouter::Edge >* resultEdge, GPSCoordinate source, GPSCoordinate target, double lookupRadius);
 	void getInstructions(Route &route, QStringList* icons, int units);
@@ -63,8 +65,8 @@ private:
 
 	double _pos[2][2];
 
-	int _startPlaceID;
-	int _destPlaceID;
+	size_t _startPlaceID;
+	size_t _destPlaceID;
 
 	bool _init;
 };

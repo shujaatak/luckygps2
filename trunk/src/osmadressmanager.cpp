@@ -40,8 +40,13 @@ WHERE "addr:interpolation" is not null
 #include <QDebug>
 #include <QFile>
 #include <QIODevice>
+#include <QStringList>
 
 #include "sqlite3.h"
+
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define ABS(a) (((a) < 0) ? -(a) : (a))
 
 
 osmAdressManager::osmAdressManager()
@@ -137,16 +142,17 @@ bool osmAdressManager::Preprocess(QString dataDir)
 		sqlite3_exec(_db, "CREATE VIRTUAL TABLE hn_idx USING RTREE(osm_id, minLat, maxLat, minLon, maxLon);", 0, NULL, NULL);
 		sqlite3_exec(_db, "INSERT INTO hn_idx SELECT osm_id, lat, lat, lon, lon FROM hn;", 0, NULL, NULL);
 
-
 		// TODO: add interpolations
 		// TODO: add housenumbers from buildings/areas
 		// TODO: add missing streets
 
+		sqlite3_exec(_db, "ANALYZE; COMPACT;", 0, NULL, NULL);
+		sqlite3_close(_db);
 	}
 	return true;
 }
 
-bool osmAdressManager::getHousenumbers(QString street)
+bool osmAdressManager::getHousenumbers(QString streetname, QStringList hnList, IAddressLookup *addressLookupPlugins, size_t placeID)
 {
 	sqlite3 *_db;
 	QString filename = "/home/daniel/hn.sqlite";
@@ -162,9 +168,39 @@ bool osmAdressManager::getHousenumbers(QString street)
 
 		return false;
 	}
-	else
+
+	// get boundary of street ???? ---> TODO: put street ID into db in preprocess???
+
+	/* Get street osm id for the street name */
+	QVector< int > segmentLength;
+	QVector< UnsignedCoordinate > coordinates;
+	if (!addressLookupPlugins->GetStreetData(placeID, streetname, &segmentLength, &coordinates))
+		return false;
+
+	if (coordinates.size() == 0)
+		return false;
+
+	GPSCoordinate gpsMin = coordinates.first().ToGPSCoordinate();
+	GPSCoordinate gpsMax = gpsMin;
+
+	for(unsigned int i = 1; i < coordinates.size(); i++)
 	{
+		GPSCoordinate gpsTmp = coordinates[i].ToGPSCoordinate();
+
+		/* Update minimum */
+		gpsMin.latitude = MIN(gpsMin.latitude, gpsTmp.latitude);
+		gpsMin.longitude = MIN(gpsMin.longitude, gpsTmp.longitude);
+
+		/* Update maximum */
+		gpsMin.latitude = MAX(gpsMin.latitude, gpsTmp.latitude);
+		gpsMin.longitude = MAX(gpsMin.longitude, gpsTmp.longitude);
+
 	}
+
+	// SELECT housenumber FROM hn where street=street
+
+	sqlite3_close(_db);
+	return true;
 }
 
 
