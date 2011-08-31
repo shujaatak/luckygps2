@@ -1374,28 +1374,18 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 
 		key -= m_profile.accessList.size();
 		if ( key == 0) /* addr:housenumber */
-		{
 			node->housenumber = value;
-		}
 		else if ( key == 1) /* addr:street */
-		{
 			node->streetname = value;
-		}
 		else if ( key == 2) /* addr:postcode */
 		{
 			bool ok;
 			node->postcode = value.toInt(&ok);
 		}
 		else if ( key == 3) /* addr:city */
-		{
-			/* not supported yet */
 			node->city = value;
-		}
 		else if ( key == 4) /* addr:country */
-		{
-			/* not supported yet */
 			node->country = value;
-		}
 
 		/* UNSED: m_profile.nodeModificators */
 	}
