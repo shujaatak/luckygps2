@@ -20,10 +20,15 @@
 #ifndef OSMADRESSMANAGER_H
 #define OSMADRESSMANAGER_H
 
+#include <QString>
+
+
 class osmAdressManager
 {
 public:
     osmAdressManager();
+
+	bool Preprocess(QString dataDir);
 };
 
 #endif // OSMADRESSMANAGER_H

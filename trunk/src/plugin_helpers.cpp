@@ -23,6 +23,7 @@
 #include <QPluginLoader>
 #include <QString>
 
+#include "osmadressmanager.h"
 #include "plugin_helpers.h"
 #include "system_helpers.h"
 #include "interfaces/iimporter.h"
@@ -118,9 +119,11 @@ bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int l
 	result = addressLookupPlugins->Preprocess( importer, dataDir);
 
 	/* House number lookup */
+	osmAdressManager *hn = new osmAdressManager();
 	result = hn->Preprocess(dataDir);
+	delete hn;
 
-	importer->DeleteTemporaryFiles();
+	// importer->DeleteTemporaryFiles();
 
 	return result;
 }

@@ -358,7 +358,7 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 					if(node.country.isEmpty())
 						node.country = "-1";
 
-					hnData << inputNode.coordinate.latitude << inputNode.coordinate.longitude << node.housenumber << node.streetname << node.postcode << node.city << node.country;
+					hnData << unsigned( inputNode.id ) << inputNode.coordinate.latitude << inputNode.coordinate.longitude << node.housenumber << node.streetname << node.postcode << node.city << node.country;
 				}
 
 				continue;
