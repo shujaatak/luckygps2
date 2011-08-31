@@ -379,6 +379,8 @@ bool Routing::suggestionClicked(QString text, int typeID)
 		GPSCoordinate gps = coordinates.first().ToGPSCoordinate();
 		setPos(gps.latitude, gps.longitude, typeID);
 
+		// TODO set only streetID
+
 		/* TODO: cannot handle house numbers or 2 streets with the same name */
 		// return false;
 	}

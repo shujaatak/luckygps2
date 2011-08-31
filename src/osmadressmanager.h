@@ -22,14 +22,18 @@
 
 #include <QString>
 
+#include "interfaces/iaddresslookup.h"
+#include "interfaces/igpslookup.h"
+#include "interfaces/irouter.h"
+
 
 class osmAdressManager
 {
 public:
-    osmAdressManager();
+	osmAdressManager();
 
 	bool Preprocess(QString dataDir);
-	bool getHousenumbers(QString street);
+	bool getHousenumbers(QString streetname, QStringList hnList, IAddressLookup *addressLookupPlugins, size_t placeID);
 };
 
 #endif // OSMADRESSMANAGER_H
