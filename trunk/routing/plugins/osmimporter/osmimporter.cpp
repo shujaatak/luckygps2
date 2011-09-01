@@ -272,6 +272,8 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	FileStream hnData( filename + "_hn" ); /* house numbers from nodes */
 	FileStream hnWayData( filename + "_hn_ways" ); /* house numbers from ways (buildings) */
 
+	int count = 0;
+
 	if ( !edgeData.open( QIODevice::WriteOnly ) )
 		return false;
 	if ( !onewayEdgeData.open( QIODevice::WriteOnly ) )
@@ -468,9 +470,11 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 						for ( unsigned node = 0; node < inputWay.nodes.size(); ++node )
 						{
 							m_buildingNodes.push_back( inputWay.nodes[node] );
+							hnWayData << unsigned(inputWay.nodes[node]);
 						}
 
 						hnData << -1 << 0 << 0 << node.housenumber << node.streetname << node.postcode << node.city << node.country;
+						count++;
 					}
 				}
 
@@ -507,6 +511,8 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 		}
 
 		boundingBoxData << min.latitude << min.longitude << max.latitude << max.longitude;
+
+		qDebug() << "Building nodes count: " << m_buildingNodes.size() << ", hnData count: " << count; // 1008624
 
 	} catch ( const std::exception& e ) {
 		qCritical( "OSM Importer: caught execption: %s", e.what() );
@@ -552,12 +558,12 @@ bool OSMImporter::preprocessData( const QString& filename ) {
 		element = std::lower_bound( m_buildingNodes.begin(), m_buildingNodes.end(), node );
 		if ( element != m_buildingNodes.end() && *element == node )
 		{
-			adressCoordinatesData << coordinate.x << coordinate.y;
+			adressCoordinatesData << unsigned(node) << coordinate.x << coordinate.y;
 			count++;
 		}
 
 	}
-	qDebug() << "Coordinates put into list: " << count;
+	qDebug() << "Coordinates put into list: " << count; // 67990
 
 	qDebug() << "OSM Importer: filtered node coordinates:" << time.restart() << "ms";
 
