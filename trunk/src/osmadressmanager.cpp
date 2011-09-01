@@ -20,13 +20,6 @@
 #include "osmadressmanager.h"
 
 /*
-select "addr:city", "addr:street", "addr:postcode","addr:housenumber" as addr_housenumber
-from world_point
-where "addr:housenumber" is not null and "addr:street" is not null
-and world_point.rowid in (SELECT pkid FROM 'idx_world_point_way' WHERE xmin >= -113.6 AND xmax <= -113.55 AND ymin >= 53.25 AND ymax <= 53.3)
-*/
-
-/*
 select osm_id, "addr:interpolation"
 FROM world_line
 WHERE "addr:interpolation" is not null
@@ -153,7 +146,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	return true;
 }
 
-bool osmAdressManager::getHousenumbers(QString streetname, QList<HouseNumber> &hnList, IAddressLookup *addressLookupPlugins, size_t placeID)
+bool osmAdressManager::getHousenumbers(QString streetname, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID)
 {
 	sqlite3 *_db;
 	sqlite3_stmt *stmt = NULL;
@@ -209,29 +202,27 @@ bool osmAdressManager::getHousenumbers(QString streetname, QList<HouseNumber> &h
 	gpsMax.latitude += 0.001 * correctionLat;
 	gpsMax.longitude += 0.001 * correctionLon;
 
-	QString sql = "SELECT housenumber, lat, lon FROM hn WHERE street=? ";
+	QString sql = "SELECT lat, lon FROM hn WHERE street=? AND housenumber=? ";
 	sql += "AND hn.osm_id IN (SELECT osm_id FROM hn_idx WHERE minLat>=%1 AND maxLat<=%2 AND minLon>=%3 AND maxLon<=%4);";
-
 	sql = sql.arg(gpsMin.latitude).arg(gpsMax.latitude).arg(gpsMin.longitude).arg(gpsMax.longitude);
 
-	qDebug() << sql;
+	// qDebug() << sql;
 
 	if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) == SQLITE_OK)
 	{
 		sqlite3_bind_text (stmt, 1, streetname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text (stmt, 2, hn.housenumber.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
-		while(sqlite3_step(stmt) == SQLITE_ROW)
+		if(sqlite3_step(stmt) == SQLITE_ROW)
 		{
-			QString hn = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)),sqlite3_column_bytes(stmt, 0) / sizeof(char));
-			double latitude = sqlite3_column_double(stmt, 1);
-			double longitude = sqlite3_column_double(stmt, 2);
+			// QString hnString = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0)),sqlite3_column_bytes(stmt, 0) / sizeof(char));
+			double latitude = sqlite3_column_double(stmt, 0);
+			double longitude = sqlite3_column_double(stmt, 1);
 
-			hnList.append(HouseNumber(hn, latitude, longitude));
+			hn = HouseNumber(latitude, longitude);
 		}
 		sqlite3_finalize(stmt);
 	}
-
-	// SELECT housenumber FROM hn where street=street
 
 	sqlite3_close(_db);
 	return true;
