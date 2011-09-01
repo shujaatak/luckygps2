@@ -44,6 +44,20 @@ WHERE "addr:interpolation" is not null
 #include <float.h>
 #endif
 
+#ifdef __GNUC__
+#include <ext/hash_map>
+#else
+#include <hash_map>
+#endif
+
+namespace std
+{
+ using namespace __gnu_cxx;
+}
+
+
+typedef std::hash_map<int, GPSCoordinate>::value_type hashGPS;
+
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define ABS(a) (((a) < 0) ? -(a) : (a))
@@ -56,6 +70,8 @@ osmAdressManager::osmAdressManager()
 
 bool osmAdressManager::Preprocess(QString dataDir)
 {
+	std::hash_map<int, GPSCoordinate> hm1;
+
 	QDataStream hnData;
 	QFile hnFile( "/tmp/OSM Importer_hn" ); /* house numbers filename + "_hn"  */
 	if ( !hnFile.open(QIODevice::ReadOnly) )
@@ -113,6 +129,22 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			return false;
 		}
 
+		/* cache needed nodes */
+		while(true)
+		{
+			unsigned node;
+			double tlat, tlon;
+			hnCoordsData >> node >> tlat >> tlon;
+
+			if ( hnCoordsData.status() == QDataStream::ReadPastEnd )
+			{
+				break;
+			}
+
+			// hm1.insert(hashGPS(node, GPSCoordinate(tlat, tlon)));
+			hm1[node] = GPSCoordinate(tlat, tlon);
+		}
+
 		/* Loop over housenumber nodes */
 		int count = 0;
 		while ( true ) {
@@ -140,21 +172,20 @@ bool osmAdressManager::Preprocess(QString dataDir)
 
 				for(unsigned i = 0; i < size; i++)
 				{
-					double tlat, tlon;
-					hnCoordsData >> tlat >> tlon;
+					unsigned tmpNode;
+					hnWayData >> tmpNode;
 
-					if ( hnCoordsData.status() == QDataStream::ReadPastEnd )
+					if ( hnWayData.status() == QDataStream::ReadPastEnd )
 					{
-						// something bad happened
-						qDebug() << "Adress import error: Not enough coordinates for buildings.";
+						qDebug() << "Adress import error 2: Not enough size information for buildings.";
 						break;
 					}
 
-					minLat = MIN(minLat, tlat);
-					minLon = MIN(minLon, tlon);
+					minLat = MIN(minLat, hm1[tmpNode].latitude);
+					minLon = MIN(minLon, hm1[tmpNode].longitude);
 
-					maxLat = MAX(maxLat, tlat);
-					maxLon = MAX(maxLon, tlon);
+					maxLat = MAX(maxLat, hm1[tmpNode].latitude);
+					maxLon = MAX(maxLon, hm1[tmpNode].longitude);
 				}
 				lat = (minLat + maxLat) * 0.5;
 				lon = (minLon + maxLon) * 0.5;
