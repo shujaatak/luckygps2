@@ -28,10 +28,14 @@
 
 class HouseNumber {
 public:
-	HouseNumber(QString hn, double lat, double lon) : housenumber(hn), latitude(lat), longitude(lon) {}
+	HouseNumber(QString hn, double lat, double lon) : housenumber(hn), latitude(lat), longitude(lon), valid(1) {}
+	HouseNumber(double lat, double lon) : latitude(lat), longitude(lon), valid(1) {}
+	HouseNumber() : housenumber(""), valid(0) {}
+
 	QString housenumber;
 	double latitude;
 	double longitude;
+	bool valid;
 };
 
 class osmAdressManager
@@ -40,7 +44,7 @@ public:
 	osmAdressManager();
 
 	bool Preprocess(QString dataDir);
-	static bool getHousenumbers(QString streetname, QList<HouseNumber> &hnList, IAddressLookup *addressLookupPlugins, size_t placeID);
+	static bool getHousenumbers(QString streetname, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID);
 
 
 };

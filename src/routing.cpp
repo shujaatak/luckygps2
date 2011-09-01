@@ -202,13 +202,14 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 	// Check if house number is given, too */
 	if(!hnStart.isEmpty())
 	{
-		QList<HouseNumber> hnList;
-		bool ret = osmAdressManager::getHousenumbers(_startStreet, hnList, _addressLookup, _startPlaceID);
+		HouseNumber hn;
+		hn.housenumber = hnStart;
+		bool ret = osmAdressManager::getHousenumbers(_startStreet, hn, _addressLookup, _startPlaceID);
 
-		if(ret && !hnList.isEmpty())
+		if(ret && hn.valid)
 		{
-			_pos[0][0] = hnList[0].latitude;
-			_pos[0][1] = hnList[0].longitude;
+			_pos[0][0] = hn.latitude;
+			_pos[0][1] = hn.longitude;
 
 			qDebug() << "Found house number! (start)";
 		}
@@ -216,13 +217,14 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 
 	if(!hnDest.isEmpty())
 	{
-		QList<HouseNumber> hnList;
-		bool ret = osmAdressManager::getHousenumbers(_destStreet, hnList, _addressLookup, _destPlaceID);
+		HouseNumber hn;
+		hn.housenumber = hnDest;
+		bool ret = osmAdressManager::getHousenumbers(_destStreet, hn, _addressLookup, _destPlaceID);
 
-		if(ret && !hnList.isEmpty())
+		if(ret && hn.valid)
 		{
-			_pos[1][0] = hnList[0].latitude;
-			_pos[1][1] = hnList[0].longitude;
+			_pos[1][0] = hn.latitude;
+			_pos[1][1] = hn.longitude;
 
 			qDebug() << "Found house number! (dest)";
 		}
