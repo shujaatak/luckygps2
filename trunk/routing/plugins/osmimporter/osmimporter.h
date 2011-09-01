@@ -139,6 +139,15 @@ protected:
 
 		int addPercentage;
 		int addFixed;
+
+		int building;
+		QString housenumber; /* addr:housenumber */
+		QString streetname; /* addr:streetname */
+		int postcode; /* addr:postcode */
+		QString city; /* addr:city */
+		QString country; /* addr:country */
+
+		/* TODO: house number interpolation */
 	};
 
 	struct Node {
@@ -332,6 +341,8 @@ protected:
 	std::vector< NodePenalty > m_penaltyNodes;
 	std::vector< unsigned > m_noAccessNodes;
 
+	std::vector< unsigned > m_buildingNodes;
+	std::vector< unsigned > m_buildingNodesCount;
 	std::vector< unsigned > m_usedNodes;
 	std::vector< unsigned > m_routingNodes;
 	std::vector< unsigned > m_outlineNodes;
