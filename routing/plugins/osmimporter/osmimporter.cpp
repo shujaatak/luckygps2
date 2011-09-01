@@ -90,6 +90,14 @@ void OSMImporter::setRequiredTags( IEntityReader *reader )
 		list.push_back( m_settings.languageSettings[i] );
 	for ( int i = 0; i < m_profile.accessList.size(); i++ )
 		list.push_back( m_profile.accessList[i] );
+
+	list.push_back("building");
+	list.push_back("addr:housenumber");
+	list.push_back("addr:street");
+	list.push_back("addr:postcode");
+	list.push_back("addr:city");
+	list.push_back("addr:country");
+
 	for ( int i = 0; i < m_profile.wayModificators.size(); i++ ) {
 		int index = list.indexOf( m_profile.wayModificators[i].key );
 		if ( index == -1 ) {
@@ -261,7 +269,8 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	FileStream wayNameData( filename + "_way_names" );
 	FileStream wayRefData( filename + "_way_refs" );
 	FileStream restrictionData( filename + "_restrictions" );
-	FileStream hnData( filename + "_hn" ); /* house numbers */
+	FileStream hnData( filename + "_hn" ); /* house numbers from nodes */
+	FileStream hnWayData( filename + "_hn_ways" ); /* house numbers from ways (buildings) */
 
 	if ( !edgeData.open( QIODevice::WriteOnly ) )
 		return false;
@@ -282,6 +291,8 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	if ( !restrictionData.open( QIODevice::WriteOnly ) )
 		return false;
 	if ( !hnData.open( QIODevice::WriteOnly ) )
+		return false;
+	if ( !hnWayData.open( QIODevice::WriteOnly ) )
 		return false;
 
 	m_wayNames[QString()] = 0;
@@ -444,6 +455,25 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 					m_statistics.numberOfOutlines++;
 				}
 
+				if( way.building && way.housenumber.length() > 0)
+				{
+					if(way.city.isEmpty())
+						way.city = "-1";
+					if(way.country.isEmpty())
+						way.country = "-1";
+
+					if(inputWay.nodes.size() > 0)
+					{
+						hnWayData << unsigned(inputWay.nodes.size());
+						for ( unsigned node = 0; node < inputWay.nodes.size(); ++node )
+						{
+							m_buildingNodes.push_back( inputWay.nodes[node] );
+						}
+
+						hnData << -1 << 0 << 0 << node.housenumber << node.streetname << node.postcode << node.city << node.country;
+					}
+				}
+
 				continue;
 			}
 
@@ -492,17 +522,19 @@ bool OSMImporter::preprocessData( const QString& filename ) {
 	std::vector< UnsignedCoordinate > outlineCoordinates( m_outlineNodes.size() );
 
 	FileStream allNodesData( filename + "_all_nodes" );
-
 	if ( !allNodesData.open( QIODevice::ReadOnly ) )
 		return false;
 
 	FileStream routingCoordinatesData( filename + "_routing_coordinates" );
-
 	if ( !routingCoordinatesData.open( QIODevice::WriteOnly ) )
 		return false;
 
-	Timer time;
+	FileStream adressCoordinatesData( filename + "_adress_coordinates" );
+	if ( !adressCoordinatesData.open( QIODevice::WriteOnly ) )
+		return false;
 
+	Timer time;
+	int count = 0;
 	while ( true ) {
 		unsigned node;
 		UnsignedCoordinate coordinate;
@@ -515,7 +547,17 @@ bool OSMImporter::preprocessData( const QString& filename ) {
 		element = std::lower_bound( m_outlineNodes.begin(), m_outlineNodes.end(), node );
 		if ( element != m_outlineNodes.end() && *element == node )
 			outlineCoordinates[element - m_outlineNodes.begin()] = coordinate;
+
+		/* Adress from buildings */
+		element = std::lower_bound( m_buildingNodes.begin(), m_buildingNodes.end(), node );
+		if ( element != m_buildingNodes.end() && *element == node )
+		{
+			adressCoordinatesData << coordinate.x << coordinate.y;
+			count++;
+		}
+
 	}
+	qDebug() << "Coordinates put into list: " << count;
 
 	qDebug() << "OSM Importer: filtered node coordinates:" << time.restart() << "ms";
 
@@ -1149,6 +1191,12 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 	way->accessPriority = m_profile.accessList.size();
 	way->addFixed = 0;
 	way->addPercentage = 0;
+	way->building = 0;
+	way->housenumber.clear();
+	way->postcode = -1;
+	way->streetname.clear();
+	way->city.clear();
+	way->country.clear();
 
 	for ( unsigned tag = 0; tag < inputWay.tags.size(); tag++ ) {
 		int key = inputWay.tags[tag].key;
@@ -1264,6 +1312,46 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 
 			continue;
 		}
+
+
+		key -= m_profile.accessList.size();
+		if ( key == 0) /* building = yes? */
+		{
+			/*
+			// Use this to obtain bad buildings in OSM
+			// building contains NEVER an integer
+			bool ok;
+			way->building = value.toInt(&ok);
+
+			if(way->building)
+				qDebug() << "Building tag: " << inputWay.id;
+			*/
+
+			way->building = (value == "yes" ? 1 : 0);
+		}
+		else if ( key == 1) /* addr:housenumber */
+			way->housenumber = value;
+		else if ( key == 2) /* addr:street */
+			way->streetname = value;
+		else if ( key == 3) /* addr:postcode */
+		{
+			bool ok;
+			way->postcode = value.toInt(&ok);
+		}
+		else if ( key == 4) /* addr:city */
+			way->city = value;
+		else if ( key == 5) /* addr:country */
+			way->country = value;
+	}
+
+	/* addr:housenumbers fix: use only nodes where a street name and a city identifier (name/postcode) is given */
+	if(!way->building || way->streetname.length() == 0)
+	{
+		way->building = 0;
+		way->housenumber.clear();
+		way->postcode = -1;
+		way->city.clear();
+		way->country.clear();
 	}
 
 	// rescan tags to apply modificators
@@ -1386,12 +1474,10 @@ void OSMImporter::readNode( OSMImporter::Node* node, const IEntityReader::Node& 
 			node->city = value;
 		else if ( key == 4) /* addr:country */
 			node->country = value;
-
-		/* UNSED: m_profile.nodeModificators */
 	}
 
 	/* addr:housenumbers fix: use only nodes where a street name and a city identifier (name/postcode) is given */
-	if(node->streetname.length() == 0 || (node->city.length() == 0 && node->postcode == -1))
+	if(node->streetname.length() == 0)
 	{
 		node->housenumber.clear();
 		node->postcode = -1;
@@ -1913,6 +1999,7 @@ void OSMImporter::DeleteTemporaryFiles()
 	QFile::remove( filename + "_way_refs" );
 	QFile::remove( filename + "_way_types" );
 	QFile::remove( filename + "_hn" );
+	QFile::remove( filename + "_hn_ways" );
 }
 
 #ifndef NOGUI
