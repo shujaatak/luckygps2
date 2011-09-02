@@ -256,7 +256,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			QString sql2 = "SELECT housenumber, street, postcode, city, country FROM hn WHERE lat=? AND lon=? ";
 			sql2 += "AND hn.rowid IN (SELECT rowid FROM hn_idx WHERE minLat>=%1 AND maxLat<=%2 AND minLon>=%3 AND maxLon<=%4) LIMIT 1;";
 			query = sql2.arg(hm1[nodeA].latitude - 0.001).arg(hm1[nodeA].latitude + 0.001).arg(hm1[nodeA].longitude - 0.001).arg(hm1[nodeA].longitude + 0.001);
-			qDebug() << sql2;
+			// qDebug() << sql2;
 			if(sqlite3_prepare_v2(_db, sql2.toUtf8().constData(), -1, &stmtQuery, NULL) == SQLITE_OK)
 			{
 				sqlite3_bind_double(stmtQuery, 1, hm1[nodeA].latitude);
@@ -334,6 +334,8 @@ bool osmAdressManager::Preprocess(QString dataDir)
 					sqlite3_finalize(stmt);
 					return false;
 				}
+
+				qDebug() << latitude << longitude << housenumber << streetname << postcode << city << country;
 
 				sqlite3_reset(stmt);
 
