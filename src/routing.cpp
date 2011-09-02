@@ -251,6 +251,7 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 	QStringList icons;
 	getInstructions(route, &icons, units);
 
+	if(0)
 	{
 		QFile file("/home/daniel/test.txt");
 		if (file.open(QIODevice::WriteOnly))
