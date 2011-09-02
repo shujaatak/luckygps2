@@ -500,6 +500,11 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 					// save interpolation value and nodes to disk (TODO: support more than 2 interpolation nodes?)
 					if(inputWay.nodes.size() > 0)
 					{
+						if(!m_buildingNodes.contains(inputWay.nodes.front()))
+							m_buildingNodes[inputWay.nodes.front()] = inputWay.nodes.front();
+						if(!m_buildingNodes.contains(inputWay.nodes.back()))
+							m_buildingNodes[inputWay.nodes.back()] = inputWay.nodes.back();
+
 						hnWayInterData << way.interpolation << unsigned(inputWay.nodes.front()) << unsigned(inputWay.nodes.back());
 					}
 				}
