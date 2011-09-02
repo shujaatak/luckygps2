@@ -19,12 +19,6 @@
 
 #include "osmadressmanager.h"
 
-/*
-select osm_id, "addr:interpolation"
-FROM world_line
-WHERE "addr:interpolation" is not null
-*/
-
 // CANNOT use map sqlite: for interpolations, node id's are not saved
 // TODO: import data from temp file and insert into sqlite file, create spatial index
 
@@ -94,6 +88,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 
 	sqlite3 *_db;
 	QString filename = "/home/daniel/hn.sqlite";
+	QFile::remove(filename);
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{
 		qDebug() << "Cannot open " << filename.toUtf8().constData();
@@ -109,7 +104,6 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	else
 	{
 		/* Create housenumber NODES table */
-		sqlite3_exec(_db, "DROP TABLE hn;", 0, NULL, NULL);
 		if(sqlite3_exec(_db, "CREATE TABLE hn (lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, housenumber TEXT NOT NULL, street TEXT, postcode INTEGER, city TEXT, country TEXT)", 0, NULL, NULL) != SQLITE_OK)
 		{
 			return false;
