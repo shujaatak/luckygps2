@@ -70,7 +70,7 @@ osmAdressManager::osmAdressManager()
 
 bool osmAdressManager::Preprocess(QString dataDir)
 {
-	std::hash_map<int, GPSCoordinate> hm1;
+	std::hash_map<unsigned, GPSCoordinate> hm1;
 
 	QDataStream hnData;
 	QFile hnFile( "/tmp/OSM Importer_hn" ); /* house numbers filename + "_hn"  */
@@ -137,12 +137,12 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			hnCoordsData >> node >> tlat >> tlon;
 
 			if ( hnCoordsData.status() == QDataStream::ReadPastEnd )
-			{
 				break;
-			}
 
-			// hm1.insert(hashGPS(node, GPSCoordinate(tlat, tlon)));
 			hm1[node] = GPSCoordinate(tlat, tlon);
+
+			qDebug() << "Fetching node: " << node << tlat << tlon;
+			qDebug() << "OUT: " << node << hm1[node].latitude << hm1[node].longitude;
 		}
 
 		/* Loop over housenumber nodes */
@@ -158,7 +158,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			if ( hnData.status() == QDataStream::ReadPastEnd )
 				break;
 
-			if(osm_id == -1)
+			if(osm_id == 0)
 			{
 				double minLat = DBL_MAX, minLon = DBL_MAX, maxLat = -DBL_MAX, maxLon = -DBL_MAX;
 				unsigned size = 0;
@@ -169,6 +169,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 					qDebug() << "Adress import error: Not enough size information for buildings.";
 					break;
 				}
+				// qDebug() << "Nodes for this building: " << size;
 
 				for(unsigned i = 0; i < size; i++)
 				{
@@ -181,6 +182,8 @@ bool osmAdressManager::Preprocess(QString dataDir)
 						break;
 					}
 
+					// qDebug() << "Fetching node: " << tmpNode << hm1[tmpNode].latitude << hm1[tmpNode].longitude;
+
 					minLat = MIN(minLat, hm1[tmpNode].latitude);
 					minLon = MIN(minLon, hm1[tmpNode].longitude);
 
@@ -189,6 +192,10 @@ bool osmAdressManager::Preprocess(QString dataDir)
 				}
 				lat = (minLat + maxLat) * 0.5;
 				lon = (minLon + maxLon) * 0.5;
+
+				// This was needed for some bad OSM data
+				// if(streetname[0] == '<')
+				//	qDebug() << "Found building data: " << streetname << housenumber << lat << lon;
 			}
 
 			sqlite3_bind_double(stmt, 1, lat);
@@ -212,7 +219,10 @@ bool osmAdressManager::Preprocess(QString dataDir)
 		}
 
 		sqlite3_finalize(stmt);
-		sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL);
+		if(sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
+		{
+			qDebug() << "Error: Cannot commit to database.";
+		}
 
 		qDebug() << "Imported adress nodes: " << count;
 
@@ -267,7 +277,7 @@ bool osmAdressManager::getHousenumbers(QString streetname, HouseNumber &hn, IAdd
 	GPSCoordinate gpsMin = coordinates.first().ToGPSCoordinate();
 	GPSCoordinate gpsMax = gpsMin;
 
-	for(unsigned int i = 1; i < coordinates.size(); i++)
+	for(int i = 1; i < coordinates.size(); i++)
 	{
 		GPSCoordinate gpsTmp = coordinates[i].ToGPSCoordinate();
 

@@ -473,7 +473,7 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 							hnWayData << unsigned(inputWay.nodes[node]);
 						}
 
-						hnData << -1 << 0 << 0 << node.housenumber << node.streetname << node.postcode << node.city << node.country;
+						hnData << unsigned(0) << double(0.0) << double(0.0) << way.housenumber << way.streetname << way.postcode << way.city << way.country;
 						count++;
 					}
 				}
