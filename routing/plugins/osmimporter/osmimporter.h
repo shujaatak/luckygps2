@@ -341,8 +341,8 @@ protected:
 	std::vector< NodePenalty > m_penaltyNodes;
 	std::vector< unsigned > m_noAccessNodes;
 
-	std::vector< unsigned > m_buildingNodes;
-	std::vector< unsigned > m_buildingNodesCount;
+
+	QHash<unsigned, unsigned> m_buildingNodes;
 	std::vector< unsigned > m_usedNodes;
 	std::vector< unsigned > m_routingNodes;
 	std::vector< unsigned > m_outlineNodes;
