@@ -148,6 +148,7 @@ protected:
 		QString country; /* addr:country */
 
 		/* TODO: house number interpolation */
+		QString interpolation;
 	};
 
 	struct Node {

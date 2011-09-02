@@ -111,6 +111,8 @@ void OSMImporter::setRequiredTags( IEntityReader *reader )
 	list.push_back("addr:city");
 	list.push_back("addr:country");
 
+	list.push_back("addr:interpolation");
+
 	for ( int i = 0; i < m_profile.wayModificators.size(); i++ ) {
 		int index = list.indexOf( m_profile.wayModificators[i].key );
 		if ( index == -1 ) {
@@ -284,6 +286,7 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	FileStream restrictionData( filename + "_restrictions" );
 	FileStream hnData( filename + "_hn" ); /* house numbers from nodes */
 	FileStream hnWayData( filename + "_hn_ways" ); /* house numbers from ways (buildings) */
+	FileStream hnWayInterData( filename + "_hn_ways_inter" );
 
 	if ( !edgeData.open( QIODevice::WriteOnly ) )
 		return false;
@@ -306,6 +309,8 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	if ( !hnData.open( QIODevice::WriteOnly ) )
 		return false;
 	if ( !hnWayData.open( QIODevice::WriteOnly ) )
+		return false;
+	if ( !hnWayInterData.open( QIODevice::WriteOnly ) )
 		return false;
 
 	m_wayNames[QString()] = 0;
@@ -487,6 +492,15 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 						}
 
 						hnData << unsigned(0) << double(0.0) << double(0.0) << way.housenumber << way.streetname << way.postcode << way.city << way.country;
+					}
+				}
+
+				if( !way.interpolation.isEmpty())
+				{
+					// save interpolation value and nodes to disk (TODO: support more than 2 interpolation nodes?)
+					if(inputWay.nodes.size() > 0)
+					{
+						hnWayInterData << way.interpolation << unsigned(inputWay.nodes.front()) << unsigned(inputWay.nodes.back());
 					}
 				}
 
@@ -1213,6 +1227,7 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 	way->streetname.clear();
 	way->city.clear();
 	way->country.clear();
+	way->interpolation.clear();
 
 	for ( unsigned tag = 0; tag < inputWay.tags.size(); tag++ ) {
 		int key = inputWay.tags[tag].key;
@@ -1358,6 +1373,8 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 			way->city = value;
 		else if ( key == 5) /* addr:country */
 			way->country = value;
+		else if( key == 6) /* addr:interpolation */
+			way->interpolation = value;
 	}
 
 	/* addr:housenumbers fix: use only nodes where a street name and a city identifier (name/postcode) is given */
@@ -2016,6 +2033,7 @@ void OSMImporter::DeleteTemporaryFiles()
 	QFile::remove( filename + "_way_types" );
 	QFile::remove( filename + "_hn" );
 	QFile::remove( filename + "_hn_ways" );
+	QFile::remove( filename + "_hn_ways_inter" );
 }
 
 #ifndef NOGUI
