@@ -285,8 +285,6 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 	FileStream hnData( filename + "_hn" ); /* house numbers from nodes */
 	FileStream hnWayData( filename + "_hn_ways" ); /* house numbers from ways (buildings) */
 
-	int count = 0;
-
 	if ( !edgeData.open( QIODevice::WriteOnly ) )
 		return false;
 	if ( !onewayEdgeData.open( QIODevice::WriteOnly ) )
@@ -371,9 +369,6 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 
 				UnsignedCoordinate coordinate( inputNode.coordinate );
 				nodeData << unsigned( inputNode.id ) << coordinate.x << coordinate.y;
-
-				if(inputNode.id == 1132589292)
-					qDebug() << "Put missing noder into nodeData" << unsigned( inputNode.id ) << coordinate.x << coordinate.y;
 
 				if ( node.type != Place::None && !node.name.isEmpty() ) {
 					placeData << inputNode.coordinate.latitude << inputNode.coordinate.longitude << unsigned( node.type ) << node.population << node.name;
@@ -489,14 +484,9 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 								m_buildingNodes[inputWay.nodes[node]] = inputWay.nodes[node];
 
 							hnWayData << unsigned(inputWay.nodes[node]);
-
-							if( inputWay.nodes[node] == 1132589292)
-								qDebug() << "Put missing node into hnWayData" << unsigned( inputWay.nodes[node] );
-
 						}
 
 						hnData << unsigned(0) << double(0.0) << double(0.0) << way.housenumber << way.streetname << way.postcode << way.city << way.country;
-						count++;
 					}
 				}
 
@@ -533,8 +523,6 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 		}
 
 		boundingBoxData << min.latitude << min.longitude << max.latitude << max.longitude;
-
-		qDebug() << "Building nodes count: " << m_buildingNodes.size() << ", hnData count: " << count; // 1008624
 
 	} catch ( const std::exception& e ) {
 		qCritical( "OSM Importer: caught execption: %s", e.what() );
@@ -581,14 +569,11 @@ bool OSMImporter::preprocessData( const QString& filename ) {
 		{
 			adressCoordinatesData << unsigned(node) << unsigned(coordinate.x) << unsigned(coordinate.y);
 
-			if(node == 1132589292)
-				qDebug() << "Put missing node into adressCoordinatesData" << unsigned( node ) << coordinate.x << coordinate.y;
-
 			count++;
 		}
 
 	}
-	qDebug() << "Coordinates put into list: " << count; // 67990
+	qDebug() << "Coordinates put into list: " << count;
 
 	qDebug() << "OSM Importer: filtered node coordinates:" << time.restart() << "ms";
 
