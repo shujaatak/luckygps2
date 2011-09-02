@@ -29,6 +29,19 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <limits>
 
+
+#ifdef __GNUC__
+#include <ext/hash_map>
+#else
+#include <hash_map>
+#endif
+
+namespace std
+{
+ using namespace __gnu_cxx;
+}
+
+
 OSMImporter::OSMImporter()
 {
 	Q_INIT_RESOURCE(speedprofiles);
@@ -359,6 +372,9 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 				UnsignedCoordinate coordinate( inputNode.coordinate );
 				nodeData << unsigned( inputNode.id ) << coordinate.x << coordinate.y;
 
+				if(inputNode.id == 1132589292)
+					qDebug() << "Put missing noder into nodeData" << unsigned( inputNode.id ) << coordinate.x << coordinate.y;
+
 				if ( node.type != Place::None && !node.name.isEmpty() ) {
 					placeData << inputNode.coordinate.latitude << inputNode.coordinate.longitude << unsigned( node.type ) << node.population << node.name;
 					m_statistics.numberOfPlaces++;
@@ -469,8 +485,14 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 						hnWayData << unsigned(inputWay.nodes.size());
 						for ( unsigned node = 0; node < inputWay.nodes.size(); ++node )
 						{
-							m_buildingNodes.push_back( inputWay.nodes[node] );
+							if(!m_buildingNodes.contains(inputWay.nodes[node]))
+								m_buildingNodes[inputWay.nodes[node]] = inputWay.nodes[node];
+
 							hnWayData << unsigned(inputWay.nodes[node]);
+
+							if( inputWay.nodes[node] == 1132589292)
+								qDebug() << "Put missing node into hnWayData" << unsigned( inputWay.nodes[node] );
+
 						}
 
 						hnData << unsigned(0) << double(0.0) << double(0.0) << way.housenumber << way.streetname << way.postcode << way.city << way.country;
@@ -555,10 +577,13 @@ bool OSMImporter::preprocessData( const QString& filename ) {
 			outlineCoordinates[element - m_outlineNodes.begin()] = coordinate;
 
 		/* Adress from buildings */
-		element = std::lower_bound( m_buildingNodes.begin(), m_buildingNodes.end(), node );
-		if ( element != m_buildingNodes.end() && *element == node )
+		if(m_buildingNodes.contains(node))
 		{
-			adressCoordinatesData << unsigned(node) << coordinate.x << coordinate.y;
+			adressCoordinatesData << unsigned(node) << unsigned(coordinate.x) << unsigned(coordinate.y);
+
+			if(node == 1132589292)
+				qDebug() << "Put missing node into adressCoordinatesData" << unsigned( node ) << coordinate.x << coordinate.y;
+
 			count++;
 		}
 

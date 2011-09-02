@@ -132,17 +132,18 @@ bool osmAdressManager::Preprocess(QString dataDir)
 		/* cache needed nodes */
 		while(true)
 		{
-			unsigned node;
-			double tlat, tlon;
+			unsigned node = 0;
+			unsigned tlat = 0, tlon = 0;
 			hnCoordsData >> node >> tlat >> tlon;
 
 			if ( hnCoordsData.status() == QDataStream::ReadPastEnd )
 				break;
 
-			hm1[node] = GPSCoordinate(tlat, tlon);
+			UnsignedCoordinate coord(tlat, tlon);
 
-			qDebug() << "Fetching node: " << node << tlat << tlon;
-			qDebug() << "OUT: " << node << hm1[node].latitude << hm1[node].longitude;
+			hm1[node] = coord.ToGPSCoordinate();
+
+			// qDebug() << "Fetching node: " << node << hm1[node].latitude << hm1[node].longitude;
 		}
 
 		/* Loop over housenumber nodes */
