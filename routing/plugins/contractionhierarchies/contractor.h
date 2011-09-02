@@ -124,7 +124,7 @@ class Contractor {
 			}
 
 			void PrintStatistics() const {
-				qDebug( "%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf", iteration, nodes, independent, contraction, inserting, removing, updating );
+				// qDebug( "%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf", iteration, nodes, independent, contraction, inserting, removing, updating );
 			}
 		};
 
@@ -154,7 +154,7 @@ class Contractor {
 				}
 
 				void PrintHeader() const {
-					qDebug( "Iteration\tNodes\tIndependent\tContraction\tInserting\tRemoving\tUpdating" );
+					// qDebug( "Iteration\tNodes\tIndependent\tContraction\tInserting\tRemoving\tUpdating" );
 				}
 
 				void PrintSummary() const {
@@ -163,9 +163,11 @@ class Contractor {
 				}
 
 				void Print() const {
+					/*
 					PrintHeader();
 					for ( int i = 0, e = ( int ) iterations.size(); i < e; ++i )
 						iterations[i].PrintStatistics();
+						*/
 				}
 
 				void Insert( const _LogItem& data ) {
