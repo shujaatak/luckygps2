@@ -587,7 +587,6 @@ bool OSMImporter::preprocessData( const QString& filename ) {
 		if(m_buildingNodes.contains(node))
 		{
 			adressCoordinatesData << unsigned(node) << unsigned(coordinate.x) << unsigned(coordinate.y);
-
 			count++;
 		}
 

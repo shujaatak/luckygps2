@@ -101,100 +101,206 @@ bool osmAdressManager::Preprocess(QString dataDir)
 
 		return false;
 	}
-	else
+
+	/* Create housenumber NODES table */
+	if(sqlite3_exec(_db, "CREATE TABLE hn (osm_id INTEGER UNIQUE, lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, housenumber TEXT NOT NULL, street TEXT, postcode INTEGER, city TEXT, country TEXT)", 0, NULL, NULL) != SQLITE_OK)
 	{
-		/* Create housenumber NODES table */
-		if(sqlite3_exec(_db, "CREATE TABLE hn (lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, housenumber TEXT NOT NULL, street TEXT, postcode INTEGER, city TEXT, country TEXT)", 0, NULL, NULL) != SQLITE_OK)
+		return false;
+	}
+
+	/* prepare insertion query */
+	sqlite3_stmt *stmt = NULL;
+	QString sql = "INSERT OR IGNORE INTO hn VALUES(?, ?, ?, ?, ?, ?, ?, ?);";
+
+	sqlite3_exec (_db, "BEGIN;", NULL, NULL, NULL);
+
+	if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) != SQLITE_OK)
+	{
+		sql = "Could not prepare statement: " + sql;
+		qDebug(sql.toUtf8().constData());
+		sqlite3_finalize(stmt);
+		return false;
+	}
+
+	/* cache needed nodes */
+	while(true)
+	{
+		unsigned node = 0, tlat = 0, tlon = 0;
+
+		hnCoordsData >> node >> tlat >> tlon;
+
+		if ( hnCoordsData.status() == QDataStream::ReadPastEnd )
+			break;
+
+		UnsignedCoordinate coord(tlat, tlon);
+		hm1[node] = coord.ToGPSCoordinate();
+	}
+
+	/* Loop over housenumber nodes */
+	int count = 0;
+	while (true) {
+		unsigned osm_id;
+		int postcode;
+		double lat, lon;
+		QString housenumber, streetname, city, country;
+
+		hnData >> osm_id >> lat >> lon >> housenumber >> streetname >> postcode >> city >> country;
+
+		if (hnData.status() == QDataStream::ReadPastEnd)
+			break;
+
+		if(osm_id == 0)
 		{
-			return false;
+			double minLat = DBL_MAX, minLon = DBL_MAX, maxLat = -DBL_MAX, maxLon = -DBL_MAX;
+			unsigned size = 0;
+			hnWayData >> size;
+
+			if (hnWayData.status() == QDataStream::ReadPastEnd)
+			{
+				qDebug() << "Adress import error: Not enough size information for buildings.";
+				break;
+			}
+
+			for(unsigned i = 0; i < size; i++)
+			{
+				unsigned tmpNode;
+				hnWayData >> tmpNode;
+
+				if (hnWayData.status() == QDataStream::ReadPastEnd)
+				{
+					qDebug() << "Adress import error 2: Not enough size information for buildings.";
+					break;
+				}
+
+				minLat = MIN(minLat, hm1[tmpNode].latitude);
+				minLon = MIN(minLon, hm1[tmpNode].longitude);
+
+				maxLat = MAX(maxLat, hm1[tmpNode].latitude);
+				maxLon = MAX(maxLon, hm1[tmpNode].longitude);
+			}
+			lat = (minLat + maxLat) * 0.5;
+			lon = (minLon + maxLon) * 0.5;
+
+			sqlite3_bind_null(stmt, 1);
 		}
+		else
+			sqlite3_bind_int(stmt, 1, osm_id);
 
-		/* prepare insertion query */
-		sqlite3_stmt *stmt = NULL;
-		QString sql = "INSERT OR IGNORE INTO hn VALUES(?, ?, ?, ?, ?, ?, ?);";
+		sqlite3_bind_double(stmt, 2, lat);
+		sqlite3_bind_double(stmt, 3, lon);
+		sqlite3_bind_text (stmt, 4, housenumber.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text (stmt, 5, streetname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_double(stmt, 6, postcode);
+		sqlite3_bind_text (stmt, 7, city.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text (stmt, 8, country.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 
-		sqlite3_exec (_db, "BEGIN;", NULL, NULL, NULL);
-
-		if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) != SQLITE_OK)
+		if(sqlite3_step(stmt) != SQLITE_DONE)
 		{
-			sql = "Could not prepare statement: " + sql;
-			qDebug(sql.toUtf8().constData());
+			qDebug("Could not step (execute) stmt.");
 			sqlite3_finalize(stmt);
 			return false;
 		}
 
-		/* cache needed nodes */
-		while(true)
+		sqlite3_reset(stmt);
+
+		count++;
+	}
+
+	sqlite3_finalize(stmt);
+	if(sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
+	{
+		qDebug() << "Error: Cannot commit to database.";
+	}
+
+	/* Interpolation ways */
+
+	/*  nodes for a interpolation tag of a way */
+	QDataStream hnWayInterData;
+	QFile hnWayInterFile( "/tmp/OSM Importer_hn_ways_inter" );
+	if (!hnWayInterFile.open(QIODevice::ReadOnly))
+		return false;
+	hnWayInterData.setDevice(&hnWayInterFile);
+
+	/* Read ndoes from DB */
+	QList <GPSCoordinate> wayNodes;
+	QList <QString> wayInterpolations;
+	sql = "SELECT housenumber, street, postcode, city, country FROM hn WHERE osm_id=? OR osm_id=? ORDER BY osm_id LIMIT 2;";
+	sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL);
+
+	while(true)
+	{
+		QString interpolation;
+		unsigned nodeA = 0, nodeB = 0;
+
+		hnWayInterData >> nodeA >> nodeB >> interpolation;
+
+		if (hnWayInterData.status() == QDataStream::ReadPastEnd)
+			break;
+
+		sqlite3_bind_int(stmt, 1, nodeA);
+		sqlite3_bind_int(stmt, 2, nodeB);
+
+		if(sqlite3_step(stmt) == SQLITE_ROW)
 		{
-			unsigned node = 0;
-			unsigned tlat = 0, tlon = 0;
-			hnCoordsData >> node >> tlat >> tlon;
+			// double latitude = sqlite3_column_double(stmt, 0);
+			// double longitude = sqlite3_column_double(stmt, 1);
 
-			if ( hnCoordsData.status() == QDataStream::ReadPastEnd )
-				break;
 
-			UnsignedCoordinate coord(tlat, tlon);
-
-			hm1[node] = coord.ToGPSCoordinate();
-
-			// qDebug() << "Fetching node: " << node << hm1[node].latitude << hm1[node].longitude;
+		}
+		else
+		{
+			// This is for cold winter nights: Correcting OSM data with the node id's here.
+			// Propably missing street names or even house numbers
+			// Around 100 bad id's in Bavaria/Germany
+			// qDebug() << "Did not found the following ID's: " << nodeA << nodeB;
 		}
 
-		/* Loop over housenumber nodes */
-		int count = 0;
-		while (true) {
-			unsigned osm_id;
-			int postcode;
-			double lat, lon;
-			QString housenumber, streetname, city, country;
+		sqlite3_reset(stmt);
 
-			hnData >> osm_id >> lat >> lon >> housenumber >> streetname >> postcode >> city >> country;
+	}
 
-			if (hnData.status() == QDataStream::ReadPastEnd)
-				break;
+	sqlite3_finalize(stmt);
 
-			if(osm_id == 0)
-			{
-				double minLat = DBL_MAX, minLon = DBL_MAX, maxLat = -DBL_MAX, maxLon = -DBL_MAX;
-				unsigned size = 0;
-				hnWayData >> size;
+#if 0
+	for(int i = 0; i < wayNodes.length(); i++)
+	{
+		int postcode = 0;
+		QString streetname, city, country;
+		// wayNodes
+		// wayInterpolations
 
-				if (hnWayData.status() == QDataStream::ReadPastEnd)
-				{
-					qDebug() << "Adress import error: Not enough size information for buildings.";
-					break;
-				}
-				// qDebug() << "Nodes for this building: " << size;
+		if(housenumberB < housenumberA)
+		{
+			int tmp = housenumberB;
+			housenumberB = housenumberA;
+			housenumberA = tmp;
+		}
 
-				for(unsigned i = 0; i < size; i++)
-				{
-					unsigned tmpNode;
-					hnWayData >> tmpNode;
+		// all numbers
+		int countNumber = (housenumberB - housenumberA - 1);
+		int increment = 1;
 
-					if (hnWayData.status() == QDataStream::ReadPastEnd)
-					{
-						qDebug() << "Adress import error 2: Not enough size information for buildings.";
-						break;
-					}
+		if(interpolation == "alphabetic")
+			continue; /* not supoprted yet */
+		else if(interpolation != "even" || interpolation != "odd")
+			continue; /* not supoprted yet */
 
-					// qDebug() << "Fetching node: " << tmpNode << hm1[tmpNode].latitude << hm1[tmpNode].longitude;
+		if(interpolation != "all")
+		{
+			countNumber /= 2;
+			increment = 2;
+		}
 
-					minLat = MIN(minLat, hm1[tmpNode].latitude);
-					minLon = MIN(minLon, hm1[tmpNode].longitude);
+		/* put every housenumber into database */
+		for(int i = increment; i <= countNumber; i += increment)
+		{
+			/* interpolate gps coordinates */
+			double latitude = 0; //////////////////////////////// TODO: interpolate gps
+			double longitude = 0;
+			QString housenumber = QString::number(housenumberA + i);
 
-					maxLat = MAX(maxLat, hm1[tmpNode].latitude);
-					maxLon = MAX(maxLon, hm1[tmpNode].longitude);
-				}
-				lat = (minLat + maxLat) * 0.5;
-				lon = (minLon + maxLon) * 0.5;
-
-				// This was needed for some bad OSM data
-				// if(streetname[0] == '<')
-				//	qDebug() << "Found building data: " << streetname << housenumber << lat << lon;
-			}
-
-			sqlite3_bind_double(stmt, 1, lat);
-			sqlite3_bind_double(stmt, 2, lon);
+			sqlite3_bind_double(stmt, 1, latitude);
+			sqlite3_bind_double(stmt, 2, longitude);
 			sqlite3_bind_text (stmt, 3, housenumber.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 			sqlite3_bind_text (stmt, 4, streetname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 			sqlite3_bind_double(stmt, 5, postcode);
@@ -208,189 +314,32 @@ bool osmAdressManager::Preprocess(QString dataDir)
 				return false;
 			}
 
+			qDebug() << latitude << longitude << housenumber << streetname << postcode << city << country;
+
 			sqlite3_reset(stmt);
 
 			count++;
 		}
 
-		sqlite3_finalize(stmt);
-		if(sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
-		{
-			qDebug() << "Error: Cannot commit to database.";
-		}
+	}
 
-		/* Interpolation ways */
+	sqlite3_finalize(stmt);
 
-		/*  nodes for a interpolation tag of a way */
-		QDataStream hnWayInterData;
-		QFile hnWayInterFile( "/tmp/OSM Importer_hn_ways_inter" );
-		if (!hnWayInterFile.open(QIODevice::ReadOnly))
-			return false;
-		hnWayInterData.setDevice(&hnWayInterFile);
 
-		// sqlite3_exec (_db, "BEGIN;", NULL, NULL, NULL);
-		sql = "INSERT OR IGNORE INTO hn VALUES(?, ?, ?, ?, ?, ?, ?);";
-		if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) != SQLITE_OK)
-		{
-			sql = "Could not prepare statement: " + sql;
-			qDebug(sql.toUtf8().constData());
-			sqlite3_finalize(stmt);
-			return false;
-		}
-
-		sqlite3_stmt *stmtQuery = NULL;
-		while(true)
-		{
-			QString interpolation;
-			unsigned nodeA = 0, nodeB = 0;
-			int postcode = 0;
-			QString streetname, city, country;
-			int housenumberA = 0, housenumberB = 0;
-			bool ok = 0;
-			int ret = 0;
-
-			hnWayInterData >> nodeA >> nodeB >> interpolation;
-
-			if (hnWayInterData.status() == QDataStream::ReadPastEnd)
-				break;
-
-			// qDebug() << "Read interpolation way" << nodeA << nodeB << interpolation;
-
-			QString query;
-			QString sql2 = "SELECT housenumber, street, postcode, city, country FROM hn WHERE lat=? AND lon=? ";
-			sql2 += "AND hn.rowid IN (SELECT rowid FROM hn_idx WHERE minLat>=%1 AND maxLat<=%2 AND minLon>=%3 AND maxLon<=%4) LIMIT 1;";
-			query = sql2.arg(hm1[nodeA].latitude - FLT_EPSILON).arg(hm1[nodeA].latitude + FLT_EPSILON).arg(hm1[nodeA].longitude - FLT_EPSILON).arg(hm1[nodeA].longitude + FLT_EPSILON);
-			qDebug() << query << hm1[nodeA].latitude << hm1[nodeA].longitude;
-			if((ret = sqlite3_prepare_v2(_db, query.toUtf8().constData(), -1, &stmtQuery, NULL)) == SQLITE_OK)
-			{
-				sqlite3_bind_double(stmtQuery, 1, hm1[nodeA].latitude);
-				sqlite3_bind_double(stmtQuery, 2, hm1[nodeA].longitude);
-
-				if(sqlite3_step(stmtQuery) == SQLITE_ROW)
-				{
-					QString housenumber = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 0)),sqlite3_column_bytes(stmtQuery, 0) / sizeof(char));
-					streetname = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 1)),sqlite3_column_bytes(stmtQuery, 1) / sizeof(char));
-					postcode = sqlite3_column_int(stmtQuery, 2);
-					city = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 3)),sqlite3_column_bytes(stmtQuery, 3) / sizeof(char));
-					country = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 4)),sqlite3_column_bytes(stmtQuery, 4) / sizeof(char));
-
-					housenumberA = housenumber.toInt(&ok);
-
-					// qDebug() << housenumber;
-				}
-				sqlite3_finalize(stmtQuery);
-			}
-			else
-			{
-				qDebug() << "Cannot prerpare query: " << ret;
-			}
-
-			if(!ok)
-				continue;
-
-			qDebug() << "First good";
-
-			query = sql2.arg(hm1[nodeB].latitude - 0.001).arg(hm1[nodeB].latitude + 0.001).arg(hm1[nodeB].longitude - 0.001).arg(hm1[nodeB].longitude + 0.001);
-			if(sqlite3_prepare_v2(_db, query.toUtf8().constData(), -1, &stmtQuery, NULL) == SQLITE_OK)
-			{
-				sqlite3_bind_double(stmtQuery, 1, hm1[nodeB].latitude);
-				sqlite3_bind_double(stmtQuery, 2, hm1[nodeB].longitude);
-
-				if(sqlite3_step(stmtQuery) == SQLITE_ROW)
-				{
-					QString housenumber = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 0)),sqlite3_column_bytes(stmtQuery, 0) / sizeof(char));
-					/*
-					street = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 1)),sqlite3_column_bytes(stmtQuery, 1) / sizeof(char));
-					postcode = sqlite3_column_int(stmtQuery, 2);
-					city = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 3)),sqlite3_column_bytes(stmtQuery, 3) / sizeof(char));
-					country = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 4)),sqlite3_column_bytes(stmtQuery, 4) / sizeof(char));
-					*/
-
-					housenumberB = housenumber.toInt(&ok);
-				}
-				sqlite3_finalize(stmtQuery);
-			}
-
-			if(!ok)
-				continue;
-
-			qDebug() << "Second good";
-
-			if(housenumberB < housenumberA)
-			{
-				int tmp = housenumberB;
-				housenumberB = housenumberA;
-				housenumberA = tmp;
-			}
-
-			// all numbers
-			int countNumber = (housenumberB - housenumberA - 1);
-			int increment = 1;
-
-			if(interpolation == "alphabetic")
-				continue; /* not supoprted yet */
-			else if(interpolation != "even" || interpolation != "odd")
-				continue; /* not supoprted yet */
-
-			if(interpolation != "all")
-			{
-				countNumber /= 2;
-				increment = 2;
-			}
-
-			/* put every housenumber into database */
-			for(int i = increment; i <= countNumber; i += increment)
-			{
-				/* interpolate gps coordinates */
-				double latitude = 0;
-				double longitude = 0;
-				QString housenumber = QString::number(housenumberA + i);
-
-				sqlite3_bind_double(stmt, 1, latitude);
-				sqlite3_bind_double(stmt, 2, longitude);
-				sqlite3_bind_text (stmt, 3, housenumber.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-				sqlite3_bind_text (stmt, 4, streetname.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-				sqlite3_bind_double(stmt, 5, postcode);
-				sqlite3_bind_text (stmt, 6, city.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-				sqlite3_bind_text (stmt, 7, country.toUtf8().constData(), -1, SQLITE_TRANSIENT);
-
-				if(sqlite3_step(stmt) != SQLITE_DONE)
-				{
-					qDebug("Could not step (execute) stmt.");
-					sqlite3_finalize(stmt);
-					return false;
-				}
-
-				qDebug() << latitude << longitude << housenumber << streetname << postcode << city << country;
-
-				sqlite3_reset(stmt);
-
-				count++;
-			}
-
-		}
-
-		sqlite3_finalize(stmt);
-#if 0
-		if(sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
-		{
-			qDebug() << "Error: Cannot commit to database.";
-		}
 #endif
 
-		qDebug() << "Imported adress nodes: " << count;
+	qDebug() << "Imported adress nodes: " << count;
 
-		/* Create RTree index */
-		sqlite3_exec(_db, "CREATE VIRTUAL TABLE hn_idx USING RTREE(rowid, minLat, maxLat, minLon, maxLon);", 0, NULL, NULL);
-		sqlite3_exec(_db, "INSERT INTO hn_idx SELECT rowid, lat, lat, lon, lon FROM hn;", 0, NULL, NULL);
+	/* Create RTree index */
+	sqlite3_exec(_db, "CREATE VIRTUAL TABLE hn_idx USING RTREE(rowid, minLat, maxLat, minLon, maxLon);", 0, NULL, NULL);
+	sqlite3_exec(_db, "INSERT INTO hn_idx SELECT rowid, lat, lat, lon, lon FROM hn;", 0, NULL, NULL);
 
-		// TODO: add interpolations
-		// TODO: add housenumbers from buildings/areas
-		// TODO: add missing streets
+	// TODO: add interpolations
+	// TODO: add housenumbers from buildings/areas
+	// TODO: add missing streets
 
-		sqlite3_exec(_db, "ANALYZE; COMPACT;", 0, NULL, NULL);
-		sqlite3_close(_db);
-	}
+	sqlite3_exec(_db, "ANALYZE; COMPACT;", 0, NULL, NULL);
+	sqlite3_close(_db);
 
 	hnCoordsFile.close();
 	QFile::remove("/tmp/OSM Importer_adress_coordinates");
