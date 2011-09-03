@@ -495,7 +495,7 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 					}
 				}
 
-				if( !way.interpolation.isEmpty())
+				if(way.interpolation.length() > 0)
 				{
 					// save interpolation value and nodes to disk (TODO: support more than 2 interpolation nodes?)
 					if(inputWay.nodes.size() > 0)
@@ -505,7 +505,7 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 						if(!m_buildingNodes.contains(inputWay.nodes.back()))
 							m_buildingNodes[inputWay.nodes.back()] = inputWay.nodes.back();
 
-						hnWayInterData << way.interpolation << unsigned(inputWay.nodes.front()) << unsigned(inputWay.nodes.back());
+						hnWayInterData << unsigned(inputWay.nodes.front()) << unsigned(inputWay.nodes.back()) << way.interpolation;
 					}
 				}
 
@@ -1351,7 +1351,7 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 
 
 		key -= m_profile.accessList.size();
-		if ( key == 0) /* building = yes? */
+		if(key == 0) /* building = yes? */
 		{
 			/*
 			// Use this to obtain bad buildings in OSM
@@ -1365,20 +1365,20 @@ void OSMImporter::readWay( OSMImporter::Way* way, const IEntityReader::Way& inpu
 
 			way->building = (value == "yes" ? 1 : 0);
 		}
-		else if ( key == 1) /* addr:housenumber */
+		else if(key == 1) /* addr:housenumber */
 			way->housenumber = value;
-		else if ( key == 2) /* addr:street */
+		else if (key == 2) /* addr:street */
 			way->streetname = value;
-		else if ( key == 3) /* addr:postcode */
+		else if(key == 3) /* addr:postcode */
 		{
 			bool ok;
 			way->postcode = value.toInt(&ok);
 		}
-		else if ( key == 4) /* addr:city */
+		else if(key == 4) /* addr:city */
 			way->city = value;
-		else if ( key == 5) /* addr:country */
+		else if(key == 5) /* addr:country */
 			way->country = value;
-		else if( key == 6) /* addr:interpolation */
+		else if(key == 6) /* addr:interpolation */
 			way->interpolation = value;
 	}
 

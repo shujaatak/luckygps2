@@ -228,7 +228,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			return false;
 		hnWayInterData.setDevice(&hnWayInterFile);
 
-		sqlite3_exec (_db, "BEGIN;", NULL, NULL, NULL);
+		// sqlite3_exec (_db, "BEGIN;", NULL, NULL, NULL);
 		sql = "INSERT OR IGNORE INTO hn VALUES(?, ?, ?, ?, ?, ?, ?);";
 		if(sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL) != SQLITE_OK)
 		{
@@ -247,20 +247,21 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			QString streetname, city, country;
 			int housenumberA = 0, housenumberB = 0;
 			bool ok = 0;
+			int ret = 0;
 
-			hnWayInterData >> interpolation >> nodeA >> nodeB;
+			hnWayInterData >> nodeA >> nodeB >> interpolation;
 
 			if (hnWayInterData.status() == QDataStream::ReadPastEnd)
 				break;
 
-			qDebug() << "Read interpolation way";
+			// qDebug() << "Read interpolation way" << nodeA << nodeB << interpolation;
 
 			QString query;
 			QString sql2 = "SELECT housenumber, street, postcode, city, country FROM hn WHERE lat=? AND lon=? ";
 			sql2 += "AND hn.rowid IN (SELECT rowid FROM hn_idx WHERE minLat>=%1 AND maxLat<=%2 AND minLon>=%3 AND maxLon<=%4) LIMIT 1;";
-			query = sql2.arg(hm1[nodeA].latitude - 0.001).arg(hm1[nodeA].latitude + 0.001).arg(hm1[nodeA].longitude - 0.001).arg(hm1[nodeA].longitude + 0.001);
-			// qDebug() << sql2;
-			if(sqlite3_prepare_v2(_db, sql2.toUtf8().constData(), -1, &stmtQuery, NULL) == SQLITE_OK)
+			query = sql2.arg(hm1[nodeA].latitude - FLT_EPSILON).arg(hm1[nodeA].latitude + FLT_EPSILON).arg(hm1[nodeA].longitude - FLT_EPSILON).arg(hm1[nodeA].longitude + FLT_EPSILON);
+			qDebug() << query << hm1[nodeA].latitude << hm1[nodeA].longitude;
+			if((ret = sqlite3_prepare_v2(_db, query.toUtf8().constData(), -1, &stmtQuery, NULL)) == SQLITE_OK)
 			{
 				sqlite3_bind_double(stmtQuery, 1, hm1[nodeA].latitude);
 				sqlite3_bind_double(stmtQuery, 2, hm1[nodeA].longitude);
@@ -274,8 +275,14 @@ bool osmAdressManager::Preprocess(QString dataDir)
 					country = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmtQuery, 4)),sqlite3_column_bytes(stmtQuery, 4) / sizeof(char));
 
 					housenumberA = housenumber.toInt(&ok);
+
+					// qDebug() << housenumber;
 				}
 				sqlite3_finalize(stmtQuery);
+			}
+			else
+			{
+				qDebug() << "Cannot prerpare query: " << ret;
 			}
 
 			if(!ok)
@@ -284,7 +291,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			qDebug() << "First good";
 
 			query = sql2.arg(hm1[nodeB].latitude - 0.001).arg(hm1[nodeB].latitude + 0.001).arg(hm1[nodeB].longitude - 0.001).arg(hm1[nodeB].longitude + 0.001);
-			if(sqlite3_prepare_v2(_db, sql2.toUtf8().constData(), -1, &stmtQuery, NULL) == SQLITE_OK)
+			if(sqlite3_prepare_v2(_db, query.toUtf8().constData(), -1, &stmtQuery, NULL) == SQLITE_OK)
 			{
 				sqlite3_bind_double(stmtQuery, 1, hm1[nodeB].latitude);
 				sqlite3_bind_double(stmtQuery, 2, hm1[nodeB].longitude);
@@ -319,6 +326,11 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			// all numbers
 			int countNumber = (housenumberB - housenumberA - 1);
 			int increment = 1;
+
+			if(interpolation == "alphabetic")
+				continue; /* not supoprted yet */
+			else if(interpolation != "even" || interpolation != "odd")
+				continue; /* not supoprted yet */
 
 			if(interpolation != "all")
 			{
@@ -359,11 +371,12 @@ bool osmAdressManager::Preprocess(QString dataDir)
 		}
 
 		sqlite3_finalize(stmt);
+#if 0
 		if(sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
 		{
 			qDebug() << "Error: Cannot commit to database.";
 		}
-
+#endif
 
 		qDebug() << "Imported adress nodes: " << count;
 
