@@ -24,6 +24,7 @@
 
 #include "mapnikthread.h"
 #include "filetilemanager.h"
+#include "system_helpers.h" /* TODO: support a local instalation here */
 
 
 #ifdef WITH_MAPNIK
@@ -33,7 +34,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	/* Unique thread number */
 	_numThread = numThread;
 
-	QString mapnikDir("/home/daniel/mapnik_files");
+	QString mapnikDir(getDataHome() + "/mapnik_files");
 
 	/* Register fonts */
 	QDir fontDir = mapnikDir + "/dejavu-fonts-ttf-2.33/ttf/";
@@ -46,7 +47,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 		}
 
 	/* Register plugins */
-	datasource_cache::instance()->register_datasources("/usr/lib/mapnik/0.7/input/");
+	datasource_cache::instance()->register_datasources(getDataHome().toStdString());
 
 	for(unsigned i = 0; i < datasource_cache::instance()->plugin_names().size(); i++)
 	qDebug() << "Found Mapnik plugin: " << QString::fromStdString(datasource_cache::instance()->plugin_names().at(i));
@@ -56,7 +57,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	/* ------------------------------- */
 
 	/* Load xml style template */
-	QFile file("/home/daniel/mapnik_files/luckygps-default.template");
+	QFile file(mapnikDir + "/luckygps-default.template");
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
 			return;
 	QTextStream in(&file);
@@ -68,7 +69,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	/* Replace path variables in template */
 	// later use %1 with .arg()?
 
-	QString symbols_path("/home/daniel/mapnik_files/symbols/");
+	QString symbols_path(mapnikDir + "/symbols/");
 	QString symbolsString("%(symbols)s");
 	size_t index = xml.indexOf(symbolsString);
 	xml.replace(index, symbolsString.length(), symbols_path);
@@ -78,7 +79,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	index = xml.indexOf(srsString);
 	xml.replace(index, srsString.length(), srs);
 
-	QString wb_path("/home/daniel/mapnik_files/world_boundaries/");
+	QString wb_path(mapnikDir + "/world_boundaries/");
 	QString wbString("%(world_boundaries)s");
 	index = xml.indexOf(wbString);
 	xml.replace(index, wbString.length(), wb_path);

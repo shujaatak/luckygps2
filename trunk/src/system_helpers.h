@@ -24,6 +24,6 @@
 #include <QString>
 
 
-QString getDataHome(int local);
+QString getDataHome(int local = 0);
 
 #endif // SYSTEM_HELPERS_H
