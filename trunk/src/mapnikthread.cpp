@@ -90,7 +90,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	xml.replace(prefixString, prefix);
 
 
-	QString dbSettings("<Parameter name=\"type\">sqlite</Parameter>\n\
+	QString dbSettings("<Parameter name=\"type\">spatialite</Parameter>\n\
 					   <Parameter name=\"file\">/home/daniel/alberta.sqlite</Parameter>\n\
 					   <Parameter name=\"key_field\">rowid</Parameter>\n\
 					   <Parameter name=\"geometry_field\">way</Parameter>\n\
