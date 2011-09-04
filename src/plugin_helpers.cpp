@@ -126,8 +126,14 @@ bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int l
 
 	importer->DeleteTemporaryFiles();
 
-	/* TODO: download mapnik world_boundaries here? */
 	/* TODO: create mapnik sqlite file here? */
+	dir.mkdir(dataDir + "/mapnik_data");
+
+	if(!dir.exists(dataDir + "/mapnik_data/world_boundaries"))
+	{
+		/* TODO: download mapnik world_boundaries here? */
+
+	}
 
 	return result;
 }
