@@ -506,6 +506,9 @@ bool OSMImporter::read( const QString& inputFilename, const QString& filename ) 
 							m_buildingNodes[inputWay.nodes.back()] = inputWay.nodes.back();
 
 						hnWayInterData << unsigned(inputWay.nodes.front()) << unsigned(inputWay.nodes.back()) << way.interpolation;
+
+						if(inputWay.id == 44333654)
+							qDebug() << unsigned(inputWay.nodes.front()) << unsigned(inputWay.nodes.back()) << way.interpolation;
 					}
 				}
 

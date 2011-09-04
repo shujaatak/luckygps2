@@ -219,7 +219,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	hnWayInterData.setDevice(&hnWayInterFile);
 
 	/* Read ndoes from DB */
-	sql = "SELECT housenumber, street, postcode, city, country FROM hn WHERE osm_id=? OR osm_id=? LIMIT 2;";
+	sql = "SELECT housenumber, street, postcode, city, country, lat, lon FROM hn WHERE osm_id=? OR osm_id=? LIMIT 2;";
 	sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL);
 
 	while(true)
@@ -249,6 +249,9 @@ bool osmAdressManager::Preprocess(QString dataDir)
 				iWay.back().city = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 3)),sqlite3_column_bytes(stmt, 3) / sizeof(char));
 				iWay.back().country = QString::fromUtf8(reinterpret_cast<const char *>(sqlite3_column_text(stmt, 4)),sqlite3_column_bytes(stmt, 4) / sizeof(char));
 			}
+			iWay.back().latitude[rowCount] = sqlite3_column_double(stmt, 5);
+			iWay.back().longitude[rowCount] = sqlite3_column_double(stmt, 6);
+
 			rowCount++;
 		}
 
@@ -340,12 +343,12 @@ size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt,
 		return 0;
 
 	/* Put every housenumber into database */
-	for(int i = increment; i <= countNumber; i += increment)
+	for(int i = 1; i <= countNumber; i++)
 	{
 		/* interpolate gps coordinates */
-		double latitude = iWay.latitude[iA] + deltaLat * i;
-		double longitude = iWay.longitude[iA] + deltaLon * i;
-		QString hn = QString::number(housenumber[iA] + i);
+		double latitude = iWay.latitude[iA] + deltaLat * i * increment;
+		double longitude = iWay.longitude[iA] + deltaLon * i * increment;
+		QString hn = QString::number(housenumber[iA] + i * increment);
 
 		sqlite3_bind_null(stmt, 1);
 		sqlite3_bind_double(stmt, 2, latitude);
