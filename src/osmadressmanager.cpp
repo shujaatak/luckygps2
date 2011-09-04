@@ -254,8 +254,8 @@ bool osmAdressManager::Preprocess(QString dataDir)
 
 		if(iWay.back().housenumber[0].isEmpty() || iWay.back().housenumber[1].isEmpty())
 			iWay.removeLast();
-		else
-			qDebug() << iWay.back().osm_id[0] << iWay.back().osm_id[1];
+		//else
+		//	qDebug() << iWay.back().osm_id[0] << iWay.back().osm_id[1];
 
 
 		sqlite3_reset(stmt);
