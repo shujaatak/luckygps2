@@ -47,7 +47,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 		}
 
 	/* Register plugins */
-	datasource_cache::instance()->register_datasources(getDataHome().toStdString());
+	datasource_cache::instance()->register_datasources(mapnikDir.toStdString());
 
 	for(unsigned i = 0; i < datasource_cache::instance()->plugin_names().size(); i++)
 	qDebug() << "Found Mapnik plugin: " << QString::fromStdString(datasource_cache::instance()->plugin_names().at(i));
