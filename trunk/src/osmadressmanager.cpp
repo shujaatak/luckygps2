@@ -299,8 +299,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, InterpolationWay &iWay)
 {
 	bool ok = false;
-	int housenumberA = 0;
-	int housenumberB = 0;
+	int housenumber[2];
 	int countNumber; /* Total number count to insert into DB */
 	int increment = 1;
 	double deltaLat, deltaLon;
@@ -313,22 +312,18 @@ size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt,
 		return 0; /* not supoprted yet */
 
 	/* Only support numbers as housenumbers */
-	housenumberA = iWay.housenumber[iA].toInt(&ok);
+	housenumber[iA] = iWay.housenumber[iA].toInt(&ok);
 	if(!ok) return 0;
-	housenumberB = iWay.housenumber[iB].toInt(&ok);
+	housenumber[iB] = iWay.housenumber[iB].toInt(&ok);
 	if(!ok) return 0;
 
-	if(housenumberB < housenumberA)
+	if(housenumber[iB] < housenumber[iA])
 	{
 		iA = 1; iB = 0;
-
-		int tmp = housenumberB;
-		housenumberB = housenumberA;
-		housenumberA = tmp;
 	}
 
 	/* Count all needed numbers for interpolation */
-	countNumber = (housenumberB - housenumberA - 1);
+	countNumber = (housenumber[iB] - housenumber[iA] - 1);
 
 	/* Compute increment of latitude and longitude along the street interpolation */
 	deltaLat = (iWay.latitude[iB] - iWay.latitude[iA]) / countNumber;
@@ -350,12 +345,12 @@ size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt,
 		/* interpolate gps coordinates */
 		double latitude = iWay.latitude[iA] + deltaLat * i;
 		double longitude = iWay.longitude[iA] + deltaLon * i;
-		QString housenumber = QString::number(housenumberA + i);
+		QString hn = QString::number(housenumber[iA] + i);
 
 		sqlite3_bind_null(stmt, 1);
 		sqlite3_bind_double(stmt, 2, latitude);
 		sqlite3_bind_double(stmt, 3, longitude);
-		sqlite3_bind_text (stmt, 4, housenumber.toUtf8().constData(), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text (stmt, 4, hn.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 		sqlite3_bind_text (stmt, 5, iWay.street.toUtf8().constData(), -1, SQLITE_TRANSIENT);
 		sqlite3_bind_double(stmt, 6, iWay.postcode);
 		sqlite3_bind_text (stmt, 7, iWay.city.toUtf8().constData(), -1, SQLITE_TRANSIENT);
