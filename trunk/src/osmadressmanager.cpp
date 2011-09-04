@@ -297,7 +297,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	return true;
 }
 
-size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, InterpolationWay &iWay)
+size_t osmAdressManager::interpolateHousenumber(sqlite3_stmt *stmt, InterpolationWay &iWay)
 {
 	bool ok = false;
 	int housenumber[2];

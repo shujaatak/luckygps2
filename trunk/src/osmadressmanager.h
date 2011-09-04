@@ -68,7 +68,7 @@ public:
 	bool getHousenumbers(QString street, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID);
 
 private:
-	size_t interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, InterpolationWay &iWay);
+	size_t interpolateHousenumber(sqlite3_stmt *stmt, InterpolationWay &iWay);
 	QString _dataDir;
 
 };
