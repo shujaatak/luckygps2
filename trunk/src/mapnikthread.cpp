@@ -48,6 +48,8 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	/* Register plugins */
 	datasource_cache::instance()->register_datasources("/usr/lib/mapnik/0.7/input/");
 
+	for(unsigned i = 0; i < datasource_cache::instance()->plugin_names().size(); i++)
+	qDebug() << "Found Mapnik plugin: " << QString::fromStdString(datasource_cache::instance()->plugin_names().at(i));
 
 	/* ------------------------------- */
 	/*    Adjust xml style template    */
@@ -126,7 +128,7 @@ MapnikThread::~MapnikThread()
 void MapnikThread::renderTile(void *mytile)
 {
 	Tile *newtile = new Tile(*((Tile *)mytile), NULL);
-	delete mytile;
+	delete (Tile *)mytile;
 
 	/* Calculate pixel positions of bottom-left & top-right */
 	int p0_x = newtile->_x * TILE_SIZE;
@@ -173,7 +175,7 @@ MapnikSource::MapnikSource(DataSource *ds, QObject *parent) : DataSource(parent)
 
 		// connect thread signals
 		connect(mapnikThread[i], SIGNAL(finished(int, QImage *, Tile *)), this, SLOT(save(int, QImage *, Tile *)));
-		connect(&thread[i], SIGNAL(quit()), mapnikThread[i], SLOT(deleteLater()));
+		connect(&thread[i], SIGNAL(terminated()), mapnikThread[i], SLOT(deleteLater()));
 		thread[i].start();
 	}
 }
