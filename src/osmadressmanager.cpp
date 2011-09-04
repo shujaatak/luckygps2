@@ -75,24 +75,24 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	sqlite3_stmt *stmt = NULL;
 	size_t count = 0;
 
-	QFile hnFile( "/tmp/OSM Importer_hn" ); /* house numbers filename + "_hn"  */
+	QFile hnFile( _dataDir + "/OSM Importer_hn" ); /* house numbers filename + "_hn"  */
 	if (!hnFile.open(QIODevice::ReadOnly))
 		return false;
 	hnData.setDevice(&hnFile);
 
 	/* Node coordinates from */
-	QFile hnCoordsFile( "/tmp/OSM Importer_adress_coordinates" );
+	QFile hnCoordsFile( _dataDir + "/OSM Importer_adress_coordinates" );
 	if (!hnCoordsFile.open(QIODevice::ReadOnly))
 		return false;
 	hnCoordsData.setDevice(&hnCoordsFile);
 
 	/*  nodes for a building tag of a way */
-	QFile hnWayFile( "/tmp/OSM Importer_hn_ways" );
+	QFile hnWayFile( _dataDir + "/OSM Importer_hn_ways" );
 	if (!hnWayFile.open(QIODevice::ReadOnly))
 		return false;
 	hnWayData.setDevice(&hnWayFile);
 
-	filename = "/home/daniel/hn.sqlite";
+	filename = dataDir + "/hn.sqlite";
 	QFile::remove(filename);
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{
@@ -213,7 +213,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	/* Interpolation ways */
 
 	/*  nodes for a interpolation tag of a way */
-	QFile hnWayInterFile( "/tmp/OSM Importer_hn_ways_inter" );
+	QFile hnWayInterFile( _dataDir + "/OSM Importer_hn_ways_inter" );
 	if (!hnWayInterFile.open(QIODevice::ReadOnly))
 		return false;
 	hnWayInterData.setDevice(&hnWayInterFile);
@@ -286,15 +286,11 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	sqlite3_exec(_db, "CREATE VIRTUAL TABLE hn_idx USING RTREE(rowid, minLat, maxLat, minLon, maxLon);", 0, NULL, NULL);
 	sqlite3_exec(_db, "INSERT INTO hn_idx SELECT rowid, lat, lat, lon, lon FROM hn;", 0, NULL, NULL);
 
-	// TODO: add interpolations
-	// TODO: add housenumbers from buildings/areas
-	// TODO: add missing streets
-
 	sqlite3_exec(_db, "ANALYZE; COMPACT;", 0, NULL, NULL);
 	sqlite3_close(_db);
 
 	hnCoordsFile.close();
-	QFile::remove("/tmp/OSM Importer_adress_coordinates");
+	QFile::remove(_dataDir + "/OSM Importer_adress_coordinates");
 
 	return true;
 }
@@ -376,7 +372,7 @@ bool osmAdressManager::getHousenumbers(QString street, HouseNumber &hn, IAddress
 {
 	sqlite3 *_db;
 	sqlite3_stmt *stmt = NULL;
-	QString filename = "/home/daniel/hn.sqlite";
+	QString filename = _dataDir + "/hn.sqlite";
 
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{

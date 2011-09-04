@@ -34,6 +34,7 @@ Routing::Routing()
 	_router = NULL;
 	_addressLookup = NULL;
 	_descGenerator = new DescriptionGenerator();
+	_addressManager = new osmAdressManager();
 
 	_pos[0][0] = _pos[0][1] = 0.0;
 	_pos[1][0] = _pos[1][1] = 0.0;
@@ -72,6 +73,9 @@ Routing::~Routing()
 	/* Description Generator */
 	if(_descGenerator)
 		delete _descGenerator;
+
+	if(_addressManager)
+		delete _addressManager;
 }
 
 int Routing::dataFolder(QString dir, QString *result)
@@ -188,6 +192,8 @@ int Routing::loadPlugins(QString dataDirectory)
 	}
 	/* ---------------------------------- */
 
+	_addressManager->SetInputDirectory(dataDirectory);
+
 	qDebug("loadPlugins: successfull.");
 
 	return true;
@@ -204,7 +210,7 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 	{
 		HouseNumber hn;
 		hn.housenumber = hnStart;
-		bool ret = osmAdressManager::getHousenumbers(_startStreet, hn, _addressLookup, _startPlaceID);
+		bool ret = _addressManager->getHousenumbers(_startStreet, hn, _addressLookup, _startPlaceID);
 
 		if(ret && hn.valid)
 		{
@@ -219,7 +225,7 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 	{
 		HouseNumber hn;
 		hn.housenumber = hnDest;
-		bool ret = osmAdressManager::getHousenumbers(_destStreet, hn, _addressLookup, _destPlaceID);
+		bool ret = _addressManager->getHousenumbers(_destStreet, hn, _addressLookup, _destPlaceID);
 
 		if(ret && hn.valid)
 		{

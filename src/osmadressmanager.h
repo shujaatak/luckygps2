@@ -61,11 +61,15 @@ class osmAdressManager
 public:
 	osmAdressManager();
 
+	void SetInputDirectory(QString dataDir) { _dataDir = dataDir; };
+	void SetOutputDirectory(QString dataDir) { _dataDir = dataDir; };
+
 	bool Preprocess(QString dataDir);
-	static bool getHousenumbers(QString street, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID);
+	bool getHousenumbers(QString street, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID);
 
 private:
 	size_t interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, InterpolationWay &iWay);
+	QString _dataDir;
 
 };
 
