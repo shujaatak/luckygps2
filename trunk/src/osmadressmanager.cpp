@@ -101,6 +101,8 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			sqlite3_close(_db);
 		return false;
 	}
+	sqlite3_exec(_db, "PRAGMA synchronous=OFF;", 0, NULL, 0);
+	sqlite3_exec(_db, "PRAGMA cache_size=10000;", 0, NULL, 0);
 
 	/* Create housenumber NODES table */
 	if(sqlite3_exec(_db, "CREATE TABLE hn (osm_id INTEGER UNIQUE, lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, housenumber TEXT NOT NULL, street TEXT, postcode INTEGER, city TEXT, country TEXT)", 0, NULL, NULL) != SQLITE_OK)
