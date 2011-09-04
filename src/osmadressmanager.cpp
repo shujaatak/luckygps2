@@ -105,6 +105,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	sqlite3_exec(_db, "PRAGMA cache_size=10000;", 0, NULL, 0);
 
 	/* Create housenumber NODES table */
+	/* TODO: use street id, city id */
 	if(sqlite3_exec(_db, "CREATE TABLE hn (osm_id INTEGER UNIQUE, lat DOUBLE NOT NULL, lon DOUBLE NOT NULL, housenumber TEXT NOT NULL, street TEXT, postcode INTEGER, city TEXT, country TEXT)", 0, NULL, NULL) != SQLITE_OK)
 	{
 		return false;
@@ -421,10 +422,12 @@ bool osmAdressManager::getHousenumbers(QString street, HouseNumber &hn, IAddress
 	double correctionLon = (111412.84 * cos(deg_to_rad(gpsMin.latitude*correctionLat)) -93.5 * cos(3 * deg_to_rad(gpsMin.latitude*correctionLat)) + 0.118 * cos(5.0 * deg_to_rad(gpsMin.latitude*correctionLat))) / 111412.84;
 
 	/* Search in 200 meters radius of street for house numbers */
-	gpsMin.latitude -= 0.001 * correctionLat; /* ~110 meters */
-	gpsMin.longitude -= 0.001 * correctionLon; /* ~110 meters, too */
-	gpsMax.latitude += 0.001 * correctionLat;
-	gpsMax.longitude += 0.001 * correctionLon;
+	gpsMin.latitude -= 0.0005 * correctionLat; /* ~55 meters */
+	gpsMin.longitude -= 0.0005 * correctionLon; /* ~55 meters, too */
+	gpsMax.latitude += 0.0005 * correctionLat;
+	gpsMax.longitude += 0.0005 * correctionLon; /* was 0.001 */
+
+	/* TODO: use street id, city id */
 
 	QString sql = "SELECT lat, lon FROM hn WHERE street=? AND housenumber=? ";
 	sql += "AND hn.rowid IN (SELECT rowid FROM hn_idx WHERE minLat>=%1 AND maxLat<=%2 AND minLon>=%3 AND maxLon<=%4);";
