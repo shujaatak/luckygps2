@@ -73,6 +73,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	QString filename;
 	QString sql;
 	sqlite3_stmt *stmt = NULL;
+	size_t count = 0;
 
 	QFile hnFile( "/tmp/OSM Importer_hn" ); /* house numbers filename + "_hn"  */
 	if (!hnFile.open(QIODevice::ReadOnly))
@@ -134,7 +135,6 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	}
 
 	/* Loop over housenumber nodes */
-	int count = 0;
 	while (true) {
 		unsigned osm_id;
 		int postcode;
@@ -251,6 +251,13 @@ bool osmAdressManager::Preprocess(QString dataDir)
 			}
 			rowCount++;
 		}
+
+		if(iWay.back().housenumber[0].isEmpty() || iWay.back().housenumber[1].isEmpty())
+			iWay.removeLast();
+		else
+			qDebug() << iWay.back().osm_id[0] << iWay.back().osm_id[1];
+
+
 		sqlite3_reset(stmt);
 	}
 	sqlite3_finalize(stmt);
@@ -263,7 +270,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL);
 
 	for(size_t i = 0; i < iWay.size(); i++)
-		interpolateHousenumber(_db, stmt, iWay[i]);
+		count += interpolateHousenumber(_db, stmt, iWay[i]);
 
 	sqlite3_finalize(stmt);
 	if(sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
@@ -289,25 +296,26 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	return true;
 }
 
-void osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, InterpolationWay &iWay)
+size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, InterpolationWay &iWay)
 {
 	bool ok = false;
 	int housenumberA = 0;
 	int housenumberB = 0;
-	int countNumber;
+	int countNumber; /* Total number count to insert into DB */
 	int increment = 1;
 	double deltaLat, deltaLon;
+	size_t count = 0;
 
 	if(iWay.interpolation == "alphabetic")
-		return; /* not supoprted yet */
+		return 0; /* not supoprted yet */
 	else if(iWay.interpolation != "even" || iWay.interpolation != "odd")
-		return; /* not supoprted yet */
+		return 0; /* not supoprted yet */
 
 	/* Only support numbers as housenumbers */
 	housenumberA = iWay.housenumber[0].toInt(&ok);
-	if(!ok) return;
+	if(!ok) return 0;
 	housenumberB = iWay.housenumber[1].toInt(&ok);
-	if(!ok) return;
+	if(!ok) return 0;
 
 	/* Count all needed numbers for interpolation */
 	countNumber = (housenumberB - housenumberA - 1);
@@ -344,10 +352,13 @@ void osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, I
 		{
 			qDebug("Could not step (execute) stmt.");
 			sqlite3_finalize(stmt);
-			return;
+			return count;
 		}
 		sqlite3_reset(stmt);
+
+		count++;
 	}
+	return count;
 }
 
 bool osmAdressManager::getHousenumbers(QString street, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID)
