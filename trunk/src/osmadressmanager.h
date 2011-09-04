@@ -26,6 +26,8 @@
 #include "interfaces/igpslookup.h"
 #include "interfaces/irouter.h"
 
+#include "sqlite3.h"
+
 class HouseNumber {
 public:
 	HouseNumber(QString hn, double lat, double lon) : housenumber(hn), latitude(lat), longitude(lon), valid(1) {}
@@ -38,14 +40,32 @@ public:
 	bool valid;
 };
 
+
+class InterpolationWay {
+public:
+	InterpolationWay() {}
+
+	QString housenumber[2];
+	QString street;
+	QString city;
+	QString country;
+	int postcode;
+	double latitude[2];
+	double longitude[2];
+	unsigned osm_id[2];
+	QString interpolation;
+};
+
 class osmAdressManager
 {
 public:
 	osmAdressManager();
 
 	bool Preprocess(QString dataDir);
-	static bool getHousenumbers(QString streetname, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID);
+	static bool getHousenumbers(QString street, HouseNumber &hn, IAddressLookup *addressLookupPlugins, size_t placeID);
 
+private:
+	void interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt, InterpolationWay &iWay);
 
 };
 
