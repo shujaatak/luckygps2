@@ -141,6 +141,8 @@ linux-g++ {
 	# geos lib for linux* platform
 	# INCLUDEPATH += /usr/include/geos
 
+	INCLUDEPATH += /usr/include/freetype2
+
 	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik
 	# `GraphicsMagick++-config --cppflags --libs`
 	desktop.path += /usr/share/applications
