@@ -253,7 +253,6 @@ public:
 							}
 						}
 
-						qDebug() << "Found traffic circle to adapt description info.";
 						descInfo desc = {tmpPoint->name, tmpPoint->nextName, tmpPoint->direction, tmpPoint2->length*1000.0, icons, &labels, tmpPoint->exitNumber, tmpPoint->lastType, units, 0, tmpPoint->exitLink, tmpPoint->enterLink, tmpPoint->type};
 						describe(desc);
 						tmpPoint->desc = labels.last();
