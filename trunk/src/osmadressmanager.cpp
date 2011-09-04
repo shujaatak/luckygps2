@@ -275,7 +275,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL);
 
 	for(size_t i = 0; i < iWay.size(); i++)
-		count += interpolateHousenumber(_db, stmt, iWay[i]);
+		count += interpolateHousenumber(stmt, iWay[i]);
 
 	sqlite3_finalize(stmt);
 	if(sqlite3_exec (_db, "COMMIT;", NULL, NULL, NULL) != SQLITE_OK)
