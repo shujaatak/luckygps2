@@ -216,8 +216,6 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 		{
 			_pos[0][0] = hn.latitude;
 			_pos[0][1] = hn.longitude;
-
-			qDebug() << "Found house number! (start)";
 		}
 	}
 
@@ -231,8 +229,6 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 		{
 			_pos[1][0] = hn.latitude;
 			_pos[1][1] = hn.longitude;
-
-			qDebug() << "Found house number! (dest)";
 		}
 	}
 
