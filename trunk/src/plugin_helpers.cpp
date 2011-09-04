@@ -110,13 +110,13 @@ bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int l
 	bool result = importer->Preprocess(filename.filePath());
 
 	/* Route plugin */
-	// result = routerPlugins->Preprocess(importer, dataDir);
+	result = routerPlugins->Preprocess(importer, dataDir);
 
 	/* GPS Lookup */
-	// result = gpsLookupPlugins->Preprocess(importer, dataDir);
+	result = gpsLookupPlugins->Preprocess(importer, dataDir);
 
 	/* Address lookup */
-	// result = addressLookupPlugins->Preprocess( importer, dataDir);
+	result = addressLookupPlugins->Preprocess( importer, dataDir);
 
 	/* House number lookup */
 	osmAdressManager *hn = new osmAdressManager();
