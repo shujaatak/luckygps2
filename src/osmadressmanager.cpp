@@ -219,7 +219,7 @@ bool osmAdressManager::Preprocess(QString dataDir)
 	hnWayInterData.setDevice(&hnWayInterFile);
 
 	/* Read ndoes from DB */
-	sql = "SELECT housenumber, street, postcode, city, country FROM hn WHERE osm_id=? OR osm_id=? ORDER BY osm_id LIMIT 2;";
+	sql = "SELECT housenumber, street, postcode, city, country FROM hn WHERE osm_id=? OR osm_id=? LIMIT 2;";
 	sqlite3_prepare_v2(_db, sql.toUtf8().constData(), -1, &stmt, NULL);
 
 	while(true)
@@ -305,24 +305,34 @@ size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt,
 	int increment = 1;
 	double deltaLat, deltaLon;
 	size_t count = 0;
+	int iA = 0, iB = 1; /* order of housenumber */
 
 	if(iWay.interpolation == "alphabetic")
 		return 0; /* not supoprted yet */
-	else if(iWay.interpolation != "even" || iWay.interpolation != "odd")
+	else if(iWay.interpolation != "even" && iWay.interpolation != "odd")
 		return 0; /* not supoprted yet */
 
 	/* Only support numbers as housenumbers */
-	housenumberA = iWay.housenumber[0].toInt(&ok);
+	housenumberA = iWay.housenumber[iA].toInt(&ok);
 	if(!ok) return 0;
-	housenumberB = iWay.housenumber[1].toInt(&ok);
+	housenumberB = iWay.housenumber[iB].toInt(&ok);
 	if(!ok) return 0;
+
+	if(housenumberB < housenumberA)
+	{
+		iA = 1; iB = 0;
+
+		int tmp = housenumberB;
+		housenumberB = housenumberA;
+		housenumberA = tmp;
+	}
 
 	/* Count all needed numbers for interpolation */
 	countNumber = (housenumberB - housenumberA - 1);
 
 	/* Compute increment of latitude and longitude along the street interpolation */
-	deltaLat = (iWay.latitude[1] - iWay.latitude[0]) / countNumber;
-	deltaLon = (iWay.longitude[1] - iWay.longitude[0]) / countNumber;
+	deltaLat = (iWay.latitude[iB] - iWay.latitude[iA]) / countNumber;
+	deltaLon = (iWay.longitude[iB] - iWay.longitude[iA]) / countNumber;
 
 	/* Only half the numbers are needed in case of odd/even */
 	if(iWay.interpolation != "all")
@@ -331,12 +341,15 @@ size_t osmAdressManager::interpolateHousenumber(sqlite3 *db, sqlite3_stmt *stmt,
 		increment = 2;
 	}
 
+	if(!countNumber)
+		return 0;
+
 	/* Put every housenumber into database */
 	for(int i = increment; i <= countNumber; i += increment)
 	{
 		/* interpolate gps coordinates */
-		double latitude = iWay.latitude[0] + deltaLat * i;
-		double longitude = iWay.longitude[0] + deltaLon * i;
+		double latitude = iWay.latitude[iA] + deltaLat * i;
+		double longitude = iWay.longitude[iA] + deltaLon * i;
 		QString housenumber = QString::number(housenumberA + i);
 
 		sqlite3_bind_null(stmt, 1);
