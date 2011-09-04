@@ -16,6 +16,8 @@
 #include "interfaces/igpslookup.h"
 #include "interfaces/irouter.h"
 
+#include "osmadressmanager.h"
+
 #include "route.h"
 #include "route_description.h"
 
@@ -62,6 +64,7 @@ private:
 	IRouter					*_router;			/* Calculate route				*/
 	IAddressLookup			*_addressLookup;	/* Route address				*/
 	DescriptionGenerator	*_descGenerator;	/* Description Generator		*/
+	osmAdressManager		*_addressManager;	/* House numbers				*/
 
 	double _pos[2][2];
 

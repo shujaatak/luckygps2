@@ -120,6 +120,7 @@ bool importOsmPbf(QCoreApplication *app, char *file, QString settingsFile, int l
 
 	/* House number lookup */
 	osmAdressManager *hn = new osmAdressManager();
+	hn->SetOutputDirectory(QDir::tempPath());
 	result = hn->Preprocess(dataDir);
 	delete hn;
 
