@@ -28,6 +28,7 @@
 #include <cmath>
 
 #include "sqliteTileManager.h"
+#include "system_helpers.h"
 
 
 SQLiteTileMgr::SQLiteTileMgr(QObject *parent) : DataSource(parent)
@@ -43,7 +44,7 @@ SQLiteTileMgr::~SQLiteTileMgr()
 
 bool SQLiteTileMgr::LoadDatabase(QString path)
 {
-	QString filename = path + "/map.sqlite";
+	QString filename = getDataHome() + "/map.sqlite";
 
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{
@@ -82,7 +83,7 @@ bool SQLiteTileMgr::LoadDatabase(QString path)
 
 bool SQLiteTileMgr::CreateDatabase(QString path)
 {
-	QString filename = path + "/map.sqlite";
+	QString filename = getDataHome() + "/map.sqlite";
 
 	if(sqlite3_open(filename.toUtf8().constData(), &_db) != SQLITE_OK)
 	{
