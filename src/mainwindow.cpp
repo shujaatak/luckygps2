@@ -558,7 +558,9 @@ void MainWindow::on_button_calc_route_clicked()
 			/* disable autocenter button */
 			callback_center_toggle();
 
+#ifdef GPS_DEBUG
 			_gpsd->_route = &(ui->map->_route);
+#endif
 		}
 	}
 }
