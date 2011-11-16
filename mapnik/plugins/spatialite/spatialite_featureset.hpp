@@ -37,20 +37,22 @@
 #include "sqlite_types.hpp"
   
   
-class spatialite_featureset : public mapnik::Featureset
+class sqlite_featureset : public mapnik::Featureset
 {
    public:
-	  spatialite_featureset(boost::shared_ptr<sqlite_resultset> rs,
+      sqlite_featureset(boost::shared_ptr<sqlite_resultset> rs,
                         std::string const& encoding,
                         mapnik::wkbFormat format,
-                        bool multiple_geometries);
-	  virtual ~spatialite_featureset();
+                        bool multiple_geometries,
+                        bool using_subquery);
+      virtual ~sqlite_featureset();
       mapnik::feature_ptr next();
    private:
       boost::shared_ptr<sqlite_resultset> rs_;
       boost::scoped_ptr<mapnik::transcoder> tr_;
       mapnik::wkbFormat format_;
       bool multiple_geometries_;
+      bool using_subquery_;
 };
 
 #endif // SQLITE_FEATURESET_HPP
