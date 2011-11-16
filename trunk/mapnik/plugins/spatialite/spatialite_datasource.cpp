@@ -156,7 +156,7 @@ void spatialite_datasource::bind() const
     if (is_bound_) return;
     
     boost::optional<std::string> file = params_.get<std::string>("file");
-    if (!file) throw datasource_exception("Sqlite Plugin: missing <file> parameter");
+    if (!file) throw datasource_exception("Spatialite Plugin: missing <file> parameter");
     
     boost::optional<std::string> key_field_name = params_.get<std::string>("key_field");
     if (key_field_name) {
@@ -211,7 +211,7 @@ void spatialite_datasource::bind() const
     }
 
     if (!boost::filesystem::exists(dataset_name_))
-        throw datasource_exception("Sqlite Plugin: " + dataset_name_ + " does not exist");
+        throw datasource_exception("Spatialite Plugin: " + dataset_name_ + " does not exist");
           
     dataset_ = new sqlite_connection (dataset_name_);
 
@@ -219,7 +219,7 @@ void spatialite_datasource::bind() const
     for (std::vector<std::string>::const_iterator iter=init_statements_.begin(); iter!=init_statements_.end(); ++iter)
     {
 #ifdef MAPNIK_DEBUG
-        std::clog << "Sqlite Plugin: Execute init sql: " << *iter << std::endl;
+        std::clog << "Spatialite Plugin: Execute init sql: " << *iter << std::endl;
 #endif
         dataset_->execute(*iter);
     }
@@ -284,7 +284,7 @@ void spatialite_datasource::bind() const
                      
                   default:
 #ifdef MAPNIK_DEBUG
-                     std::clog << "Sqlite Plugin: unknown type_oid=" << type_oid << std::endl;
+                     std::clog << "Spatialite Plugin: unknown type_oid=" << type_oid << std::endl;
 #endif
                      break;
                 }
@@ -357,14 +357,14 @@ void spatialite_datasource::bind() const
             {
                 // "Column Affinity" says default to "Numeric" but for now we pass..
                 //desc_.add_descriptor(attribute_descriptor(fld_name,mapnik::Double));
-                std::clog << "Sqlite Plugin: column '" << std::string(fld_name) << "' unhandled due to unknown type: " << fld_type << std::endl;
+                std::clog << "Spatialite Plugin: column '" << std::string(fld_name) << "' unhandled due to unknown type: " << fld_type << std::endl;
             }
 #endif
         }
         if (!found_table)
         {
             std::ostringstream s;
-            s << "Sqlite Plugin: could not query table '" << geometry_table_ << "' ";
+            s << "Spatialite Plugin: could not query table '" << geometry_table_ << "' ";
             if (using_subquery_)
                 s << " from subquery '" << table_ << "' ";
             s << "using 'PRAGMA table_info(" << geometry_table_  << ")' ";
@@ -376,7 +376,7 @@ void spatialite_datasource::bind() const
     }
 
     if (geometry_field_.empty()) {
-        throw datasource_exception("Sqlite Plugin: cannot detect geometry_field, please supply the name of the geometry_field to use.");
+        throw datasource_exception("Spatialite Plugin: cannot detect geometry_field, please supply the name of the geometry_field to use.");
     }
 
     if (index_table_.size() == 0) {
@@ -397,7 +397,7 @@ void spatialite_datasource::bind() const
         #ifdef MAPNIK_DEBUG
         else
         {
-            std::clog << "SQLite Plugin: rtree index lookup did not succeed: '" << sqlite3_errmsg(*(*dataset_)) << "'\n";
+            std::clog << "Spatialite Plugin: rtree index lookup did not succeed: '" << sqlite3_errmsg(*(*dataset_)) << "'\n";
         }
         #endif
     }
@@ -441,7 +441,7 @@ void spatialite_datasource::bind() const
                 }
                 catch (bad_lexical_cast &ex)
                 {
-                    std::clog << boost::format("SQLite Plugin: warning: could not determine extent from query: %s\nError was: '%s'\n") % s.str() % ex.what() << std::endl;
+                    std::clog << boost::format("Spatialite Plugin: warning: could not determine extent from query: %s\nError was: '%s'\n") % s.str() % ex.what() << std::endl;
                 }
             }
         }    
@@ -454,7 +454,7 @@ void spatialite_datasource::bind() const
         && key_field_ == "rowid"
         && !boost::algorithm::icontains(table_,"rowid")) {
        // this is an impossible situation because rowid will be null via a subquery
-       std::clog << "Sqlite Plugin: WARNING: spatial index usage will fail because rowid is not present in your subquery. You have 4 options: 1) Add rowid into your select statement, 2) alias your primary key as rowid, 3) supply a 'key_field' value that references the primary key of your spatial table, or 4) avoid using a spatial index by setting 'use_spatial_index'=false";
+       std::clog << "Spatialite Plugin: WARNING: spatial index usage will fail because rowid is not present in your subquery. You have 4 options: 1) Add rowid into your select statement, 2) alias your primary key as rowid, 3) supply a 'key_field' value that references the primary key of your spatial table, or 4) avoid using a spatial index by setting 'use_spatial_index'=false";
     }
 #endif
     
@@ -473,7 +473,7 @@ void spatialite_datasource::bind() const
         }
 
 #ifdef MAPNIK_DEBUG
-        std::clog << "Sqlite Plugin: " << s.str() << std::endl;
+        std::clog << "Spatialite Plugin: " << s.str() << std::endl;
 #endif
 
         boost::shared_ptr<sqlite_resultset> rs(dataset_->execute_query(s.str()));
@@ -491,7 +491,7 @@ void spatialite_datasource::bind() const
             if (rc != SQLITE_OK)
             {
                std::ostringstream index_error;
-               index_error << "Sqlite Plugin: auto-index table creation failed: '"
+               index_error << "Spatialite Plugin: auto-index table creation failed: '"
                  << sqlite3_errmsg(*(*dataset_)) << "' query was: " << spatial_index_insert_sql;
                throw datasource_exception(index_error.str());
             }
@@ -523,7 +523,7 @@ void spatialite_datasource::bind() const
                         const int type_oid = rs->column_type(1);
                         if (type_oid != SQLITE_INTEGER) {
                             std::ostringstream type_error;
-                            type_error << "Sqlite Plugin: invalid type for key field '"
+                            type_error << "Spatialite Plugin: invalid type for key field '"
                                 << key_field_ << "' when creating index '" << index_table_ 
                                 << "' type was: " << type_oid << "";
                             throw datasource_exception(type_error.str());
@@ -544,7 +544,7 @@ void spatialite_datasource::bind() const
                         int res = sqlite3_step(stmt);
                         if (res != SQLITE_DONE) {
                             std::ostringstream s;
-                            s << "SQLite Plugin: inserting bbox into rtree index failed: "
+                            s << "Spatialite Plugin: inserting bbox into rtree index failed: "
                                  << "error code " << sqlite3_errcode(*(*dataset_)) << ": '"
                                  << sqlite3_errmsg(*(*dataset_)) << "' query was: " << spatial_index_insert_sql;
                             throw datasource_exception(s.str());
@@ -554,7 +554,7 @@ void spatialite_datasource::bind() const
                 }
                 else {
                     std::ostringstream index_error;
-                    index_error << "SQLite Plugin: encountered invalid bbox at '"
+                    index_error << "Spatialite Plugin: encountered invalid bbox at '"
                         << key_field_ << "' == " << rs->column_integer64(1);
                     throw datasource_exception(index_error.str());
                 }
@@ -571,7 +571,7 @@ void spatialite_datasource::bind() const
 
     if (!extent_initialized_) {
         std::ostringstream s;
-        s << "Sqlite Plugin: extent could not be determined for table '" 
+        s << "Spatialite Plugin: extent could not be determined for table '" 
           << geometry_table_ << "' and geometry field '" << geometry_field_ << "'"
           << " because an rtree spatial index is missing or empty."
           << " - either set the table 'extent' or create an rtree spatial index";
@@ -591,7 +591,7 @@ spatialite_datasource::~spatialite_datasource()
 
 std::string spatialite_datasource::name()
 {
-   return "sqlite";
+   return "spatialite";
 }
 
 int spatialite_datasource::type() const
@@ -671,8 +671,8 @@ featureset_ptr spatialite_datasource::features(query const& q) const
         }
 
 #ifdef MAPNIK_DEBUG
-        std::clog << "Sqlite Plugin: table_: " << table_ << "\n\n";
-        std::clog << "Sqlite Plugin: query:" << s.str() << "\n\n";
+        std::clog << "Spatialite Plugin: table_: " << table_ << "\n\n";
+        std::clog << "Spatialite Plugin: query:" << s.str() << "\n\n";
 #endif
 
         boost::shared_ptr<sqlite_resultset> rs(dataset_->execute_query(s.str()));
@@ -736,7 +736,7 @@ featureset_ptr spatialite_datasource::features_at_point(coord2d const& pt) const
         }
 
 #ifdef MAPNIK_DEBUG
-        std::clog << "Sqlite Plugin: " << s.str() << std::endl;
+        std::clog << "Spatialite Plugin: " << s.str() << std::endl;
 #endif
 
         boost::shared_ptr<sqlite_resultset> rs(dataset_->execute_query(s.str()));
