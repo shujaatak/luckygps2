@@ -31,6 +31,8 @@
 
 MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 {
+	_init = 1;
+
 	/* Unique thread number */
 	_numThread = numThread;
 
@@ -40,17 +42,27 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	QDir fontDir = mapnikDir + "/dejavu-fonts-ttf-2.33/ttf/";
 	QFileInfoList fileList = fontDir.entryInfoList(QStringList("*.ttf"), QDir::Files);
 	if(fileList.length() > 0)
+	{
 		for(int i = 0; i < fileList.length(); i++)
 		{
 			freetype_engine::register_font(fileList[i].filePath().toStdString());
 			qDebug() << "Register font: " << fileList[i].filePath();
 		}
+	}
+	else
+	{
+		qDebug() << "Cannot find any mapnik fonts.";
+		_init = 0;
+	}
 
 	/* Register plugins */
 	datasource_cache::instance()->register_datasources(mapnikDir.toStdString());
 
 	for(unsigned i = 0; i < datasource_cache::instance()->plugin_names().size(); i++)
-	qDebug() << "Found Mapnik plugin: " << QString::fromStdString(datasource_cache::instance()->plugin_names().at(i));
+		qDebug() << "Found Mapnik plugin: " << QString::fromStdString(datasource_cache::instance()->plugin_names().at(i));
+
+	if(datasource_cache::instance()->plugin_names().size() <= 0)
+		_init = 0;
 
 	/* ------------------------------- */
 	/*    Adjust xml style template    */
@@ -59,7 +71,10 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 	/* Load xml style template */
 	QFile file(mapnikDir + "/luckygps-default.template");
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-			return;
+	{
+		_init = 0;
+		return;
+	}
 	QTextStream in(&file);
 	in.setCodec("UTF-8");
 	in.setAutoDetectUnicode(true);
@@ -92,7 +107,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 
 
 	QString dbSettings("<Parameter name=\"type\">spatialite</Parameter>\n\
-					   <Parameter name=\"file\">/home/daniel/alberta.sqlite</Parameter>\n\
+					   <Parameter name=\"file\">/home/daniel/of.sqlite</Parameter>\n\
 					   <Parameter name=\"key_field\">rowid</Parameter>\n\
 					   <Parameter name=\"geometry_field\">way</Parameter>\n\
 					   <Parameter name=\"wkb_format\">spatialite</Parameter>\n\
@@ -116,6 +131,13 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 
 	/* Google srid=900913 projection used for rendering */
 	_proj = new projection("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs +over");
+
+	if(!_proj)
+	{
+		/* Shouldn't happen */
+		qDebug() << "No valid projection given.";
+		_init = 0;
+	}
 }
 
 MapnikThread::~MapnikThread()
@@ -128,6 +150,9 @@ MapnikThread::~MapnikThread()
 
 void MapnikThread::renderTile(void *mytile)
 {
+	if(!_init)
+		return;
+
 	Tile *newtile = new Tile(*((Tile *)mytile), NULL);
 	delete (Tile *)mytile;
 

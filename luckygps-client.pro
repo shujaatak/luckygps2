@@ -125,12 +125,12 @@ win32 {
 	LIBS += $$PWD/lib/$$SYSLIBPATH/bzip2/lib/libbz2.lib
 }
 
-linux-g++ {
+linux-g++-64|linux-g++-32 {
 	SOURCES += ./src/gpsd_debug.cpp
 	# ./src/gpsd_linux.cpp
 
-	QMAKE_CXXFLAGS_RELEASE -= -O2
-	QMAKE_CXXFLAGS_RELEASE += -O3 -Wno-unused-function
+	# QMAKE_CXXFLAGS_RELEASE -= -O2
+	QMAKE_CXXFLAGS_RELEASE += -Os -Wno-unused-function
 	# `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 	# QMAKE_CXXFLAGS_DEBUG += `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
