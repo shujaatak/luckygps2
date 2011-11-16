@@ -172,16 +172,16 @@ void MapnikThread::renderTile(void *mytile)
 	_proj->forward(lon_1, lat_1);
 
 	/* calculate bounding box for the tile */
-	Envelope<double> box = Envelope<double>(lon_0, lat_0, lon_1, lat_1);
-	_map->zoomToBox(box);
+	box2d<double> box = box2d<double>(lon_0, lat_0, lon_1, lat_1);
+	_map->zoom_to_box(box);
 
 	/* Render image with default Agg renderer */
-	Image32 img = Image32(TILE_SIZE, TILE_SIZE);
-	agg_renderer<Image32> render(*_map, img);
+	image_32 img = image_32(TILE_SIZE, TILE_SIZE);
+	agg_renderer<image_32> render(*_map, img);
 	render.apply();
 
 	/* TODO: speed this up! */
-	QImage tmpImg = QImage((uchar*)img.raw_data(), _map->getWidth(), _map->getHeight(), QImage::Format_ARGB32);
+	QImage tmpImg = QImage((uchar*)img.raw_data(), _map->width(), _map->height(), QImage::Format_ARGB32);
 	// Need to switch r and b channel
 	QImage *image = new QImage(tmpImg.rgbSwapped());
 

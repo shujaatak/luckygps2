@@ -21,8 +21,8 @@
  *****************************************************************************/
 //$Id$
 
-#ifndef SQLITE_FEATURESET_HPP
-#define SQLITE_FEATURESET_HPP
+#ifndef SPATIALITE_FEATURESET_HPP
+#define SPATIALITE_FEATURESET_HPP
 
 // mapnik
 #include <mapnik/datasource.hpp>
@@ -37,15 +37,15 @@
 #include "sqlite_types.hpp"
   
   
-class sqlite_featureset : public mapnik::Featureset
+class spatialite_featureset : public mapnik::Featureset
 {
    public:
-      sqlite_featureset(boost::shared_ptr<sqlite_resultset> rs,
+      spatialite_featureset(boost::shared_ptr<sqlite_resultset> rs,
                         std::string const& encoding,
                         mapnik::wkbFormat format,
                         bool multiple_geometries,
                         bool using_subquery);
-      virtual ~sqlite_featureset();
+      virtual ~spatialite_featureset();
       mapnik::feature_ptr next();
    private:
       boost::shared_ptr<sqlite_resultset> rs_;
@@ -55,4 +55,4 @@ class sqlite_featureset : public mapnik::Featureset
       bool using_subquery_;
 };
 
-#endif // SQLITE_FEATURESET_HPP
+#endif // SPATIALITE_FEATURESET_HPP
