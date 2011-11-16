@@ -189,7 +189,7 @@ feature_ptr spatialite_featureset::next()
                      
                   default:
     #ifdef MAPNIK_DEBUG
-                     std::clog << "Sqlite Plugin: unhandled type_oid=" << type_oid << std::endl;
+                     std::clog << "Spatialite Plugin: unhandled type_oid=" << type_oid << std::endl;
     #endif
                      break;
                 }

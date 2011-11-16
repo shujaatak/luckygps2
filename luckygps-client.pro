@@ -54,7 +54,7 @@ TRANSLATIONS =	./translations/luckygps_de.ts \
 				./translations/luckygps_hu.ts
 
 DEFINES +=	SQLITE_ENABLE_RTREE=1 \
-			SQLITE_ENABLE_FTS4 OMIT_PROJ=1
+			SQLITE_ENABLE_FTS4 OMIT_PROJ=1 OMIT_FREEXL=1
 
 INCLUDEPATH += ./routing ./src
 LIBS += -L./routing/bin/plugins_client -lcontractionhierarchiesclient -lgpsgridclient -lunicodetournamenttrieclient \

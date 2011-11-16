@@ -33,6 +33,7 @@
 // sqlite
 extern "C" {
   #include <sqlite3.h>
+  #include <spatialite.h>
 }
 
 
@@ -61,7 +62,7 @@ public:
         int status = sqlite3_step (stmt_);
         if (status != SQLITE_ROW && status != SQLITE_DONE) {
             std::ostringstream s;
-            s << "SQLite Plugin: retrieving next row failed";
+            s << "Spatialite Plugin: retrieving next row failed";
             std::string msg(sqlite3_errmsg(sqlite3_db_handle(stmt_)));
             if (msg != "unknown error") s << ": " << msg;
             throw mapnik::datasource_exception(s.str());
@@ -142,6 +143,8 @@ public:
     sqlite_connection (const std::string& file)
         : db_(0)
     {
+        spatialite_init (0);
+
         // sqlite3_open_v2 is available earlier but 
         // shared cache not available until >= 3.6.18
         #if SQLITE_VERSION_NUMBER >= 3006018
@@ -159,7 +162,7 @@ public:
         #endif
         {
             std::ostringstream s;
-            s << "Sqlite Plugin: ";
+            s << "Spatialite Plugin: ";
             throw mapnik::datasource_exception (sqlite3_errmsg (db_));
         }
         //sqlite3_enable_load_extension(db_, 1);
@@ -174,7 +177,7 @@ public:
     void throw_sqlite_error(const std::string& sql)
     {
       std::ostringstream s;
-      s << "Sqlite Plugin: ";
+      s << "Spatialite Plugin: ";
       if (db_)
           s << "'" << sqlite3_errmsg(db_) << "'";
       else
