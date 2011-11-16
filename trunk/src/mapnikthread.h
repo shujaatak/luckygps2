@@ -41,7 +41,7 @@
 
 using namespace mapnik;
 
-#define NUM_THREADS 2
+#define NUM_THREADS 1
 
 class MapnikThread : public QObject
 {
@@ -55,6 +55,7 @@ private:
 	Map *_map;
 	projection *_proj;
 	int _numThread;
+	bool _init; /* is Mapnik ready to render? */
 
 private slots:
 	void renderTile(void *mytile);
@@ -84,7 +85,6 @@ private:
 
 	bool _isRendering[NUM_THREADS];
 
-
 private slots:
 	void save(int numThread, QImage *img, Tile *tile);
 signals:
@@ -97,7 +97,7 @@ class MapnikSource : public DataSource
 	Q_OBJECT
 
 public:
-	MapnikThread() {};
+	MapnikThread() {}
 	virtual QImage *loadMapTile(const Tile *mytile) { return NULL; }
 };
 #endif // #ifdef WITH_MAPNIK

@@ -9,7 +9,7 @@ protobuf_decl.output  = ${QMAKE_FILE_BASE}.pb.h
 win32 {
 	protobuf_decl.commands = e:/svn/luckygps2/lib/win64/protobuf/protoc -I=${QMAKE_FILE_PATH} --cpp_out=. ${QMAKE_FILE_IN}
 }
-linux-g++ {
+linux-g++-64|linux-g++-32 {
 	protobuf_decl.commands = protoc -I=${QMAKE_FILE_PATH} --cpp_out=. ${QMAKE_FILE_IN}
 }
 protobuf_decl.variable_out = GENERATED_FILES
