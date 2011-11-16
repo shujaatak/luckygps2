@@ -35,7 +35,7 @@
 #include <string.h>
 
 // ogr
-#include "sqlite_featureset.hpp"
+#include "spatialite_featureset.hpp"
 
 using mapnik::query;
 using mapnik::box2d;
@@ -46,7 +46,7 @@ using mapnik::geometry_utils;
 using mapnik::transcoder;
 using mapnik::feature_factory;
 
-sqlite_featureset::sqlite_featureset(boost::shared_ptr<sqlite_resultset> rs,
+spatialite_featureset::spatialite_featureset(boost::shared_ptr<sqlite_resultset> rs,
                                      std::string const& encoding,
                                      mapnik::wkbFormat format,
                                      bool multiple_geometries,
@@ -59,9 +59,9 @@ sqlite_featureset::sqlite_featureset(boost::shared_ptr<sqlite_resultset> rs,
 {
 }
 
-sqlite_featureset::~sqlite_featureset() {}
+spatialite_featureset::~spatialite_featureset() {}
 
-void sqlite_dequote(char *z){
+void spatialite_dequote(char *z){
   char quote;                     /* Quote character (if any ) */
 
   quote = z[0];
@@ -87,7 +87,7 @@ void sqlite_dequote(char *z){
 
 
 
-feature_ptr sqlite_featureset::next()
+feature_ptr spatialite_featureset::next()
 {
     if (rs_->is_valid () && rs_->step_next ())
     {
@@ -154,7 +154,7 @@ feature_ptr sqlite_featureset::next()
                 // subqueries in sqlite lead to field double quoting which we need to strip
                 char fld_name2[strlen(fld_name)];
                 strcpy(fld_name2,fld_name);
-                sqlite_dequote(fld_name2);
+                spatialite_dequote(fld_name2);
                 switch (type_oid)
                 {
                   case SQLITE_INTEGER:

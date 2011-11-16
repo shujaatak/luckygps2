@@ -21,8 +21,8 @@
  *****************************************************************************/
 //$Id$
 
-#ifndef SQLITE_DATASOURCE_HPP
-#define SQLITE_DATASOURCE_HPP
+#ifndef SPATIALITE_DATASOURCE_HPP
+#define SPATIALITE_DATASOURCE_HPP
 
 // mapnik
 #include <mapnik/datasource.hpp>
@@ -37,11 +37,11 @@
 // sqlite
 #include "sqlite_types.hpp"
 
-class sqlite_datasource : public mapnik::datasource 
+class spatialite_datasource : public mapnik::datasource 
 {
    public:
-      sqlite_datasource(mapnik::parameters const& params, bool bind=true);
-      virtual ~sqlite_datasource ();
+      spatialite_datasource(mapnik::parameters const& params, bool bind=true);
+      virtual ~spatialite_datasource ();
       int type() const;
       static std::string name();
       mapnik::featureset_ptr features(mapnik::query const& q) const;
@@ -78,4 +78,4 @@ class sqlite_datasource : public mapnik::datasource
 };
 
 
-#endif // SQLITE_DATASOURCE_HPP
+#endif // SPATIALITE_DATASOURCE_HPP

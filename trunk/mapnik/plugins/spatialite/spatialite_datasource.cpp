@@ -21,8 +21,8 @@
  *****************************************************************************/
 // $Id$
 
-#include "sqlite_datasource.hpp"
-#include "sqlite_featureset.hpp"
+#include "spatialite_datasource.hpp"
+#include "spatialite_featureset.hpp"
 
 // mapnik
 #include <mapnik/ptree_helpers.hpp>
@@ -46,7 +46,7 @@ using boost::bad_lexical_cast;
 using mapnik::datasource;
 using mapnik::parameters;
 
-DATASOURCE_PLUGIN(sqlite_datasource)
+DATASOURCE_PLUGIN(spatialite_datasource)
 
 using mapnik::box2d;
 using mapnik::coord2d;
@@ -57,7 +57,7 @@ using mapnik::attribute_descriptor;
 using mapnik::datasource_exception;
 
 
-sqlite_datasource::sqlite_datasource(parameters const& params, bool bind)
+spatialite_datasource::spatialite_datasource(parameters const& params, bool bind)
    : datasource(params),
      extent_(),
      extent_initialized_(false),
@@ -81,10 +81,10 @@ sqlite_datasource::sqlite_datasource(parameters const& params, bool bind)
     // - ensure that the supplied key_field is a valid "integer primary key"
     
     boost::optional<std::string> file = params_.get<std::string>("file");
-    if (!file) throw datasource_exception("Sqlite Plugin: missing <file> parameter");
+    if (!file) throw datasource_exception("Spatialite Plugin: missing <file> parameter");
 
     if (table_.empty()) {
-        throw mapnik::datasource_exception("Sqlite Plugin: missing <table> parameter");
+        throw mapnik::datasource_exception("Spatialite Plugin: missing <table> parameter");
     }
     
     if (bind)
@@ -93,7 +93,7 @@ sqlite_datasource::sqlite_datasource(parameters const& params, bool bind)
     }
 }
 
-void sqlite_datasource::parse_attachdb(std::string const& attachdb) const
+void spatialite_datasource::parse_attachdb(std::string const& attachdb) const
 {
     boost::char_separator<char> sep(",");
     boost::tokenizer<boost::char_separator<char> > tok(attachdb, sep);
@@ -151,7 +151,7 @@ void sqlite_datasource::parse_attachdb(std::string const& attachdb) const
     }
 }
 
-void sqlite_datasource::bind() const
+void spatialite_datasource::bind() const
 {
     if (is_bound_) return;
     
@@ -581,7 +581,7 @@ void sqlite_datasource::bind() const
     is_bound_ = true;
 }
 
-sqlite_datasource::~sqlite_datasource()
+spatialite_datasource::~spatialite_datasource()
 {
     if (is_bound_) 
     {
@@ -589,29 +589,29 @@ sqlite_datasource::~sqlite_datasource()
     }
 }
 
-std::string sqlite_datasource::name()
+std::string spatialite_datasource::name()
 {
    return "sqlite";
 }
 
-int sqlite_datasource::type() const
+int spatialite_datasource::type() const
 {
    return type_;
 }
 
-box2d<double> sqlite_datasource::envelope() const
+box2d<double> spatialite_datasource::envelope() const
 {
    if (!is_bound_) bind();
    return extent_;
 }
 
-layer_descriptor sqlite_datasource::get_descriptor() const
+layer_descriptor spatialite_datasource::get_descriptor() const
 {
    if (!is_bound_) bind();
    return desc_;
 }
 
-featureset_ptr sqlite_datasource::features(query const& q) const
+featureset_ptr spatialite_datasource::features(query const& q) const
 {
    if (!is_bound_) bind();
    if (dataset_)
@@ -677,13 +677,13 @@ featureset_ptr sqlite_datasource::features(query const& q) const
 
         boost::shared_ptr<sqlite_resultset> rs(dataset_->execute_query(s.str()));
 
-        return boost::make_shared<sqlite_featureset>(rs, desc_.get_encoding(), format_, multiple_geometries_, using_subquery_);
+        return boost::make_shared<spatialite_featureset>(rs, desc_.get_encoding(), format_, multiple_geometries_, using_subquery_);
    }
 
    return featureset_ptr();
 }
 
-featureset_ptr sqlite_datasource::features_at_point(coord2d const& pt) const
+featureset_ptr spatialite_datasource::features_at_point(coord2d const& pt) const
 {
    if (!is_bound_) bind();
 
@@ -741,7 +741,7 @@ featureset_ptr sqlite_datasource::features_at_point(coord2d const& pt) const
 
         boost::shared_ptr<sqlite_resultset> rs(dataset_->execute_query(s.str()));
 
-        return boost::make_shared<sqlite_featureset>(rs, desc_.get_encoding(), format_, multiple_geometries_, using_subquery_);
+        return boost::make_shared<spatialite_featureset>(rs, desc_.get_encoding(), format_, multiple_geometries_, using_subquery_);
    }
       
    return featureset_ptr();

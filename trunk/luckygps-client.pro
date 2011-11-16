@@ -143,7 +143,7 @@ linux-g++-64|linux-g++-32 {
 
 	INCLUDEPATH += /usr/include/freetype2
 
-	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik
+	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik2
 	# `GraphicsMagick++-config --cppflags --libs`
 	desktop.path += /usr/share/applications
 	desktop.files += ./luckygps.desktop
