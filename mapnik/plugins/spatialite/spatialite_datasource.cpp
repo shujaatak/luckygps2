@@ -658,6 +658,16 @@ featureset_ptr spatialite_datasource::features(query const& q) const
            {
               boost::algorithm::ireplace_first(query, table_, table_ + " " + spatial_sql.str());
            }
+
+           /* support UNION queries */
+           #if 0
+           if(boost::algorithm::ifind_first(query, "union"))
+           {
+                      /* use spatial index for UNION query, too */
+                      boost::algorithm::ireplace_last(query, "WHERE", spatial_sql.str() + " AND ");
+           }
+           #endif
+
         }
         
         s << query ;

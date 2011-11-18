@@ -34,6 +34,7 @@
 extern "C" {
   #include <sqlite3.h>
   #include <spatialite.h>
+#include <stdio.h>
 }
 
 
@@ -196,6 +197,10 @@ public:
         {
            throw_sqlite_error(sql);
         }
+	else
+	{
+		// printf("%s\n", sql.c_str());
+	}
 
         return new sqlite_resultset (stmt);
     }
