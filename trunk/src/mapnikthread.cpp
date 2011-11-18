@@ -104,7 +104,7 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 
 
 	QString dbSettings("<Parameter name=\"type\">spatialite</Parameter>\n\
-					   <Parameter name=\"file\">/home/daniel/of.sqlite</Parameter>\n\
+					   <Parameter name=\"file\">/home/daniel/mf.sqlite</Parameter>\n\
 					   <Parameter name=\"key_field\">rowid</Parameter>\n\
 					   <Parameter name=\"geometry_field\">way</Parameter>\n\
 					   <Parameter name=\"wkb_format\">spatialite</Parameter>\n\

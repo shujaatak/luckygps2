@@ -4048,7 +4048,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>tunnels-fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway from %(prefix)s_line where highway in ('motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','residential','unclassified') and tunnel in ('yes','true','1') order by z_order) as roads
+      (select CastToMulti(way) as way,highway from %(prefix)s_line where highway in ('motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','residential','unclassified') and tunnel in ('yes','true','1') order by z_order) as roads
       </Parameter>
       %(datasource_settings)s
     </Datasource>
@@ -4118,7 +4118,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>footbikecycle-tunnels</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,horse,foot,bicycle from %(prefix)s_line where highway in ('bridleway','footway','cycleway','path') and tunnel in ('yes','true','1') order by z_order) as roads
+      (select CastToMulti(way) as way,highway,horse,foot,bicycle from %(prefix)s_line where highway in ('bridleway','footway','cycleway','path') and tunnel in ('yes','true','1') order by z_order) as roads
       </Parameter>
       %(datasource_settings)s
     </Datasource>
@@ -4137,7 +4137,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
      <StyleName>barriers</StyleName>
      <Datasource>
       <Parameter name="table">
-      (select way,barrier,"natural",man_made from %(prefix)s_line where barrier is not null or "natural" in ('hedge','cliff') or man_made='embankment') as roads
+      (select CastToMulti(way) as way,barrier,"natural",man_made from %(prefix)s_line where barrier is not null or "natural" in ('hedge','cliff') or man_made='embankment') as roads
       </Parameter>
       %(datasource_settings)s
     </Datasource>
@@ -4155,7 +4155,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>highway-area-casing</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,railway from %(prefix)s_polygon
+      (select CastToMulti(way) as way,highway,railway from %(prefix)s_polygon
        where highway in ('residential','unclassified','pedestrian','service','footway','track','path','platform')
           or railway='platform'
        order by z_order,way_area desc) as roads
@@ -4168,7 +4168,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>minor-roads-casing</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,
+      (select CastToMulti(way) as way,highway,
        case when tunnel in ('yes','true','1') then 'yes' else tunnel end as tunnel,
        case when service in ('parking_aisle','drive-through','driveway') then 'INT-minor' else service end as service
        from %(prefix)s_line
@@ -4182,7 +4182,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>highway-area-fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,railway,aeroway from %(prefix)s_polygon
+      (select CastToMulti(way) as way,highway,railway,aeroway from %(prefix)s_polygon
        where highway in ('residential','unclassified','pedestrian','service','footway','living_street','track','path','platform','services')
           or railway='platform'
           or aeroway in ('runway','taxiway','helipad')
@@ -4288,7 +4288,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>minor-roads-fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,horse,bicycle,foot,construction,aeroway,
+      (select CastToMulti(way) as way,highway,horse,bicycle,foot,construction,aeroway,
        case when tunnel in ('yes','true','1') then 'yes' else tunnel end as tunnel,
        case when bridge in ('yes','true','1','viaduct') then 'yes' else bridge end as bridge,
        case when railway in ('spur','siding')
@@ -4353,7 +4353,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>roads</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,
+      (select CastToMulti(way) as way,highway,
        case when tunnel in ('yes','true','1') then 'yes' else tunnel end as tunnel,
        case when railway='preserved' and service in ('spur','siding','yard') then 'INT-preserved-ssy' else railway end as railway
        from %(prefix)s_roads
@@ -4408,7 +4408,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>bridges_fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,aeroway,horse,bicycle,foot,tracktype,
+      (select CastToMulti(way) as way,highway,aeroway,horse,bicycle,foot,tracktype,
        case when railway in ('spur','siding')
               or (railway='rail' and service in ('spur','siding','yard'))
             then 'INT-spur-siding-yard' else railway end as railway
@@ -4461,7 +4461,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>bridges_fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,aeroway,horse,bicycle,foot,tracktype,
+      (select CastToMulti(way) as way,highway,aeroway,horse,bicycle,foot,tracktype,
        case when railway in ('spur','siding')
               or (railway='rail' and service in ('spur','siding','yard'))
             then 'INT-spur-siding-yard' else railway end as railway
@@ -4514,7 +4514,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>bridges_fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,aeroway,horse,bicycle,foot,tracktype,
+      (select CastToMulti(way) as way,highway,aeroway,horse,bicycle,foot,tracktype,
        case when railway in ('spur','siding')
               or (railway='rail' and service in ('spur','siding','yard'))
             then 'INT-spur-siding-yard' else railway end as railway
@@ -4567,7 +4567,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>bridges_fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,aeroway,horse,bicycle,foot,tracktype,
+      (select CastToMulti(way) as way,highway,aeroway,horse,bicycle,foot,tracktype,
        case when railway in ('spur','siding')
               or (railway='rail' and service in ('spur','siding','yard'))
             then 'INT-spur-siding-yard' else railway end as railway
@@ -4620,7 +4620,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>bridges_fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,aeroway,horse,bicycle,foot,tracktype,
+      (select CastToMulti(way) as way,highway,aeroway,horse,bicycle,foot,tracktype,
        case when railway in ('spur','siding')
               or (railway='rail' and service in ('spur','siding','yard'))
             then 'INT-spur-siding-yard' else railway end as railway
@@ -4673,7 +4673,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>bridges_fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,aeroway,horse,bicycle,foot,tracktype,
+      (select CastToMulti(way) as way,highway,aeroway,horse,bicycle,foot,tracktype,
        case when railway in ('spur','siding')
               or (railway='rail' and service in ('spur','siding','yard'))
             then 'INT-spur-siding-yard' else railway end as railway
@@ -5753,7 +5753,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
      <StyleName>roads-text-low-zoom</StyleName>
      <Datasource>
       <Parameter name="table">
-      (select way,highway,ref,length(ref) as length
+      (select CastToMulti(way) as way,highway,ref,length(ref) as length
        from %(prefix)s_roads
        where highway in ('motorway','trunk','primary')
          and ref is not null
@@ -5778,7 +5778,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
      <StyleName>roads-text</StyleName>
      <Datasource>
       <Parameter name="table">
-      (select way,highway,aeroway,name,ref,length(ref) as length,
+      (select CastToMulti(way) as way,highway,aeroway,name,ref,length(ref) as length,
        case when bridge in ('yes','true','1') then 'yes' else bridge end as bridge
        from %(prefix)s_line
        where waterway IS NULL
