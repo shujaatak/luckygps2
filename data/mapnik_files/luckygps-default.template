@@ -4048,11 +4048,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>tunnels-fill</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway 
-	from %(prefix)s_line 
-	where highway in ('motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','residential','unclassified') and tunnel in ('yes','true','1') 
-	order by z_order) 
-	as roads
+      (select way,highway from %(prefix)s_line where highway in ('motorway','motorway_link','trunk','trunk_link','primary','primary_link','secondary','secondary_link','tertiary','tertiary_link','residential','unclassified') and tunnel in ('yes','true','1') order by z_order) as roads
       </Parameter>
       %(datasource_settings)s
     </Datasource>
@@ -4122,10 +4118,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
     <StyleName>footbikecycle-tunnels</StyleName>
     <Datasource>
       <Parameter name="table">
-      (select way,highway,horse,foot,bicycle 
-	from %(prefix)s_line 
-	where highway in ('bridleway','footway','cycleway','path') and tunnel in ('yes','true','1') 
-	order by z_order) as roads
+      (select way,highway,horse,foot,bicycle from %(prefix)s_line where highway in ('bridleway','footway','cycleway','path') and tunnel in ('yes','true','1') order by z_order) as roads
       </Parameter>
       %(datasource_settings)s
     </Datasource>
@@ -4144,9 +4137,7 @@ ls `python -c "import mapnik;print mapnik.fontscollectionpath"`-->
      <StyleName>barriers</StyleName>
      <Datasource>
       <Parameter name="table">
-      (select way,barrier,"natural",man_made 
-	from %(prefix)s_line 
-	where barrier is not null or "natural" in ('hedge','cliff') or man_made='embankment') as roads
+      (select way,barrier,"natural",man_made from %(prefix)s_line where barrier is not null or "natural" in ('hedge','cliff') or man_made='embankment') as roads
       </Parameter>
       %(datasource_settings)s
     </Datasource>

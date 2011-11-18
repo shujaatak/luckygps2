@@ -660,13 +660,13 @@ featureset_ptr spatialite_datasource::features(query const& q) const
            }
 
            /* support UNION queries */
-           #if 0
+           // #if 0
            if(boost::algorithm::ifind_first(query, "union"))
            {
                       /* use spatial index for UNION query, too */
                       boost::algorithm::ireplace_last(query, "WHERE", spatial_sql.str() + " AND ");
            }
-           #endif
+           // #endif
 
         }
         
