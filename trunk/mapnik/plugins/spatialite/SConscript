@@ -26,8 +26,8 @@ Import ('env')
 
 sqlite_src = Split(
 	"""
-	sqlite3.c
-	spatialite.c
+	../../../src/sqlite3.c
+	../../../src/spatialite.c
 	spatialite_datasource.cpp
 	spatialite_featureset.cpp
 	"""

@@ -86,22 +86,19 @@ MapnikThread::MapnikThread(int numThread, QObject *parent) : QObject(parent)
 
 	QString symbols_path(mapnikDir + "/symbols/");
 	QString symbolsString("%(symbols)s");
-	size_t index = xml.indexOf(symbolsString);
-	xml.replace(index, symbolsString.length(), symbols_path);
+	xml.replace(symbolsString, symbols_path);
 
-	QString srs("&srs4326");
+	QString srs("&srs4326;");
 	QString srsString("%(osm2pgsql_projection)s");
-	index = xml.indexOf(srsString);
-	xml.replace(index, srsString.length(), srs);
+	xml.replace(srsString, srs);
 
 	QString wb_path(mapnikDir + "/world_boundaries/");
 	QString wbString("%(world_boundaries)s");
-	index = xml.indexOf(wbString);
-	xml.replace(index, wbString.length(), wb_path);
+	xml.replace(wbString, wb_path);
 
 	QString prefix("world");
 	QString prefixString("%(prefix)s");
-	index = xml.indexOf(prefixString);
+	int index = xml.indexOf(prefixString);
 	xml.replace(index, prefixString.length(), prefix);
 	xml.replace(prefixString, prefix);
 
