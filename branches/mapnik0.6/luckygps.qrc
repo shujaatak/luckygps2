@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/compass-bg-small.png</file>
+        <file>icons/compass-wheel-small.png</file>
+        <file>icons/icon-center-big.png</file>
+        <file>icons/icon-zoom-in-big.png</file>
+        <file>icons/icon-zoom-out-big.png</file>
+        <file>icons/finish-bg.png</file>
+        <file>icons/start-bg.png</file>
+        <file>data/routing.sqlite</file>
+        <file>icons/folder.png</file>
+        <file>data/luckygps.sqlite</file>
+        <file>icons/youarehere.png</file>
+        <file>icons/full1.png</file>
+        <file>icons/full2.png</file>
+        <file>icons/settings.png</file>
+        <file>icons/trackugps.png</file>
+        <file>icons/navigation.png</file>
+        <file>icons/position-direction.png</file>
+        <file>icons/position.png</file>
+        <file>icons/position-invalid.png</file>
+        <file>data/motorcar.spp</file>
+    </qresource>
+</RCC>
