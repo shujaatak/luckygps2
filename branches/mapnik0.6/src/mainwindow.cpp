@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent, int local)
 		ui->tabLayoutRight->setContentsMargins(0, top, right, bottom);
 
 		/* disable POI for now */
-		ui->groupBox->setVisible(0);
+        // ui->groupBox->setVisible(0);
 	}
 
 	_gpsd = NULL;
@@ -1217,4 +1217,16 @@ void MainWindow::on_lineEditRouteDestinationGPS_textChanged(QString text)
 	{
 		ui->button_calc_route->setEnabled(0);
 	}
+}
+
+void MainWindow::on_lePositionPOI_textEdited(const QString &arg1)
+{
+    // verify content of lineEdit to be a valid gps coordinate
+    double lat, lon;
+
+    if(verifyGpsString(arg1, lat, lon))
+    {
+        int width_corr = (!_mobileMode && (ui->buttonLeftTrack->isChecked() || ui->buttonLeftRoute->isChecked() || ui->buttonLeftSettings->isChecked())) ? 302: 0;
+        ui->map->set_center(lat, lon, width_corr, true);
+    }
 }

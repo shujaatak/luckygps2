@@ -61,4 +61,7 @@ QString nmeaFix_to_gpxType(int fix);
 /* when loading a new route, zoom to it so it is fully covered on screen */
 int get_route_zoom(int width, int height, double lat_max, double lon_min, double lat_min, double lon_max);
 
+/* Ensure a proper gps coordinate format string */
+bool verifyGpsString(QString text, double &lat, double &lon);
+
 #endif // CONVERTUNITS_H
