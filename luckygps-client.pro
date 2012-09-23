@@ -126,15 +126,15 @@ win32 {
 }
 
 linux-g++-64|linux-g++-32 {
-	SOURCES += ./src/gpsd_debug.cpp
-	# ./src/gpsd_linux.cpp
+        SOURCES += ./src/gpsd_linux.cpp
+        # ./src/gpsd_linux.cpp ./src/gpsd_debug.cpp
 
 	# QMAKE_CXXFLAGS_RELEASE -= -O2
 	QMAKE_CXXFLAGS_RELEASE += -Os -Wno-unused-function
 	# `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 	# QMAKE_CXXFLAGS_DEBUG += `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
-	DEFINES += WITH_MAPNIK=1 GPS_DEBUG=1
+        # DEFINES += WITH_MAPNIK=0 GPS_DEBUG=1
 	# Disable Graphicsmagick for now until libpng bugs/Crashes are solved (png.c 1369) --> WITH_IMAGEMAGICK=1
 
 	# Disabled at the moment
@@ -143,7 +143,8 @@ linux-g++-64|linux-g++-32 {
 
 	INCLUDEPATH += /usr/include/freetype2
 
-	LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj -lmapnik2
+        LIBS += -lprotobuf -lgomp -lbz2 -lgeos_c -lproj
+        # -lmapnik
 	# `GraphicsMagick++-config --cppflags --libs`
 	desktop.path += /usr/share/applications
 	desktop.files += ./luckygps.desktop

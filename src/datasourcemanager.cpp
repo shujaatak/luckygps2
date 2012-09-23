@@ -47,7 +47,8 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	connect(_networkManager, SIGNAL(finished(QNetworkReply *)), this, SLOT(slotRequestFinished(QNetworkReply *)));
 
 	_dsFile = new SQLiteTileMgr(this); // new FileTileMgr(this);
-	_dsHttp = new MapnikSource(_dsFile, this); // MapnikSource TileHttpDownload
+    // TODO
+    _dsHttp = new TileHttpDownload(_dsFile, this); // MapnikSource TileHttpDownload
 }
 
 DataSourceManager::~DataSourceManager()

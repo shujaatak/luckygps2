@@ -97,7 +97,7 @@ class MapnikSource : public DataSource
 	Q_OBJECT
 
 public:
-	MapnikThread() {}
+    MapnikSource(DataSource *ds, QObject *parent = 0) {}
 	virtual QImage *loadMapTile(const Tile *mytile) { return NULL; }
 };
 #endif // #ifdef WITH_MAPNIK
