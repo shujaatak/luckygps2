@@ -137,6 +137,8 @@ private slots:
 	void callbackRouteDestCompleterCity(const QString &);
 	void callbackRouteDestCompleterStreet(const QString &);
 
+    void on_lePositionPOI_textEdited(const QString &arg1);
+
 private:
     /* settings/db handling (in settings_update.cpp) */
 	bool loadSettings(gps_settings_t *settings, bool reset = 0,  bool startup = 0);

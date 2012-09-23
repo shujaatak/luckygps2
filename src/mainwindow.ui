@@ -1512,7 +1512,7 @@
                                  </widget>
                                 </item>
                                 <item>
-                                 <widget class="QLineEdit" name="lineEdit">
+                                 <widget class="QLineEdit" name="lePositionPOI">
                                   <property name="toolTip">
                                    <string>Provide GPS coordinates or do left-click onto the map for custom GPS coordinates.</string>
                                   </property>
@@ -1550,7 +1550,7 @@
                                  </widget>
                                 </item>
                                 <item>
-                                 <widget class="QLineEdit" name="lineEdit_2"/>
+                                 <widget class="QLineEdit" name="leNamePOI"/>
                                 </item>
                                 <item>
                                  <widget class="QPushButton" name="pushButton_2">
@@ -3833,7 +3833,7 @@
                                      <bool>true</bool>
                                     </property>
                                     <attribute name="buttonGroup">
-                                     <string>buttonGroup</string>
+                                     <string notr="true">buttonGroup</string>
                                     </attribute>
                                    </widget>
                                   </item>
@@ -3843,7 +3843,7 @@
                                      <string>imperical</string>
                                     </property>
                                     <attribute name="buttonGroup">
-                                     <string>buttonGroup</string>
+                                     <string notr="true">buttonGroup</string>
                                     </attribute>
                                    </widget>
                                   </item>

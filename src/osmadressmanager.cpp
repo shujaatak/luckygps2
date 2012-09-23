@@ -311,7 +311,7 @@ size_t osmAdressManager::interpolateHousenumber(sqlite3_stmt *stmt, Interpolatio
 	if(iWay.interpolation == "alphabetic")
 		return 0; /* not supoprted yet */
 	else if(iWay.interpolation != "even" && iWay.interpolation != "odd")
-		return 0; /* not supoprted yet */
+        return 0; /* not supported yet */
 
 	/* Only support numbers as housenumbers */
 	housenumber[iA] = iWay.housenumber[iA].toInt(&ok);
