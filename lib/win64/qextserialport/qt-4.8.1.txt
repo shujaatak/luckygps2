@@ -1,0 +1,1 @@
+qextserial revision from 17.10.2012
