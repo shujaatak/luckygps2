@@ -73,6 +73,17 @@ public:
 	void set_max_generate_tiles(int t) { _max_generate_zoom = t; }
 	int get_max_generate_tiles() { return _max_generate_zoom; }
 
+	/* routing info box */
+	int _routingInfoHeight;
+
+	/* track management */
+	Track _track;
+	bool _activeTrack; /* TODO: make this private var? */
+
+	/* route management */
+	Route _route;
+	Routing *_routing;
+
 protected:
 	void paintEvent(QPaintEvent *event);
 	void mousePressEvent( QMouseEvent *event );
@@ -82,6 +93,14 @@ protected:
 
 private:
 	void drawPolyline(QPainter* painter, const QRect& boundingBox, QPoint *points, int size);
+
+	void draw_route(QPainter &painter);
+	void draw_track(QPainter &painter);
+	void draw_position(QPainter &painter);
+	void draw_direction(QPainter &painter);
+	void draw_overview_map(QPainter &painter);
+
+	MapOverviewWidget *_mapOverviewWidget;
 
 	QToolButton *_fullscreenButton;
 	bool _sameevent;
@@ -128,22 +147,9 @@ private:
 	/* map state: fullscreen = 1 / normal = 0 */
 	bool _mapStyle;
 
-	/* Supoprt fast redraw on mouse movement */
+	/* Support fast redraw on mouse movement */
 	QImage *_painterImg;
 	int _mapRedrawCounter;
-
-public:
-
-	/* routing info box */
-	int _routingInfoHeight;
-
-	/* track management */
-	Track _track;
-	bool _activeTrack; /* TODO: make this private var? */
-
-	/* route management */
-	Route _route;
-	Routing *_routing;
 
 private slots:
 
