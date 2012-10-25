@@ -2,7 +2,7 @@
 # Project created by QtCreator 2009-11-03T16:33:44
 # -------------------------------------------------
 QT += network \
-        xml
+		xml
 TARGET = luckygps
 TEMPLATE = app
 SOURCES += ./src/main.cpp \
@@ -25,7 +25,7 @@ SOURCES += ./src/main.cpp \
 	./src/datasource.cpp \
 	./src/filetilemanager.cpp \
 	src/sqliteTileManager.cpp \
-    src/osmadressmanager.cpp
+	src/osmadressmanager.cpp
 HEADERS += ./src/mainwindow.h \
 	./src/mapwidget.h \
 	./src/convertunits.h \
@@ -45,9 +45,9 @@ HEADERS += ./src/mainwindow.h \
 	./src/route_description.h \
 	./src/datasourcemanager.h \
 	./src/datasource.h \
-    src/filetilemanager.h \
-    src/sqliteTileManager.h \
-    src/osmadressmanager.h
+	src/filetilemanager.h \
+	src/sqliteTileManager.h \
+	src/osmadressmanager.h
 FORMS += ./src/mainwindow.ui
 # CODECFORTR = UTF-8
 TRANSLATIONS =	./translations/luckygps_de.ts \
@@ -134,7 +134,7 @@ linux-g++-64|linux-g++-32 {
 	# `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 	# QMAKE_CXXFLAGS_DEBUG += `GraphicsMagick++-config --cppflags --cxxflags --ldflags --libs`
 
-	DEFINES += WITH_MAPNIK=1 GPS_DEBUG=1
+	# DEFINES += WITH_MAPNIK=1 GPS_DEBUG=1
 	# Disable Graphicsmagick for now until libpng bugs/Crashes are solved (png.c 1369) --> WITH_IMAGEMAGICK=1
 
 	# Disabled at the moment

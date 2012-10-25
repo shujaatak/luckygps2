@@ -38,7 +38,9 @@ along with MoNav.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace std
 {
+#ifdef __GNUC__
  using namespace __gnu_cxx;
+#endif
 }
 
 
