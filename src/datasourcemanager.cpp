@@ -125,7 +125,7 @@ void DataSourceManager::slotRequestFinished(QNetworkReply *reply)
 
 
 /* This function is part of the MapWidget to be able to access plugins */
-QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList *missing_tiles, TileList *cache, int nx, int ny)
+QImage *DataSourceManager::fill_tiles_pixel(TileList *requestedTiles, TileList *missingTiles, TileList *cache, int nx, int ny)
 {
 	QImage *paintImg = NULL;
 	QPainter painter;
@@ -135,36 +135,28 @@ QImage *DataSourceManager::fill_tiles_pixel(TileList *requested_tiles, TileList 
 	paintImg = new QImage(nx * TILE_SIZE, ny * TILE_SIZE, QImage::Format_RGB32);
 	if(!paintImg)
 		return NULL;
+
 	painter.begin(paintImg);
-	painter.setRenderHint(QPainter::Antialiasing, true);
+	painter.setRenderHint(QPainter::Antialiasing, false);
 	painter.fillRect(0,0, nx * TILE_SIZE, ny * TILE_SIZE, Qt::white);
 
-	for (i = 0; i < requested_tiles->length(); i++)
+	for (i = 0; i < requestedTiles->length(); i++)
 	{
 		int cache_index = -1;
-		if((cache_index = cache->indexOf(requested_tiles->at(i))) < 0)
+		if((cache_index = cache->indexOf(requestedTiles->at(i))) < 0)
 		{
-			QImage *img = NULL;
-			if(NULL)
-				img = NULL; //_tilesManager->RequestTile(requested_tiles->at(i)._x, requested_tiles->at(i)._y, requested_tiles->at(i)._z);
-			else
-				img = _dsFile->loadMapTile(&(requested_tiles->at(i)));
+			QImage *img = _dsFile->loadMapTile(&(requestedTiles->at(i)));
 
 			if(img)
 			{
-				cache->append(Tile(requested_tiles->at(i), img));
-				painter.drawImage(requested_tiles->at(i)._posx, requested_tiles->at(i)._posy, *img);
+				cache->append(Tile(requestedTiles->at(i), img));
+				painter.drawImage(requestedTiles->at(i)._posx, requestedTiles->at(i)._posy, *img);
 			}
 			else
-			{
-				missing_tiles->append(requested_tiles->at(i));
-			}
+				missingTiles->append(requestedTiles->at(i));
 		}
 		else
-		{
-			painter.drawImage(requested_tiles->at(i)._posx, requested_tiles->at(i)._posy, *(cache->at(cache_index)._img));
-		}
-
+			painter.drawImage(requestedTiles->at(i)._posx, requestedTiles->at(i)._posy, *(cache->at(cache_index)._img));
 	}
 	painter.end();
 
@@ -220,10 +212,22 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 	memcpy(cacheTileInfo, &tile_info, sizeof(TileInfo));
 	delete requested_tiles;
 
-	if(missingTiles.length() > 0)
-		_gotMissingTiles = true;
+	/*
+		The "if" is needed so the system doesn't remove the "update" flag for the UI map
+		when called second time for outlinemap
+	*/
+	if(!outlineMap)
+	{
+		if(missingTiles.length() > 0)
+			_gotMissingTiles = true;
+		else
+			_gotMissingTiles = false;
+	}
 	else
-		_gotMissingTiles = false;
+	{
+		if(missingTiles.length() > 0)
+			_gotMissingTiles = true;
+	}
 
 	/* check tile cache for MAX items */
 	while(cache->length() > *cacheSize)
@@ -238,10 +242,8 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 	/* -------------------------------------------------- */
 
 	/* request missing tiles from internet/renderer */
-	{
 		for(int i = 0; i < missingTiles.length(); i++)
 			_dsHttp->loadMapTile(new Tile(missingTiles[i]._x, missingTiles[i]._y, missingTiles[i]._z, _mapPath, _mapUrl));
-	}
 
 	return  mapImg;
 }

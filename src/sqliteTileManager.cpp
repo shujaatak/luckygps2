@@ -229,5 +229,5 @@ int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 
 	sqlite3_finalize(stmt);
 
-	return false;
+	return true;
 }
