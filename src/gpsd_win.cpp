@@ -48,7 +48,7 @@ gpsd::gpsd(QObject *parent, gps_settings_t &settings) : QObject(parent)
 	_gpsSettings.baudrate = settings.baudrate;
 	_gpsSettings.flow = settings.flow;
 	_gpsSettings.parity = settings.parity;
-	_gpsSettings.databits = settings.databits;
+	_gpsSettings.databits = settings.databits + 5 /* add value form first entry */;
 	_gpsSettings.stopbits = settings.stopbits;
 
 	connect(_port, SIGNAL(readyRead()), this, SLOT(callback_gpsd_read()));
@@ -156,12 +156,14 @@ gpsd::~gpsd()
 
 bool gpsd::gpsd_update_settings(gps_settings_t &settings)
 {
+	// TODO: unify this 8 lines with constructor code, same lines there!
 	_gpsSettings.portname = settings.portname;
 	_gpsSettings.baudrate = settings.baudrate;
+
 	_gpsSettings.flow = settings.flow;
-	_gpsSettings.parity = settings.parity;
-	_gpsSettings.databits = settings.databits;
 	_gpsSettings.stopbits = settings.stopbits;
+	_gpsSettings.parity = settings.parity;
+	_gpsSettings.databits = settings.databits + 5 /* add value form first entry */;
 
 	return gps_connect();
 }
