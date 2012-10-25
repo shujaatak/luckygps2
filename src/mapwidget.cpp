@@ -398,6 +398,95 @@ void MapWidget::draw_overview_map(QPainter &painter)
 			_mapOverviewWidget->update_overviewMap(NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 	}
 }
+
+void MapWidget::draw_info(QPainter &painter, QFont &font)
+{
+	/* top bar holds gps info, scale and fullscreen button */
+	int topBarWidth = width() - 35;
+	int topBarHeight = 25;
+
+	/* prepare half transparent information area on the top */
+	painter.setOpacity(0.8627); /* a = 220 */
+	painter.fillRect(0, 0, topBarWidth, topBarHeight, Qt::white);
+	painter.setOpacity(1.0);
+	painter.drawRect(-1, -1, topBarWidth + 1, topBarHeight);
+
+	/* draw fullscreen button */
+	painter.setOpacity(0.8627); /* a = 220 */
+	painter.fillRect(topBarWidth + 4, 0, width() - topBarWidth - 4, topBarHeight, Qt::white);
+	painter.setOpacity(1.0);
+	painter.drawRect(topBarWidth + 4, -1, width() - topBarWidth - 4, topBarHeight);
+	_fullscreenButton->setGeometry(QRect(topBarWidth + 4 + 2, 0, width() - topBarWidth - 4 - 3, topBarHeight - 1));
+
+	/* draw gps info */
+	if(!_gpsdata.nice_connection)
+	{
+		/* choose correct message according to GPS interface */
+#ifdef Q_CC_MSVC
+		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("Cannot find GPS device."));
+#else
+		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("Cannot connect to GPSD."));
+#endif
+	}
+	else if(!_gpsdata.seen_valid)
+	{
+		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("No GPS found."));
+	}
+	else if(_gpsdata.seen_valid && !_gpsdata.valid)
+	{
+		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("Searching satelites..."));
+	}
+	else
+	{
+		/* display small gps information string on top left of the MapWidget */
+		/* speed - position */
+		QString info;
+		int speed = _gpsdata.speed * 3.6; // km/h
+
+		if(_unit == 0)
+			info = QString::number(speed, 'f', 1) + " km/h   ";
+		else
+		{
+			speed *= 0.62137; // mph
+			info = QString::number(speed, 'f', 1) + " mph   ";
+		}
+		info += QString::number(_gpsdata.latitude, 'f', 6) + "N - ";
+		info += QString::number(_gpsdata.longitude, 'f', 6) + "E";
+		painter.drawText(10, 20, info);
+	}
+
+	drawFrame( &painter );
+
+	/* draw scale in info area on the top */
+	if(get_zoom() > 6)
+	{
+		int scale_width = 0;
+		int length = 200; /* scale bar width*/
+
+		/* change scale bar width according to visible map area */
+		if(width() < 400)
+			length /= 2;
+
+		QString scale = get_scale(pixel_to_latitude(get_zoom(), _y + 15), pixel_to_longitude(get_zoom(), 0), pixel_to_longitude(get_zoom(), length), &scale_width, _unit, length);
+
+		QPen pen = painter.pen();
+		pen.setWidth(2);
+		painter.setPen(pen);
+		painter.drawLine(topBarWidth - 10 - scale_width, topBarHeight-10,topBarWidth - 10, topBarHeight-10);
+		painter.drawLine(topBarWidth - 10 - scale_width, topBarHeight-15, topBarWidth - 10 - scale_width, topBarHeight-5);
+		painter.drawLine(topBarWidth -10, topBarHeight-15, topBarWidth -10, topBarHeight-5);
+
+		/* tricky text aligning to the right */
+		QTextLayout layout(scale, font);
+		layout.beginLayout();
+		QTextLine line = layout.createLine();
+		layout.endLayout();
+		QRectF rect = line.naturalTextRect();
+		painter.drawText(topBarWidth - rect.width() - 20, topBarHeight - 12, scale);
+
+	}
+}
+
 void MapWidget::paintEvent(QPaintEvent *event)
 {
 	/* Valid DataSourceManager is needed to draw a map */
@@ -459,10 +548,6 @@ void MapWidget::paintEvent(QPaintEvent *event)
 	}
 	else if(_mapRedrawCounter >= 3)
 		_mapRedrawCounter = 3;
-
-	/* top bar holds gps info, scale and fullscreen button */
-	int topBarWidth = width() - 35;
-	int topBarHeight = 25;
 
 	if(!painter.begin(_painterImg))
 	{
@@ -530,122 +615,8 @@ void MapWidget::paintEvent(QPaintEvent *event)
 	/* draw overview map */
 	draw_overview_map(painter);
 
-	/* prepare half transparent information area on the top */
-	painter.setOpacity(0.8627); /* a = 220 */
-	painter.fillRect(0, 0, topBarWidth, topBarHeight, Qt::white);
-	painter.setOpacity(1.0);
-	painter.drawRect(-1, -1, topBarWidth + 1, topBarHeight);
-
-	/* draw fullscreen button */
-	painter.setOpacity(0.8627); /* a = 220 */
-	painter.fillRect(topBarWidth + 4, 0, width() - topBarWidth - 4, topBarHeight, Qt::white);
-	painter.setOpacity(1.0);
-	painter.drawRect(topBarWidth + 4, -1, width() - topBarWidth - 4, topBarHeight);
-	_fullscreenButton->setGeometry(QRect(topBarWidth + 4 + 2, 0, width() - topBarWidth - 4 - 3, topBarHeight - 1));
-
-	/* draw gps info */
-	if(!_gpsdata.nice_connection)
-	{
-		/* choose correct message according to GPS interface */
-#ifdef Q_CC_MSVC
-		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("Cannot find GPS device."));
-#else
-		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("Cannot connect to GPSD."));
-#endif
-	}
-	else if(!_gpsdata.seen_valid)
-	{
-		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("No GPS found."));
-	}
-	else if(_gpsdata.seen_valid && !_gpsdata.valid)
-	{
-		painter.drawText(10, topBarHeight - ((topBarHeight - 9) / 2), tr("Searching satelites..."));
-	}
-	else
-	{
-		/* display small gps information string on top left of the MapWidget */
-		/* speed - position */
-		QString info;
-		int speed = _gpsdata.speed * 3.6; // km/h
-
-		if(_unit == 0)
-			info = QString::number(speed, 'f', 1) + " km/h   ";
-		else
-		{
-			speed *= 0.62137; // mph
-			info = QString::number(speed, 'f', 1) + " mph   ";
-		}
-		info += QString::number(_gpsdata.latitude, 'f', 6) + "N - ";
-		info += QString::number(_gpsdata.longitude, 'f', 6) + "E";
-		painter.drawText(10, 20, info);
-	}
-
-	drawFrame( &painter );
-
-	/* draw compass here */
-	if(0 /* !_mirror */) // don't draw compass in mirror mode
-	{
-		/* disable antialiasing to have nice thin lines*/
-		painter.setRenderHint(QPainter::Antialiasing, true);
-
-		int h = parentWidget()->height() - height();
-
-		painter.setOpacity(0.6);
-
-		/* load moving compass wheel */
-		if(!_cfImage.isNull())
-		{
-			QImage img2;
-			QTransform mat;
-
-			/* rotate icon to match track direction */
-			mat.reset();
-			mat.rotate(360 - _degree);
-			img2 = _cfImage.transformed(mat, Qt::SmoothTransformation);
-			painter.drawImage(3-pos().x()+5-2+(_cfImage.width()/2 - img2.width()/2)-3 + 5, height() - 5 - 1 - pos().y() - _cfImage.height() + (_cfImage.height()/2 - img2.height()/2) + h, img2);
-		}
-		else
-			qDebug("Cannot open compass wheel image");
-
-		/* load compass background */
-		if(!_cbImage.isNull())
-		{
-			painter.drawImage(3-pos().x()+5-2-3 + 5, -pos().y()+height()-_cbImage.height()+h-5-1, _cbImage);
-		}
-		else
-			qDebug("Cannot open compass background");
-
-		painter.setOpacity(1.0);
-	}
-
-	/* draw scale in info area on the top */
-	if(get_zoom() > 6)
-	{
-		int scale_width = 0;
-		int length = 200; /* scale bar width*/
-
-		/* change scale bar width according to visible map area */
-		if(width() < 400)
-			length /= 2;
-
-		QString scale = get_scale(pixel_to_latitude(get_zoom(), _y + 15), pixel_to_longitude(get_zoom(), 0), pixel_to_longitude(get_zoom(), length), &scale_width, _unit, length);
-
-		QPen pen = painter.pen();
-		pen.setWidth(2);
-		painter.setPen(pen);
-		painter.drawLine(topBarWidth - 10 - scale_width, topBarHeight-10,topBarWidth - 10, topBarHeight-10);
-		painter.drawLine(topBarWidth - 10 - scale_width, topBarHeight-15, topBarWidth - 10 - scale_width, topBarHeight-5);
-		painter.drawLine(topBarWidth -10, topBarHeight-15, topBarWidth -10, topBarHeight-5);
-
-		/* tricky text aligning to the right */
-		QTextLayout layout(scale, font);
-		layout.beginLayout();
-		QTextLine line = layout.createLine();
-		layout.endLayout();
-		QRectF rect = line.naturalTextRect();
-		painter.drawText(topBarWidth - rect.width() - 20, topBarHeight - 12, scale);
-
-	}
+	/* draw gps data, scale, etc. in info area on the top */
+	draw_info(painter, font);
 
 	painter.end();
 
@@ -657,8 +628,6 @@ void MapWidget::paintEvent(QPaintEvent *event)
 	}
 	widgetPainter.drawImage(0, 0, *_painterImg);
 	widgetPainter.end();
-
-	// qDebug() << pixel_to_longitude(get_zoom(), _x) << " " << pixel_to_latitude(get_zoom(), _y) << " - " << pixel_to_longitude(get_zoom(), _x + width()) << " " << pixel_to_latitude(get_zoom(), _y + height());
 
 	tend();
 	qDebug(QString::number(tval()).toAscii());
