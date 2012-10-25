@@ -160,7 +160,7 @@ int SQLiteTileMgr::saveMapTile(QImage *img, const Tile *mytile)
 	}
 
 	sqlite3_stmt *stmt = NULL;
-	char *sql_err = NULL;
+	// UNUSED char *sql_err = NULL;
 	QString sql = "INSERT OR IGNORE INTO tiles VALUES(%1, %2, %3, ?);";
 	sql = sql.arg(mytile->_z).arg(mytile->_x).arg(mytile->_y);
 

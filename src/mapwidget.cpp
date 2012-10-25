@@ -147,7 +147,7 @@ void MapWidget::callback_fullscreen_clicked()
 	_mapStyle = !_mapStyle;
 }
 
-void MapWidget::draw_route(QPainter &painter)
+bool MapWidget::draw_route(QPainter &painter)
 {
 	if(_route.points.length() > 0)
 	{
@@ -185,11 +185,17 @@ void MapWidget::draw_route(QPainter &painter)
 
 		painter.setOpacity(1.0);
 		painter.setPen(backupPen);
+
+		return true;
 	}
+	else
+		return false;
 }
 
-void MapWidget::draw_track(QPainter &painter)
+bool MapWidget::draw_track(QPainter &painter)
 {
+	bool status = false;
+
 	if(_track.name.length() > 0)
 	{
 		QPen backupPen  = painter.pen();
@@ -249,6 +255,8 @@ void MapWidget::draw_track(QPainter &painter)
 
 		painter.setOpacity(1.0);
 		painter.setPen(backupPen);
+
+		status = true;
 	}
 
 	/* Draw start and end point of the route */
@@ -269,6 +277,8 @@ void MapWidget::draw_track(QPainter &painter)
 			pixel_y -= _y + _rsImage.height();
 
 			painter.drawImage(pixel_x, pixel_y, _rsImage);
+
+			status = true;
 		}
 
 		if(!_rfImage.isNull())
@@ -287,11 +297,15 @@ void MapWidget::draw_track(QPainter &painter)
 			pixel_y -= _y + _rfImage.height() - 10;
 
 			painter.drawImage(pixel_x, pixel_y, _rfImage);
+
+			status = true;
 		}
 	}
+
+	return status;
 }
 
-void MapWidget::draw_position(QPainter &painter)
+bool MapWidget::draw_position(QPainter &painter)
 {
 	if((_gpsdata.seen_valid && !_gpsdata.valid) || (_gpsdata.valid && !check_speed(_gpsdata.speed)))
 	{
@@ -329,12 +343,16 @@ void MapWidget::draw_position(QPainter &painter)
 			pixel_y -= _y + img->height() / 2;
 
 			painter.drawImage(pixel_x, pixel_y, *img);
+
+			return true;
 		}
 	}
+
+	return false;
 }
 
 /* draw direction icon */
-void MapWidget::draw_direction(QPainter &painter)
+bool MapWidget::draw_direction(QPainter &painter)
 {
 	if(_gpsdata.valid && check_speed(_gpsdata.speed))
 	{
@@ -361,11 +379,15 @@ void MapWidget::draw_direction(QPainter &painter)
 			pixel_y -= _y + img2.height() / 2;
 
 			painter.drawImage(pixel_x, pixel_y, img2);
+
+			return true;
 		}
 	}
+
+	return false;
 }
 
-void MapWidget::draw_overview_map(QPainter &painter)
+bool MapWidget::draw_overview_map()
 {
 	if(get_zoom() > 7)
 	{
@@ -390,16 +412,24 @@ void MapWidget::draw_overview_map(QPainter &painter)
 
 		/* update overview map */
 		_mapOverviewWidget->update_overviewMap(mapImg, _x, _y, width(), height(), -tile_info.offset_tile_x, -tile_info.offset_tile_y, w, h, factor);
+
+		return true;
 	}
 	else
 	{
 		/* update overview map */
 		if(_mapOverviewWidget->_outlineMapImg)
+		{
 			_mapOverviewWidget->update_overviewMap(NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+			return true;
+		}
 	}
+
+	return false;
 }
 
-void MapWidget::draw_info(QPainter &painter, QFont &font)
+bool MapWidget::draw_info(QPainter &painter, QFont &font)
 {
 	/* top bar holds gps info, scale and fullscreen button */
 	int topBarWidth = width() - 35;
@@ -483,8 +513,9 @@ void MapWidget::draw_info(QPainter &painter, QFont &font)
 		layout.endLayout();
 		QRectF rect = line.naturalTextRect();
 		painter.drawText(topBarWidth - rect.width() - 20, topBarHeight - 12, scale);
-
 	}
+
+	return true;
 }
 
 void MapWidget::paintEvent(QPaintEvent *event)
@@ -613,7 +644,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
 	}
 
 	/* draw overview map */
-	draw_overview_map(painter);
+	draw_overview_map();
 
 	/* draw gps data, scale, etc. in info area on the top */
 	draw_info(painter, font);

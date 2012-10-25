@@ -30,47 +30,47 @@ class DataSource : public QObject
    Q_OBJECT
 
 public:
-	DataSource(QObject *parent = 0){}
+    DataSource(QObject *parent = 0){}
 
-	virtual QImage *loadMapTile(const Tile *mytile) = 0;
-	virtual int saveMapTile(QImage *img, const Tile *mytile) { return false; }
+    virtual QImage *loadMapTile(const Tile *) = 0;
+    virtual int saveMapTile(QImage *, const Tile *) { return false; }
 
-	/* Internet settings available for all children classes */
-	bool get_inet(){ return _inet; }
-	void set_inet(bool value)
-	{
-		if(!_autodownload)
-		{
-			_inet = 0;
-			return;
-		}
+    /* Internet settings available for all children classes */
+    bool get_inet(){ return _inet; }
+    void set_inet(bool value)
+    {
+        if(!_autodownload)
+        {
+            _inet = 0;
+            return;
+        }
 
-		/* If internet connection is up again, start downloading missing tiles again */
-		// if((value != _inet) && value)
-		// 		dlGetTiles();
-		// TODO DG solve this with callbacks to tileHttpDownload?
+        /* If internet connection is up again, start downloading missing tiles again */
+        // if((value != _inet) && value)
+        // 		dlGetTiles();
+        // TODO DG solve this with callbacks to tileHttpDownload?
 
-		_inet = value;
-	}
+        _inet = value;
+    }
 
-	/* Sometimes it is not allowed to use the internet */
-	bool get_autodownload() { return _autodownload; }
-	void set_autodownload(bool value) { _autodownload = value; if(_inet && !_autodownload) _inet = 0; }
+    /* Sometimes it is not allowed to use the internet */
+    bool get_autodownload() { return _autodownload; }
+    void set_autodownload(bool value) { _autodownload = value; if(_inet && !_autodownload) _inet = 0; }
 
 private:
-	/* Flags to describe what operations are possible on this data source */
-	enum dsAccessFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
-	dsAccessFlags accessFlag;
+    /* Flags to describe what operations are possible on this data source */
+    enum dsAccessFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
+    dsAccessFlags accessFlag;
 
-	/* Flags to describe what kind of data source this is */
-	// num dsTypeFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
-	// dsTypeFlags accessFlag;
+    /* Flags to describe what kind of data source this is */
+    // num dsTypeFlags { DS_ACCESS_READ = 0, DS_ACCESS_WRITE = 1};
+    // dsTypeFlags accessFlag;
 
-	/* True if internet connection available */
-	bool _inet;
+    /* True if internet connection available */
+    bool _inet;
 
-	/* false if using internet is not allowed */
-	bool _autodownload;
+    /* false if using internet is not allowed */
+    bool _autodownload;
 
 signals:
 
