@@ -45,60 +45,60 @@ using namespace mapnik;
 
 class MapnikThread : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	MapnikThread(int numThread, QObject *parent = 0);
-	~MapnikThread();
+    MapnikThread(int numThread, QObject *parent = 0);
+    ~MapnikThread();
 
 private:
-	Map *_map;
-	projection *_proj;
-	int _numThread;
-	bool _init; /* is Mapnik ready to render? */
+    Map *_map;
+    projection *_proj;
+    int _numThread;
+    bool _init; /* is Mapnik ready to render? */
 
 private slots:
-	void renderTile(void *mytile);
+    void renderTile(void *mytile);
 signals:
-	void finished(int numThread, QImage *img, Tile *tile);
+    void finished(int numThread, QImage *img, Tile *tile);
 };
 
 class MapnikSource : public DataSource
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	MapnikSource(DataSource *ds, QObject *parent = 0);
-	~MapnikSource();
+    MapnikSource(DataSource *ds, QObject *parent = 0);
+    ~MapnikSource();
 
-	virtual QImage *loadMapTile(const Tile *mytile);
+    virtual QImage *loadMapTile(const Tile *mytile);
 
-	/* Tiles for render */
-	TileListP _dlTilesTodo;
+    /* Tiles for render */
+    TileListP _dlTilesTodo;
 
 private:
-	QThread thread[NUM_THREADS];
-	MapnikThread *mapnikThread[NUM_THREADS];
+    QThread thread[NUM_THREADS];
+    MapnikThread *mapnikThread[NUM_THREADS];
 
-	/* data sink: Where to write the downloaded images */
-	DataSource *_ds;
+    /* data sink: Where to write the downloaded images */
+    DataSource *_ds;
 
-	bool _isRendering[NUM_THREADS];
+    bool _isRendering[NUM_THREADS];
 
 private slots:
-	void save(int numThread, QImage *img, Tile *tile);
+    void save(int numThread, QImage *img, Tile *tile);
 signals:
-	void renderTile(Tile *);
+    void renderTile(Tile *);
 };
 
 #else
 class MapnikSource : public DataSource
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	MapnikSource(DataSource *ds, QObject *parent = 0) {}
-	virtual QImage *loadMapTile(const Tile *mytile) { return NULL; }
+    MapnikSource(DataSource *ds, QObject *parent = 0) {}
+    virtual QImage *loadMapTile(const Tile *mytile) { return NULL; }
 };
 #endif // #ifdef WITH_MAPNIK
 

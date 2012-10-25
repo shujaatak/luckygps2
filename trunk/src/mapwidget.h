@@ -94,12 +94,13 @@ protected:
 private:
 	void drawPolyline(QPainter* painter, const QRect& boundingBox, QPoint *points, int size);
 
-	void draw_route(QPainter &painter);
-	void draw_track(QPainter &painter);
-	void draw_position(QPainter &painter);
-	void draw_direction(QPainter &painter);
-	void draw_overview_map(QPainter &painter);
-	void draw_info(QPainter &painter, QFont &font);
+	/* return value indicates if something got drawn or not */
+	bool draw_route(QPainter &painter);
+	bool draw_track(QPainter &painter);
+	bool draw_position(QPainter &painter);
+	bool draw_direction(QPainter &painter);
+	bool draw_overview_map();
+	bool draw_info(QPainter &painter, QFont &font);
 
 	MapOverviewWidget *_mapOverviewWidget;
 
