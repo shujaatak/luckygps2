@@ -39,17 +39,21 @@
 
 #ifdef __GNUC__
 #include <ext/hash_map>
+using namespace std;
 #else
 #include <hash_map>
+using namespace stdext;
 #endif
 
 namespace std
 {
+#ifdef __GNUC__
  using namespace __gnu_cxx;
+#endif
 }
 
 
-typedef std::hash_map<int, GPSCoordinate>::value_type hashGPS;
+typedef hash_map<int, GPSCoordinate>::value_type hashGPS;
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -60,10 +64,9 @@ osmAdressManager::osmAdressManager()
 {
 }
 
-
 bool osmAdressManager::Preprocess(QString dataDir)
 {
-	std::hash_map<unsigned, GPSCoordinate> hm1;
+	hash_map<unsigned, GPSCoordinate> hm1;
 	QList <InterpolationWay> iWay;
 	QDataStream hnData;
 	QDataStream hnCoordsData;

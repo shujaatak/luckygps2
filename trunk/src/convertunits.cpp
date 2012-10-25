@@ -31,6 +31,11 @@
 #endif /* !M_PI */
 
 #ifdef Q_CC_MSVC
+
+#define isnan(n) _isnan(n)
+#define finite _finite
+#define hypot _hypot
+
 static double msvc_atanh(double x)
 {
    return ( 0.5 * log( ( 1.0 + x ) / ( 1.0 - x ) ) );
@@ -92,17 +97,17 @@ double pixel_to_latitude(double zoom, int pixel_y)
 /* Return distance in km */
 double fast_distance_rad(double lat1, double lon1, double lat2, double lon2)
 {
-	double dist = acos(sin(lat1)*sin(lat2)+cos(lat1)*cos(lat2)*cos(lon2-lon1))*6371.0;
+    double dist = acos(sin(lat1)*sin(lat2)+cos(lat1)*cos(lat2)*cos(lon2-lon1))*6371.0;
 
-	if(isnan(dist))
-		dist = 0;
+    if(isnan(dist))
+        dist = 0;
 
     return dist;
 }
 
 const double fast_distance_deg(const double v[2], const double w[2])
 {
-	return fast_distance_rad(deg_to_rad(v[0]), deg_to_rad(v[1]), deg_to_rad(w[0]), deg_to_rad(w[1]));
+    return fast_distance_rad(deg_to_rad(v[0]), deg_to_rad(v[1]), deg_to_rad(w[0]), deg_to_rad(w[1]));
 }
 
 double fast_distance_deg(double lat1, double lon1, double lat2, double lon2)
@@ -246,168 +251,168 @@ double get_distance_rad(double lat1_rad, double lon1_rad, double lat2_rad, doubl
 /* convert a distance between two points into a string with units */
 QString distance_to_scale(double distance, double *scale_factor, int units)
 {
-	double unit_conversion = 1.0;
-	QString unit_string = "";
-	QString unit_name = "";
+    double unit_conversion = 1.0;
+    QString unit_string = "";
+    QString unit_name = "";
 
-	if(units == 0) /* metrical */
-	{
-		unit_conversion = 1.0;
-		unit_name = "km";
-	}
-	else if(units == 1) /* imperial */
-	{
-		unit_conversion = 1.0/1.6093444;
-		unit_name = "m";
-	}
+    if(units == 0) /* metrical */
+    {
+        unit_conversion = 1.0;
+        unit_name = "km";
+    }
+    else if(units == 1) /* imperial */
+    {
+        unit_conversion = 1.0/1.6093444;
+        unit_name = "m";
+    }
 
-	distance *= unit_conversion;
-	if (distance >= 5000)
-	{
-		unit_string = "5000" + unit_name;
-		*scale_factor = 5000 / distance;
-	}
-	else if (distance < 5000 && distance >= 2000)
-	{
-		unit_string = "2000" + unit_name;
-		*scale_factor = 2000 / distance;
-	}
-	else if (distance < 2000 && distance >= 1000)
-	{
-		unit_string = "1000" + unit_name;
-		*scale_factor = 1000 / distance;
-	}
-	else if (distance < 1000 && distance >= 500)
-	{
-		unit_string = "500" + unit_name;
-		*scale_factor = 500 / distance;
-	}
-	else if (distance < 500 && distance >= 200)
-	{
-		unit_string = "200" + unit_name;
-		*scale_factor = 200 / distance;
-	}
-	else if (distance < 200 && distance >= 100)
-	{
-		unit_string = "100" + unit_name;
-		*scale_factor = 100 / distance;
-	}
-	else if (distance < 100 && distance >= 50)
-	{
-		unit_string = "50" + unit_name;
-		*scale_factor = 50 / distance;
-	}
-	else if (distance < 50 && distance >= 20)
-	{
-		unit_string = "20" + unit_name;
-		*scale_factor = 20 / distance;
-	}
-	else if (distance < 20 && distance >= 10)
-	{
-		unit_string = "10" + unit_name;
-		*scale_factor = 10 / distance;
-	}
-	else if (distance < 10 && distance >= 5)
-	{
-		unit_string = "5" + unit_name;
-		*scale_factor = 5 / distance;
-	}
-	else if (distance < 5 && distance >= 2)
-	{
-		unit_string = "2" + unit_name;
-		*scale_factor = 2 / distance;
-	}
-	else if (distance < 2 && distance >= 1)
-	{
-		unit_string = "1" + unit_name;
-		*scale_factor = 1 / distance;
-	}
-	else /* we have a smaller distance than 1km / 1m */
-	{
-		if(units == 0) /* metrical */
-		{
-			if (distance < 1 && distance >= 0.5)
-			{
-				unit_string = "500";
-				*scale_factor = 0.5 / distance;
-			}
-			else if (distance < 0.5 && distance >= 0.2)
-			{
-				unit_string = "200";
-				*scale_factor = 0.2 / distance;
-			}
-			else if (distance < 0.2 && distance >= 0.1)
-			{
-				unit_string = "100";
-				*scale_factor = 0.1 / distance;
-			}
-			else if (distance < 0.1 && distance >= 0.05)
-			{
-				unit_string = "50";
-				*scale_factor = 0.05 / distance;
-			}
-			else if (distance < 0.05 && distance >= 0.02)
-			{
-				unit_string = "20";
-				*scale_factor = 0.02 / distance;
-			}
-			else
-			{
-				unit_string = "10";
-				*scale_factor = 0.01 / distance;
-			}
+    distance *= unit_conversion;
+    if (distance >= 5000)
+    {
+        unit_string = "5000" + unit_name;
+        *scale_factor = 5000 / distance;
+    }
+    else if (distance < 5000 && distance >= 2000)
+    {
+        unit_string = "2000" + unit_name;
+        *scale_factor = 2000 / distance;
+    }
+    else if (distance < 2000 && distance >= 1000)
+    {
+        unit_string = "1000" + unit_name;
+        *scale_factor = 1000 / distance;
+    }
+    else if (distance < 1000 && distance >= 500)
+    {
+        unit_string = "500" + unit_name;
+        *scale_factor = 500 / distance;
+    }
+    else if (distance < 500 && distance >= 200)
+    {
+        unit_string = "200" + unit_name;
+        *scale_factor = 200 / distance;
+    }
+    else if (distance < 200 && distance >= 100)
+    {
+        unit_string = "100" + unit_name;
+        *scale_factor = 100 / distance;
+    }
+    else if (distance < 100 && distance >= 50)
+    {
+        unit_string = "50" + unit_name;
+        *scale_factor = 50 / distance;
+    }
+    else if (distance < 50 && distance >= 20)
+    {
+        unit_string = "20" + unit_name;
+        *scale_factor = 20 / distance;
+    }
+    else if (distance < 20 && distance >= 10)
+    {
+        unit_string = "10" + unit_name;
+        *scale_factor = 10 / distance;
+    }
+    else if (distance < 10 && distance >= 5)
+    {
+        unit_string = "5" + unit_name;
+        *scale_factor = 5 / distance;
+    }
+    else if (distance < 5 && distance >= 2)
+    {
+        unit_string = "2" + unit_name;
+        *scale_factor = 2 / distance;
+    }
+    else if (distance < 2 && distance >= 1)
+    {
+        unit_string = "1" + unit_name;
+        *scale_factor = 1 / distance;
+    }
+    else /* we have a smaller distance than 1km / 1m */
+    {
+        if(units == 0) /* metrical */
+        {
+            if (distance < 1 && distance >= 0.5)
+            {
+                unit_string = "500";
+                *scale_factor = 0.5 / distance;
+            }
+            else if (distance < 0.5 && distance >= 0.2)
+            {
+                unit_string = "200";
+                *scale_factor = 0.2 / distance;
+            }
+            else if (distance < 0.2 && distance >= 0.1)
+            {
+                unit_string = "100";
+                *scale_factor = 0.1 / distance;
+            }
+            else if (distance < 0.1 && distance >= 0.05)
+            {
+                unit_string = "50";
+                *scale_factor = 0.05 / distance;
+            }
+            else if (distance < 0.05 && distance >= 0.02)
+            {
+                unit_string = "20";
+                *scale_factor = 0.02 / distance;
+            }
+            else
+            {
+                unit_string = "10";
+                *scale_factor = 0.01 / distance;
+            }
 
-			unit_string += "m";
-		}
-		else if(units == 1) /* imperial */
-		{
-			distance *= 5280;
-			if (distance >= 5000)
-			{
-				unit_string = "5000";
-				*scale_factor = 5000 / distance;
-			}
-			else if (distance < 5000 && distance >= 2000)
-			{
-				unit_string = "2000";
-				*scale_factor = 2000 / distance;
-			}
-			else if (distance < 2000 && distance >= 1000)
-			{
-				unit_string = "1000";
-				*scale_factor = 1000 / distance;
-			}
-			else if (distance < 1000 && distance >= 500)
-			{
-				unit_string = "500";
-				*scale_factor = 500 / distance;
-			}
-			else if (distance < 500 && distance >= 200)
-			{
-				unit_string = "200";
-				*scale_factor = 200 / distance;
-			}
-			else if(distance < 200 && distance >= 100)
-			{
-				unit_string = "100";
-				*scale_factor = 100 / distance;
-			}
-			else if(distance < 100 && distance >= 50)
-			{
-				unit_string = "50";
-				*scale_factor = 50 / distance;
-			}
-			else
-			{
-				unit_string = "10";
-				*scale_factor = 10/distance;
-			}
+            unit_string += "m";
+        }
+        else if(units == 1) /* imperial */
+        {
+            distance *= 5280;
+            if (distance >= 5000)
+            {
+                unit_string = "5000";
+                *scale_factor = 5000 / distance;
+            }
+            else if (distance < 5000 && distance >= 2000)
+            {
+                unit_string = "2000";
+                *scale_factor = 2000 / distance;
+            }
+            else if (distance < 2000 && distance >= 1000)
+            {
+                unit_string = "1000";
+                *scale_factor = 1000 / distance;
+            }
+            else if (distance < 1000 && distance >= 500)
+            {
+                unit_string = "500";
+                *scale_factor = 500 / distance;
+            }
+            else if (distance < 500 && distance >= 200)
+            {
+                unit_string = "200";
+                *scale_factor = 200 / distance;
+            }
+            else if(distance < 200 && distance >= 100)
+            {
+                unit_string = "100";
+                *scale_factor = 100 / distance;
+            }
+            else if(distance < 100 && distance >= 50)
+            {
+                unit_string = "50";
+                *scale_factor = 50 / distance;
+            }
+            else
+            {
+                unit_string = "10";
+                *scale_factor = 10/distance;
+            }
 
-			unit_string += "ft";
-		}
-	}
+            unit_string += "ft";
+        }
+    }
 
-	return unit_string;
+    return unit_string;
 }
 
 /* when loading a new route, zoom to it so it is fully covered on screen */
@@ -437,62 +442,62 @@ int get_route_zoom(int width, int height, double lat_max, double lon_min, double
 /* convert GPS fix type to GPX compatible text */
 QString nmeaFix_to_gpxType(int fix)
 {
-	QString info = "";
+    QString info = "";
 
-	if(fix < 10)
-	{
-		if(fix == 2)
-			info = "dgps";
-		else if(fix == 3)
-			info = "pps";
-		else if(fix == 0)
-			info = "none";
-	}
-	else
-	{
-		if(fix == 11)
-			info = "none";
-		else if(fix == 12)
-			info = "2d";
-		else if(fix == 13)
-			info = "3d";
-	}
+    if(fix < 10)
+    {
+        if(fix == 2)
+            info = "dgps";
+        else if(fix == 3)
+            info = "pps";
+        else if(fix == 0)
+            info = "none";
+    }
+    else
+    {
+        if(fix == 11)
+            info = "none";
+        else if(fix == 12)
+            info = "2d";
+        else if(fix == 13)
+            info = "3d";
+    }
 
-	return info;
+    return info;
 }
 
 inline static double dot(const double v[2], const double w[2])
 {
-	return (v[0] * w[0] + v[1] * w[1]);
+    return (v[0] * w[0] + v[1] * w[1]);
 }
 
 inline static double distance(const double v[2], const double w[2])
 {
-	return sqrt((w[0] - v[0]) * (w[0] - v[0]) + (w[1] - v[1]) * (w[1] - v[1]));
+    return sqrt((w[0] - v[0]) * (w[0] - v[0]) + (w[1] - v[1]) * (w[1] - v[1]));
 }
 
 // Return minimum distance between line segment vw and point p
 double minimum_distance(const double v[2], const double w[2], const double p[2])
 {
-	const double l2 = (w[0] - v[0]) * (w[0] - v[0]) + (w[1] - v[1]) * (w[1] - v[1]); // i.e. |w-v|^2 -  avoid a sqrt
+    const double l2 = (w[0] - v[0]) * (w[0] - v[0]) + (w[1] - v[1]) * (w[1] - v[1]); // i.e. |w-v|^2 -  avoid a sqrt
 
-	if (l2 < DBL_EPSILON)
-	  return  fast_distance_deg(p, v);   // v == w case
+    if (l2 < DBL_EPSILON)
+      return  fast_distance_deg(p, v);   // v == w case
 
-	// Consider the line extending the segment, parameterized as v + t (w - v).
-	// We find projection of point p onto the line.
-	// It falls where t = [(p-v) . (w-v)] / |w-v|^2
+    // Consider the line extending the segment, parameterized as v + t (w - v).
+    // We find projection of point p onto the line.
+    // It falls where t = [(p-v) . (w-v)] / |w-v|^2
 
-	const double pv[2] = {p[0] - v[0], p[1] - v[1]};
-	const double wv[2] = {w[0] - v[0], w[1] - v[1]};
-	const double t = dot(pv, wv) / l2;
+    const double pv[2] = {p[0] - v[0], p[1] - v[1]};
+    const double wv[2] = {w[0] - v[0], w[1] - v[1]};
+    const double t = dot(pv, wv) / l2;
 
-	if (t < 0.0)
-		return  fast_distance_deg(p, v);	// Beyond the 'v' end of the segment
-	else if (t > 1.0)
-		return  fast_distance_deg(p, w);  // Beyond the 'w' end of the segment
+    if (t < 0.0)
+        return  fast_distance_deg(p, v);	// Beyond the 'v' end of the segment
+    else if (t > 1.0)
+        return  fast_distance_deg(p, w);  // Beyond the 'w' end of the segment
 
-	const double projection[2] = {v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1])}; // Projection falls on the segment
+    const double projection[2] = {v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1])}; // Projection falls on the segment
 
-	return  fast_distance_deg(p, projection);
+    return  fast_distance_deg(p, projection);
 }
