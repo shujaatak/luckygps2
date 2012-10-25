@@ -84,6 +84,8 @@ MapWidget::MapWidget(QWidget *parent)
 	_fullscreenButton->setIcon(QIcon(":/icons/full2.png"));
 	connect(_fullscreenButton, SIGNAL(clicked()), this, SLOT(callback_fullscreen_clicked()));
 
+	_mapOverviewWidget = NULL;
+
 	_sameevent = false;
 	_x = 0;
 	_y = 0;
@@ -145,11 +147,277 @@ void MapWidget::callback_fullscreen_clicked()
 	_mapStyle = !_mapStyle;
 }
 
+void MapWidget::draw_route(QPainter &painter)
+{
+	if(_route.points.length() > 0)
+	{
+		QPoint *pts = new QPoint[_route.points.length()];
+		int ptscnt = 0;
+
+		for(int i = 0; i < _route.points.length(); i++)
+		{
+			const RoutePoint &point = _route.points[i];
+
+			int pixel_x = longitude_to_pixel(get_zoom(), point.longitude_rad) - _x;
+			int pixel_y = latitude_to_pixel(get_zoom(), point.latitude_rad) - _y;
+
+			pts[ptscnt] = QPoint(pixel_x, pixel_y);
+			ptscnt++;
+		}
+
+		QPen backupPen  = painter.pen();
+		QPen newPen = backupPen;
+
+		newPen.setWidth(10);
+		newPen.setColor(Qt::darkRed);
+
+		/* temporarily disabling antialiasing for drawPolyline (takes 3 times longer with antialiasing) */
+		// painter.setRenderHint(QPainter::Antialiasing, false);
+
+		painter.setPen(newPen);
+		painter.setOpacity(0.6);
+
+		drawPolyline(&painter, QRect(0, 0, width(), height()), pts, ptscnt);
+		delete pts;
+
+		/* enable antialiasing again */
+		// painter.setRenderHint(QPainter::Antialiasing, true);
+
+		painter.setOpacity(1.0);
+		painter.setPen(backupPen);
+	}
+}
+
+void MapWidget::draw_track(QPainter &painter)
+{
+	if(_track.name.length() > 0)
+	{
+		QPen backupPen  = painter.pen();
+		QPen newPen = backupPen;
+
+		newPen.setWidth(5);
+		newPen.setStyle(Qt::DotLine);
+		painter.setOpacity(0.6);
+
+		/* temporarily disabling antialiasing for drawPolyline (takes 3 times longer with antialiasing) */
+		// painter.setRenderHint(QPainter::Antialiasing, false);
+
+		const Track &track = _track;
+
+		if(track.active)
+			newPen.setColor(Qt::blue);
+		else
+			newPen.setColor(Qt::darkBlue);
+
+		painter.setPen(newPen);
+
+		for(int j = 0; j < track.segments.length(); j++)
+		{
+			const TrackSegment &segment = track.segments[j];
+
+			// TODO check if segment bounding box is in view
+
+			if(segment.points.length() > 1)
+			{
+				QPoint *pts = new QPoint[segment.points.length()];
+				int ptscnt = 0;
+
+				for(int k = 0; k < segment.points.length(); k++)
+				{
+					const TrackPoint &point = segment.points[k];
+
+					double longitude_rad = deg_to_rad(point.gpsInfo.longitude);
+					double latitude_rad = deg_to_rad(point.gpsInfo.latitude);
+
+					int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad) - _x;
+					int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad) - _y;
+
+					pts[ptscnt] = QPoint(pixel_x, pixel_y);
+					ptscnt++;
+				}
+
+				drawPolyline(&painter, QRect(0, 0, width(), height()), pts, ptscnt);
+				delete pts;
+			}
+		}
+
+		/* change line color */
+		// TODO
+
+		/* enable antialiasing again */
+		// painter.setRenderHint(QPainter::Antialiasing, true);
+
+		painter.setOpacity(1.0);
+		painter.setPen(backupPen);
+	}
+
+	/* Draw start and end point of the route */
+	if(_route.points.length() > 0)
+	{
+		if(!_rsImage.isNull())
+		{
+			double longitude_rad = 0.0;
+			double latitude_rad = 0.0;
+
+			longitude_rad = deg_to_rad(_route.points.first().longitude);
+			latitude_rad = deg_to_rad(_route.points.first().latitude);
+
+			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
+			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
+
+			pixel_x -= _x + _rsImage.width() / 2 + 12;
+			pixel_y -= _y + _rsImage.height();
+
+			painter.drawImage(pixel_x, pixel_y, _rsImage);
+		}
+
+		if(!_rfImage.isNull())
+		{
+			double longitude_rad = 0.0;
+			double latitude_rad = 0.0;
+
+			longitude_rad = deg_to_rad(_route.points.last().longitude);
+			latitude_rad = deg_to_rad(_route.points.last().latitude);
+
+			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
+			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
+
+			/* draw the icon centered according to the position */
+			pixel_x -= _x + _rfImage.width() / 2;
+			pixel_y -= _y + _rfImage.height() - 10;
+
+			painter.drawImage(pixel_x, pixel_y, _rfImage);
+		}
+	}
+}
+
+void MapWidget::draw_position(QPainter &painter)
+{
+	if((_gpsdata.seen_valid && !_gpsdata.valid) || (_gpsdata.valid && !check_speed(_gpsdata.speed)))
+	{
+		QImage *img = NULL;
+
+		/* differ between valid and invalid satellite fix */
+		if(_gpsdata.valid)
+			img = &_posImage;
+		else
+			img = &_posinvImage;
+
+		if(!img->isNull())
+		{
+			double longitude_rad = 0.0;
+			double latitude_rad = 0.0;
+
+			/* differ between valid and invalid satellite fix */
+			if(_gpsdata.valid)
+			{
+				longitude_rad = deg_to_rad(_gpsdata.longitude);
+				latitude_rad = deg_to_rad(_gpsdata.latitude);
+			}
+			else
+			{
+				/* in case of no fix, take last known coordinates */
+				longitude_rad = deg_to_rad(_lon);
+				latitude_rad = deg_to_rad(_lat);
+			}
+
+			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
+			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
+
+			/* draw the icon centered according to the position */
+			pixel_x -= _x + img->width() / 2;
+			pixel_y -= _y + img->height() / 2;
+
+			painter.drawImage(pixel_x, pixel_y, *img);
+		}
+	}
+}
+
+/* draw direction icon */
+void MapWidget::draw_direction(QPainter &painter)
+{
+	if(_gpsdata.valid && check_speed(_gpsdata.speed))
+	{
+		if(!_arrowImage.isNull())
+		{
+			QTransform mat;
+			QImage img2;
+			double longitude_rad = 0.0;
+			double latitude_rad = 0.0;
+
+			longitude_rad = deg_to_rad(_gpsdata.longitude);
+			latitude_rad = deg_to_rad(_gpsdata.latitude);
+
+			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
+			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
+
+			/* rotate icon to match track direction */
+			mat.reset();
+			mat.rotate(_degree);
+			img2 = _arrowImage.transformed(mat, Qt::SmoothTransformation);
+
+			/* draw the icon centered according to the position */
+			pixel_x -= _x + img2.width() / 2;
+			pixel_y -= _y + img2.height() / 2;
+
+			painter.drawImage(pixel_x, pixel_y, img2);
+		}
+	}
+}
+
+void MapWidget::draw_overview_map(QPainter &painter)
+{
+	if(get_zoom() > 7)
+	{
+		int w = width() / 6;
+		int h = height() / 6;
+		int zoom = get_zoom() - 4;
+		float factor = exp(zoom * M_LN2) / exp(get_zoom() * M_LN2);
+		float x = ((_x + width()/2) * factor) - w/2;
+		float y = ((_y + height()/2) * factor) - h/2;
+
+		/* enforce overview map to have width > height */
+		if(h > w)
+		{
+			int tmp = h;
+			h = w;
+			w = tmp;
+		}
+
+		/* requested tile information */
+		TileInfo tile_info;
+		QImage *mapImg = _dsm->getImage(x, y, zoom, w, h, tile_info, true);
+
+		/* update overview map */
+		_mapOverviewWidget->update_overviewMap(mapImg, _x, _y, width(), height(), -tile_info.offset_tile_x, -tile_info.offset_tile_y, w, h, factor);
+	}
+	else
+	{
+		/* update overview map */
+		if(_mapOverviewWidget->_outlineMapImg)
+			_mapOverviewWidget->update_overviewMap(NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+	}
+}
 void MapWidget::paintEvent(QPaintEvent *event)
 {
 	/* Valid DataSourceManager is needed to draw a map */
 	if(!_dsm)
 		return;
+
+	if(!_mapOverviewWidget)
+	{
+		QList<QObject*> childs = this->children();
+		for(int i = 0; i < childs.length(); i++)
+		{
+			if(childs[i]->objectName() == "overviewMapFrame")
+			{
+				_mapOverviewWidget = (MapOverviewWidget *)childs[i];
+				break;
+			}
+		}
+		if(!_mapOverviewWidget)
+			return;
+	}
 
 	int toDrawX = event->rect().x();
 	int toDrawY = event->rect().y();
@@ -236,275 +504,21 @@ void MapWidget::paintEvent(QPaintEvent *event)
 	QImage *mapImg = _dsm->getImage(_x, _y, get_zoom(), width(), height(), tile_info, false);
 
 	if(mapImg)
-	{
-#if 0
-		QTransform mat;
-		QImage img;
-
-		/* rotate icon to match track direction */
-		mat.reset();
-
-		if(get_zoom() >= 15)
-			mat.rotate(-_degree);
-
-		img = map_image->transformed(mat, Qt::SmoothTransformation);
-#endif
 		painter.drawImage(tile_info.offset_tile_x, tile_info.offset_tile_y, *mapImg);
-	}
 
 	/* ---------------------------------- */
 
 	/* draw route */
-	if(_route.points.length() > 0)
-	{
-		QPoint *pts = new QPoint[_route.points.length()];
-		int ptscnt = 0;
-
-		for(int i = 0; i < _route.points.length(); i++)
-		{
-			const RoutePoint &point = _route.points[i];
-
-			int pixel_x = longitude_to_pixel(get_zoom(), point.longitude_rad) - _x;
-			int pixel_y = latitude_to_pixel(get_zoom(), point.latitude_rad) - _y;
-
-			pts[ptscnt] = QPoint(pixel_x, pixel_y);
-			ptscnt++;
-		}
-
-		QPen backupPen  = painter.pen();
-		QPen newPen = backupPen;
-
-		newPen.setWidth(10);
-		newPen.setColor(Qt::darkRed);
-
-		/* temporarily disabling antialiasing for drawPolyline (takes 3 times longer with antialiasing) */
-		// painter.setRenderHint(QPainter::Antialiasing, false);
-
-		painter.setPen(newPen);
-		painter.setOpacity(0.6);
-
-		drawPolyline(&painter, QRect(0, 0, width(), height()), pts, ptscnt);
-		delete pts;
-
-		/* enable antialiasing again */
-		// painter.setRenderHint(QPainter::Antialiasing, true);
-
-		painter.setOpacity(1.0);
-		painter.setPen(backupPen);
-
-#if 0
-		/* get nearest route point and mark it with a different color */
-		{
-			newPen.setColor(Qt::red);
-			QBrush oldbrush = painter.brush();
-			QBrush newbrush(Qt::red, Qt::SolidPattern);
-			painter.setBrush(newbrush);
-
-			int start = MAX(0, _route.pos - 10);
-			double tempdist = fast_distance_deg(_gpsdata.latitude, _gpsdata.longitude, _route.points[start].latitude, _route.points[start].longitude);
-			int minpoint = start;
-			for(int i = start + 1; i < _route.points.length(); i++)
-			{
-				double dist = fast_distance_deg(_gpsdata.latitude, _gpsdata.longitude, _route.points[i].latitude, _route.points[i].longitude);
-
-				if(dist < tempdist)
-				{
-					tempdist = dist;
-					minpoint = i;
-				}
-
-				/* don't check further points if > 50km away */
-				if(dist > 50.0)
-					break;
-			}
-
-			/* update current position on route */
-			_route.pos = minpoint;
-
-			/* show next important action on route, which also the text describes (only if we have any descriptions) */
-			if(_route.points[minpoint].nextDesc >= 0)
-			{
-				int pixel_x = longitude_to_pixel(get_zoom(), _route.points[_route.points[minpoint].nextDesc].longitude_rad) - _x;
-				int pixel_y = latitude_to_pixel(get_zoom(), _route.points[_route.points[minpoint].nextDesc].latitude_rad) - _y;
-				painter.drawEllipse(QPoint(pixel_x, pixel_y), 10, 10);
-			}
-
-			painter.setBrush(oldbrush);
-		}
-
-		/* change line color */
-		// TODO
-#endif
-	}
+	draw_route(painter);
 
 	/* draw tracks */
-	if(_track.name.length() > 0)
-	{
-		QPen backupPen  = painter.pen();
-		QPen newPen = backupPen;
-
-		newPen.setWidth(5);
-		newPen.setStyle(Qt::DotLine);
-		painter.setOpacity(0.6);
-
-		/* temporarily disabling antialiasing for drawPolyline (takes 3 times longer with antialiasing) */
-		// painter.setRenderHint(QPainter::Antialiasing, false);
-
-		const Track &track = _track;
-
-		if(track.active)
-			newPen.setColor(Qt::blue);
-		else
-			newPen.setColor(Qt::darkBlue);
-
-		painter.setPen(newPen);
-
-		for(int j = 0; j < track.segments.length(); j++)
-		{
-			const TrackSegment &segment = track.segments[j];
-
-			// TODO check if segment bounding box is in view
-
-			if(segment.points.length() > 1)
-			{
-				QPoint *pts = new QPoint[segment.points.length()];
-				int ptscnt = 0;
-
-				for(int k = 0; k < segment.points.length(); k++)
-				{
-					const TrackPoint &point = segment.points[k];
-
-					double longitude_rad = deg_to_rad(point.gpsInfo.longitude);
-					double latitude_rad = deg_to_rad(point.gpsInfo.latitude);
-
-					int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad) - _x;
-					int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad) - _y;
-
-					pts[ptscnt] = QPoint(pixel_x, pixel_y);
-					ptscnt++;
-				}
-
-				drawPolyline(&painter, QRect(0, 0, width(), height()), pts, ptscnt);
-				delete pts;
-			}
-		}
-
-		/* change line color */
-		// TODO
-
-		/* enable antialiasing again */
-		// painter.setRenderHint(QPainter::Antialiasing, true);
-
-		painter.setOpacity(1.0);
-		painter.setPen(backupPen);
-	}
+	draw_track(painter);
 
 	/* draw position image (car, bicycle, ..) */
-	if((_gpsdata.seen_valid && !_gpsdata.valid) || (_gpsdata.valid && !check_speed(_gpsdata.speed)))
-	{
-		QImage *img = NULL;
-
-		/* differ between valid and invalid satellite fix */
-		if(_gpsdata.valid)
-			img = &_posImage;
-		else
-			img = &_posinvImage;
-
-		if(!img->isNull())
-		{
-			double longitude_rad = 0.0;
-			double latitude_rad = 0.0;
-
-			/* differ between valid and invalid satellite fix */
-			if(_gpsdata.valid)
-			{
-				longitude_rad = deg_to_rad(_gpsdata.longitude);
-				latitude_rad = deg_to_rad(_gpsdata.latitude);
-			}
-			else
-			{
-				/* in case of no fix, take last known coordinates */
-				longitude_rad = deg_to_rad(_lon);
-				latitude_rad = deg_to_rad(_lat);
-			}
-
-			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
-			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
-
-			/* draw the icon centered according to the position */
-			pixel_x -= _x + img->width() / 2;
-			pixel_y -= _y + img->height() / 2;
-
-			painter.drawImage(pixel_x, pixel_y, *img);
-		}
-	}
+	draw_position(painter);
 
 	/* draw direction icon */
-	if(_gpsdata.valid && check_speed(_gpsdata.speed))
-	{
-		if(!_arrowImage.isNull())
-		{
-			QTransform mat;
-			QImage img2;
-			double longitude_rad = 0.0;
-			double latitude_rad = 0.0;
-
-			longitude_rad = deg_to_rad(_gpsdata.longitude);
-			latitude_rad = deg_to_rad(_gpsdata.latitude);
-
-			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
-			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
-
-			/* rotate icon to match track direction */
-			mat.reset();
-			mat.rotate(_degree);
-			img2 = _arrowImage.transformed(mat, Qt::SmoothTransformation);
-
-			/* draw the icon centered according to the position */
-			pixel_x -= _x + img2.width() / 2;
-			pixel_y -= _y + img2.height() / 2;
-
-			painter.drawImage(pixel_x, pixel_y, img2);
-		}
-	}
-
-	if(_route.points.length() > 0)
-	{
-		if(!_rsImage.isNull())
-		{
-			double longitude_rad = 0.0;
-			double latitude_rad = 0.0;
-
-			longitude_rad = deg_to_rad(_route.points.first().longitude);
-			latitude_rad = deg_to_rad(_route.points.first().latitude);
-
-			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
-			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
-
-			pixel_x -= _x + _rsImage.width() / 2 + 12;
-			pixel_y -= _y + _rsImage.height();
-
-			painter.drawImage(pixel_x, pixel_y, _rsImage);
-		}
-
-		if(!_rfImage.isNull())
-		{
-			double longitude_rad = 0.0;
-			double latitude_rad = 0.0;
-
-			longitude_rad = deg_to_rad(_route.points.last().longitude);
-			latitude_rad = deg_to_rad(_route.points.last().latitude);
-
-			int pixel_x = longitude_to_pixel(get_zoom(), longitude_rad);
-			int pixel_y = latitude_to_pixel(get_zoom(), latitude_rad);
-
-			/* draw the icon centered according to the position */
-			pixel_x -= _x + _rfImage.width() / 2;
-			pixel_y -= _y + _rfImage.height() - 10;
-
-			painter.drawImage(pixel_x, pixel_y, _rfImage);
-		}
-	}
+	draw_direction(painter);
 
 	/* "globally" set cap style to square since rounded ones are not neede anymore */
 	{
@@ -514,53 +528,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
 	}
 
 	/* draw overview map */
-	if(get_zoom() > 7)
-	{
-		int w = width() / 6;
-		int h = height() / 6;
-		int zoom = get_zoom() - 4;
-		float factor = exp(zoom * M_LN2) / exp(get_zoom() * M_LN2);
-		float x = ((_x + width()/2) * factor) - w/2;
-		float y = ((_y + height()/2) * factor) - h/2;
-
-		/* enforce overview map to have width > height */
-		if(h > w)
-		{
-			int tmp = h;
-			h = w;
-			w = tmp;
-		}
-
-		/* requested tile information */
-		TileInfo tile_info;
-		QImage *mapImg = _dsm->getImage(x, y, zoom, w, h, tile_info, true);
-
-		/* update overview map */
-		QList<QObject*> childs = this->children();
-		for(int i = 0; i < childs.length(); i++)
-		{
-			if(childs[i]->objectName() == "overviewMapFrame")
-			{
-				MapOverviewWidget *mw = (MapOverviewWidget *)childs[i];
-				mw->update_overviewMap(mapImg, _x, _y, width(), height(), -tile_info.offset_tile_x, -tile_info.offset_tile_y, w, h, factor);
-				break;
-			}
-		}
-	}
-	else
-	{
-		/* update overview map */
-		QList<QObject*> childs = this->children();
-		for(int i = 0; i < childs.length(); i++)
-		{
-			if(childs[i]->objectName() == "overviewMapFrame")
-			{
-				MapOverviewWidget *mw = (MapOverviewWidget *)childs[i];
-				mw->update_overviewMap(NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-				break;
-			}
-		}
-	}
+	draw_overview_map(painter);
 
 	/* prepare half transparent information area on the top */
 	painter.setOpacity(0.8627); /* a = 220 */
