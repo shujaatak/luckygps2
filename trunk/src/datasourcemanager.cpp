@@ -38,6 +38,7 @@ DataSourceManager::DataSourceManager(QObject *parent)
 	_outlineMapImg = NULL;
 
 	memset(&_tileInfo, 0, sizeof(TileInfo));
+	memset(&_outlineTileInfo, 0, sizeof(TileInfo));
 
 	/* timer to check for internet connection once in a while */
 	connect(&_inetTimer, SIGNAL(timeout()), this, SLOT(callback_inet_connection_update()));
@@ -178,6 +179,7 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 	QImage **cachedImg = NULL;
 	TileList *cache = NULL;
 	int *cacheSize = NULL;
+	TileInfo *cacheTileInfo = NULL;
 
 	/* Change cache in dependancy of requested map typ (normal or outline/overview map) */
 	if(!outlineMap)
@@ -185,36 +187,37 @@ QImage *DataSourceManager::getImage(int x, int y, int zoom, int width, int heigh
 		cache = &_cache;
 		cacheSize = &_cacheSize;
 		cachedImg = &_mapImg;
+		cacheTileInfo = &_tileInfo;
 	}
 	else
 	{
 		cache = &_outlineCache;
 		cacheSize = &_outlineCacheSize;
 		cachedImg = &_outlineMapImg;
+		cacheTileInfo = &_outlineTileInfo;
 	}
 
 	/* generate list of tiles which are needed for the current x, y and zoom level */
 	TileList *requested_tiles = get_necessary_tiles(x, y, zoom, width, height, _mapPath, tile_info);
 
 	/* check if the same tile rect is requested as the last time */
-	if(!outlineMap && _mapImg && !_gotMissingTiles &&
-	   _tileInfo.min_tile_x== tile_info.min_tile_x &&
-	   _tileInfo.min_tile_y== tile_info.min_tile_y &&
-	   _tileInfo.max_tile_x== tile_info.max_tile_x &&
-	   _tileInfo.max_tile_y== tile_info.max_tile_y)
+	if(cachedImg && !_gotMissingTiles &&
+	   cacheTileInfo->min_tile_x == tile_info.min_tile_x &&
+	   cacheTileInfo->min_tile_y == tile_info.min_tile_y &&
+	   cacheTileInfo->max_tile_x == tile_info.max_tile_x &&
+	   cacheTileInfo->max_tile_y == tile_info.max_tile_y)
 	{
 		mapImg = *cachedImg;
 	}
 	else
 	{
-
 		/* Let's center the coordinates here using width + height of map widget */
 		mapImg = fill_tiles_pixel(requested_tiles, &missingTiles, cache, tile_info.nx, tile_info.ny);
 		delete *cachedImg;
 		*cachedImg = mapImg;
 	}
 
-	memcpy(&_tileInfo, &tile_info, sizeof(TileInfo));
+	memcpy(cacheTileInfo, &tile_info, sizeof(TileInfo));
 	delete requested_tiles;
 
 	if(missingTiles.length() > 0)

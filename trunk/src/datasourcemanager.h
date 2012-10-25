@@ -29,7 +29,7 @@
 
 class DataSourceManager : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
 	explicit DataSourceManager(QObject *parent = 0);
@@ -53,9 +53,6 @@ public:
 	void callback_no_inet();
 	void callback_http_finished();
 
-	/* Tiles Manager */
-	// TileDownload *_tilesManager;
-
 	void set_autodownload(bool value)
 	{
 		if(_dsHttp)
@@ -76,15 +73,14 @@ private:
 
 	/* MapWidget tile cache */
 	TileList _cache;
-	int _cacheSize;
 	TileList _outlineCache;
+	int _cacheSize;
 	int _outlineCacheSize;
 	TileInfo _tileInfo;
-	bool _gotMissingTiles;
+	TileInfo _outlineTileInfo;
 	QImage *_mapImg;
-
-	/* images served for the overview map widget */
 	QImage *_outlineMapImg;
+	bool _gotMissingTiles;
 
 	/* map data management */
 	QString _mapPath;

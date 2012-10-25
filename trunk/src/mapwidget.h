@@ -99,6 +99,7 @@ private:
 	void draw_position(QPainter &painter);
 	void draw_direction(QPainter &painter);
 	void draw_overview_map(QPainter &painter);
+	void draw_info(QPainter &painter, QFont &font);
 
 	MapOverviewWidget *_mapOverviewWidget;
 
