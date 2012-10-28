@@ -183,13 +183,13 @@ MainWindow::MainWindow(QWidget *parent, int local)
 	/* this is the case if we have no old settings */
 	if(ui->map->get_zoom() <= 0)
 	{
-		ui->map->set_zoom(3);
+		ui->map->set_zoom(5);
 		ui->button_left_minus->setEnabled(false);
 		ui->button_top_minus->setEnabled(false);
 	}
-	else if(ui->map->get_zoom() >= 18)
+	else if(ui->map->get_zoom() >= 17)
 	{
-		ui->map->set_zoom(18);
+		ui->map->set_zoom(17);
 		ui->button_left_plus->setEnabled(false);
 		ui->button_top_plus->setEnabled(false);
 	}
