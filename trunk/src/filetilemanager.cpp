@@ -42,21 +42,21 @@
 
 QImage *FileTileMgr::loadMapTile(const Tile *mytile)
 {
-    /* load tile or download it */
-    QImage *img = new QImage();
+	/* load tile or download it */
+	QImage *img = new QImage();
 	QString filename = get_tilename(mytile->_x, mytile->_y, mytile->_z, mytile->_path);
 
-    if(img)
-        img->load(filename);
+	if(img)
+		img->load(filename);
 	else
 		return NULL;
 
 	if(!img->isNull())
-        return img;
-    else
+		return img;
+	else
 	{
 		delete img;
-        return NULL;
+		return NULL;
 	}
 }
 

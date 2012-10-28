@@ -48,6 +48,9 @@ public:
 	/* Data source manager needs to be set before paint() */
 	void setDSM(DataSourceManager *dsm) { _dsm = dsm; }
 
+	/* Filter map tile requests */
+	QImage *getImage(int x, int y, int z, int w, int h, TileInfo &ti, int overview);
+
 	/* access to private variables */
 	int get_zoom() { return _zoom; }
 	QPoint get_pos() { return QPoint(_x,_y); }
