@@ -39,140 +39,137 @@
 
 class MapWidget : public QFrame
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	MapWidget(QWidget *parent = 0);
-	~MapWidget();
+    MapWidget(QWidget *parent = 0);
+    ~MapWidget();
 
-	/* Data source manager needs to be set before paint() */
-	void setDSM(DataSourceManager *dsm) { _dsm = dsm; }
+    /* Data source manager needs to be set before paint() */
+    void setDSM(DataSourceManager *dsm) { _dsm = dsm; }
 
-	/* Filter map tile requests */
-	QImage *getImage(int x, int y, int z, int w, int h, TileInfo &ti, int overview);
+    /* access to private variables */
+    int get_zoom() { return _zoom; }
+    QPoint get_pos() { return QPoint(_x,_y); }
+    void set_pos(QPoint point) { _x = point.x(); _y = point.y(); }
+    void force_redraw() { /* _gotMissingTiles = true; */ repaint(); }
 
-	/* access to private variables */
-	int get_zoom() { return _zoom; }
-	QPoint get_pos() { return QPoint(_x,_y); }
-	void set_pos(QPoint point) { _x = point.x(); _y = point.y(); }
-	void force_redraw() { /* _gotMissingTiles = true; */ repaint(); }
+    /* widget functions */
+    void set_center(double latitude, double longitude, int hor_corr, bool autocenter, bool do_update = true);
+    void set_center(bool autocenter) { _centerMap = autocenter; }
+    bool get_center() { return _centerMap; }
+    void set_zoom(int value);
+    void set_scroll_wheel(bool value) { _enableScrollWheel = value; }
+    void set_mirror(int value) { _mirror = (bool)value; }
+    int get_mirror() { return _mirror; }
+    void set_unit(int value) {_unit = value; }
+    int get_unit() { return _unit; }
 
-	/* widget functions */
-	void set_center(double latitude, double longitude, int hor_corr, bool autocenter, bool do_update = true);
-	void set_center(bool autocenter) { _centerMap = autocenter; }
-	bool get_center() { return _centerMap; }
-	void set_zoom(int value);
-	void set_scroll_wheel(bool value) { _enableScrollWheel = value; }
-	void set_mirror(int value) { _mirror = (bool)value; }
-	int get_mirror() { return _mirror; }
-	void set_unit(int value) {_unit = value; }
-	int get_unit() { return _unit; }
+    /* update gps data for map, compass and information display on MapWidget */
+    void set_gpsdata(nmeaGPS *gpsdata) { memcpy(&_gpsdata, gpsdata, sizeof(nmeaGPS)); }
 
-	/* update gps data for map, compass and information display on MapWidget */
-	void set_gpsdata(nmeaGPS *gpsdata) { memcpy(&_gpsdata, gpsdata, sizeof(nmeaGPS)); }
+    /* generate tiles for a specific area and zoom level */
+    void generate_tiles(int x, int y, int zoom, int w, int h);
+    void set_max_generate_tiles(int t) { _max_generate_zoom = t; }
+    int get_max_generate_tiles() { return _max_generate_zoom; }
 
-	/* generate tiles for a specific area and zoom level */
-	void generate_tiles(int x, int y, int zoom, int w, int h);
-	void set_max_generate_tiles(int t) { _max_generate_zoom = t; }
-	int get_max_generate_tiles() { return _max_generate_zoom; }
+    /* routing info box */
+    int _routingInfoHeight;
 
-	/* routing info box */
-	int _routingInfoHeight;
+    /* track management */
+    Track _track;
+    bool _activeTrack; /* TODO: make this private var? */
 
-	/* track management */
-	Track _track;
-	bool _activeTrack; /* TODO: make this private var? */
-
-	/* route management */
-	Route _route;
-	Routing *_routing;
+    /* route management */
+    Route _route;
+    Routing *_routing;
 
 protected:
-	void paintEvent(QPaintEvent *event);
-	void mousePressEvent( QMouseEvent *event );
-	void mouseMoveEvent( QMouseEvent *event );
-	void mouseReleaseEvent( QMouseEvent *event );
-	void wheelEvent(QWheelEvent *event);
+    void paintEvent(QPaintEvent *event);
+    void mousePressEvent( QMouseEvent *event );
+    void mouseMoveEvent( QMouseEvent *event );
+    void mouseReleaseEvent( QMouseEvent *event );
+    void wheelEvent(QWheelEvent *event);
 
 private:
-	void drawPolyline(QPainter* painter, const QRect& boundingBox, QPoint *points, int size);
+    void drawPolyline(QPainter* painter, const QRect& boundingBox, QPoint *points, int size);
 
-	/* return value indicates if something got drawn or not */
-	bool draw_route(QPainter &painter);
-	bool draw_track(QPainter &painter);
-	bool draw_position(QPainter &painter);
-	bool draw_direction(QPainter &painter);
-	bool draw_overview_map();
-	bool draw_info(QPainter &painter, QFont &font);
+    /* return value indicates if something got drawn or not */
+    bool draw_route(QPainter &painter);
+    bool draw_track(QPainter &painter);
+    bool draw_position(QPainter &painter);
+    bool draw_direction(QPainter &painter);
+    bool draw_overview_map();
+    bool draw_info(QPainter &painter, QFont &font);
 
-	MapOverviewWidget *_mapOverviewWidget;
+    MapOverviewWidget *_mapOverviewWidget;
 
-	QToolButton *_fullscreenButton;
-	bool _sameevent;
+    QToolButton *_fullscreenButton;
+    bool _sameevent;
 
-	DataSourceManager *_dsm;
+    DataSourceManager *_dsm;
 
-	/* handle map movement by mouse drag-and-drop */
-	int _x, _y, _startx, _starty, _zoom;
+    /* handle map movement by mouse drag-and-drop */
+    int _x, _y, _startx, _starty, _zoom;
 
-	/* center the map automatically? */
-	bool _centerMap;
+    /* center the map automatically? */
+    bool _centerMap;
 
-	/* mirror map display (e.g. for cheap HUD) */
-	bool _mirror;
+    /* mirror map display (e.g. for cheap HUD) */
+    bool _mirror;
 
-	/* compass management */
-	double _degree;
+    /* compass management */
+    double _degree;
 
-	/* position drawing management */
-	double _lat, _lon;
+    /* position drawing management */
+    double _lat, _lon;
 
-	/* unit */
-	int _unit; // 0 == metrical, 1 == imperial
+    /* unit */
+    int _unit; // 0 == metrical, 1 == imperial
 
-	/* minimum UI redraw timer */
-	QTimer _redrawTimer;
+    /* minimum UI redraw timer */
+    QTimer _redrawTimer;
 
-	/* gps data for map drawing */
-	nmeaGPS _gpsdata;
+    /* gps data for map drawing */
+    nmeaGPS _gpsdata;
 
-	/* enable / disable scroll wheel event */
-	bool _enableScrollWheel;
+    /* enable / disable scroll wheel event */
+    bool _enableScrollWheel;
 
-	/* max zoom level to generate */
-	int _max_generate_zoom;
+    /* max zoom level to generate */
+    int _max_generate_zoom;
 
-	/* cache UI png's in pixmaps */
-	QImage _rsImage, _rfImage, _posImage, _posinvImage, _arrowImage, _cbImage, _cfImage;
+    /* cache UI png's in pixmaps */
+    QImage _rsImage, _rfImage, _posImage, _posinvImage, _arrowImage, _cbImage, _cfImage;
 
-	/* interaction with navigation combobox */
-	bool _cbInFocus;
-	bool _grabGPSCoords;
+    /* interaction with navigation combobox */
+    bool _cbInFocus;
+    bool _grabGPSCoords;
 
-	/* map state: fullscreen = 1 / normal = 0 */
-	bool _mapStyle;
+    /* map state: fullscreen = 1 / normal = 0 */
+    bool _mapStyle;
 
-	/* Support fast redraw on mouse movement */
-	QImage *_painterImg;
-	int _mapRedrawCounter;
+    /* Support fast redraw on mouse movement */
+    QImage *_painterImg;
+    int _mapRedrawCounter;
 
 private slots:
 
-	/* full map redraw timer */
-	void callback_redraw();
+    /* full map redraw timer */
+    void callback_redraw();
 
-	/* support direct selection of gps position on the map */
-	void callback_routecb_getFocus();
-	void callback_routecb_lostFocus();
+    /* support direct selection of gps position on the map */
+    void callback_routecb_getFocus();
+    void callback_routecb_lostFocus();
 
-	void callback_fullscreen_clicked();
+    void callback_fullscreen_clicked();
 
 signals:
-	void zoom_level_changed(int old_zoom, int new_zoom);
-	void map_dragged();
-	void map_clicked(double lon, double lat);
-	void newTiles(TileListP);
-	void fullscreen_clicked();
+    void zoom_level_changed(int old_zoom, int new_zoom);
+    void map_dragged();
+    void map_clicked(double lon, double lat);
+    void newTiles(TileListP);
+    void fullscreen_clicked();
 
 };
 
