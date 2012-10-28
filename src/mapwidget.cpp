@@ -408,7 +408,7 @@ bool MapWidget::draw_overview_map()
 
         /* requested tile information */
         TileInfo tile_info;
-        QImage *mapImg = getImage(x, y, zoom, w, h, tile_info, true);
+        QImage *mapImg = _dsm->getImage(x, y, zoom, w, h, tile_info, true);
 
         /* update overview map */
         _mapOverviewWidget->update_overviewMap(mapImg, _x, _y, width(), height(), -tile_info.offset_tile_x, -tile_info.offset_tile_y, w, h, factor);
@@ -518,85 +518,6 @@ bool MapWidget::draw_info(QPainter &painter, QFont &font)
     return true;
 }
 
-QImage *MapWidget::getImage(int x, int y, int zoom, int width, int height, TileInfo &ti, int overview)
-{
-    int widthNew = width, heightNew = height;
-    int z = zoom;
-    int scale = 1;
-
-    if(!overview)
-    {
-        if(zoom < 8) // 5 - 7
-        {
-            int zoomDiff = zoom - 5;
-            scale = pow(2.0f, zoomDiff);
-            z = 5;
-
-            widthNew /= scale;
-            heightNew /= scale;
-        }
-        else if(zoom < 11) // 8 - 10
-        {
-            int zoomDiff = zoom - 8;
-            scale = pow(2.0f, zoomDiff);
-            z = 8;
-
-            widthNew /= scale;
-            heightNew /= scale;
-        }
-        else if(zoom < 14) // 11 - 13
-        {
-            int zoomDiff = zoom - 11;
-            scale = pow(2.0f, zoomDiff);
-            z = 11;
-
-            widthNew /= scale;
-            heightNew /= scale;
-        }
-        else if(zoom < 17)// 14 - 16
-        {
-            int zoomDiff = zoom - 14;
-            scale = pow(2.0f, zoomDiff);
-            z = 14;
-
-            widthNew /= scale;
-            heightNew /= scale;
-        }
-        else // 17
-        {
-            scale = 1; // 1 = no scale
-        }
-    }
-
-    if(scale > 1)
-    {
-        double factor = exp(z * M_LN2) / exp(zoom * M_LN2); // TODO: double?
-        double x = (((double)((double)_x + width/2) * factor) - widthNew/2); // TODO: ceil?
-        double y = (((double)((double)_y + height/2) * factor) - heightNew/2); // TODO: ceil?
-
-        // printf("x: %d. y: %d\n", (int)x, (int)y);
-        // tile_info.offset_tile_x, tile_info.offset_tile_y
-
-        QImage *img = _dsm->getImage(x, y, z, widthNew, heightNew, ti, overview);
-
-        // printf("tile_info.offset_tile_x: %d, tile_info.offset_tile_y: %d\n", ti.offset_tile_x, ti.offset_tile_y);
-        ti.offset_tile_x *= scale;
-        ti.offset_tile_y *= scale;
-
-        // Problem / Minor Bug:
-        // Random offset
-        // width 3 pixel
-        // hight 2 pixel diff
-
-        QTransform q;
-        q.scale(scale, scale);
-        img = new QImage(img->transformed(q, Qt::SmoothTransformation));
-
-        return img;
-    }
-    else return _dsm->getImage(x, y, zoom, width, height, ti, overview);
-}
-
 void MapWidget::paintEvent(QPaintEvent *event)
 {
     /* Valid DataSourceManager is needed to draw a map */
@@ -696,7 +617,7 @@ void MapWidget::paintEvent(QPaintEvent *event)
 
     /* requested tile information */
     TileInfo tile_info;
-    QImage *mapImg = getImage(_x, _y, get_zoom(), width(), height(), tile_info, false);
+    QImage *mapImg = _dsm->getImage(_x, _y, get_zoom(), width(), height(), tile_info, false);
 
     if(mapImg)
         painter.drawImage(tile_info.offset_tile_x, tile_info.offset_tile_y, *mapImg);
@@ -1002,6 +923,6 @@ void MapWidget::generate_tiles(int x, int y, int zoom, int w, int h)
         return;
 
     TileInfo info;
-    getImage(x, y, zoom, w, h, info, 0);
+    _dsm->getImage(x, y, zoom, w, h, info, 0);
 }
 
