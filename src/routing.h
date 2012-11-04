@@ -12,10 +12,11 @@
 #include <QtDebug>
 #include <QTime>
 
+#ifdef WITH_ROUTING
 #include "interfaces/iaddresslookup.h"
 #include "interfaces/igpslookup.h"
 #include "interfaces/irouter.h"
-
+#endif
 #include "osmadressmanager.h"
 
 #include "route.h"
@@ -60,9 +61,11 @@ private:
 	int dataFolder(QString dir, QString *result);
 	int loadPlugins(QString path);
 
+#ifdef WITH_ROUTING
 	IGPSLookup				*_gpsLookup;		/* Lookup nearest edge / point	*/
 	IRouter					*_router;			/* Calculate route				*/
 	IAddressLookup			*_addressLookup;	/* Route address				*/
+#endif
 	DescriptionGenerator	*_descGenerator;	/* Description Generator		*/
 	osmAdressManager		*_addressManager;	/* House numbers				*/
 

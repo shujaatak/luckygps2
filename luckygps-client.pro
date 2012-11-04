@@ -1,8 +1,7 @@
 # -------------------------------------------------
 # Project created by QtCreator 2009-11-03T16:33:44
 # -------------------------------------------------
-QT += network \
-		xml
+QT += network xml
 TARGET = luckygps
 TEMPLATE = app
 SOURCES += ./src/main.cpp \
@@ -49,7 +48,7 @@ HEADERS += ./src/mainwindow.h \
 	src/sqliteTileManager.h \
 	src/osmadressmanager.h
 FORMS += ./src/mainwindow.ui
-# CODECFORTR = UTF-8
+
 TRANSLATIONS =	./translations/luckygps_de.ts \
 				./translations/luckygps_hu.ts
 
@@ -57,10 +56,11 @@ DEFINES +=	SQLITE_ENABLE_RTREE=1 \
 			SQLITE_ENABLE_FTS4 OMIT_PROJ=1 OMIT_FREEXL=1
 
 INCLUDEPATH += ./routing ./src
-LIBS += -L./routing/bin/plugins_client -lcontractionhierarchiesclient -lgpsgridclient -lunicodetournamenttrieclient \
-		-L./routing/bin/plugins_preprocessor -losmimporter -lcontractionhierarchies -lgpsgrid -lunicodetournamenttrie
 
 win32 {
+	# No routing support on Windows atm
+	#CONFIG += WITH_ROUTING
+
 	SOURCES += ./src/gpsd_win.cpp
 	RC_FILE = luckygps.rc
 
@@ -125,9 +125,12 @@ win32 {
 	LIBS += $$PWD/lib/$$SYSLIBPATH/bzip2/lib/libbz2.lib
 }
 
-linux-g++-64|linux-g++-32 {
+linux-g++* {
+	# No routing support on Linux atm
+	#CONFIG += WITH_ROUTING
+
 	# SOURCES += ./src/gpsd_debug.cpp
-	SOURCES +=  ./src/gpsd_linux.cpp
+	SOURCES += ./src/gpsd_linux.cpp
 
 	# QMAKE_CXXFLAGS_RELEASE -= -O2
 	QMAKE_CXXFLAGS_RELEASE += -Os -Wno-unused-function
@@ -164,6 +167,13 @@ linux-g++-64|linux-g++-32 {
 
 	target.path += /usr/bin/
 }
+
+CONFIG(WITH_ROUTING) {
+	message(Building with Routing support.)
+	DEFINES += WITH_ROUTING=1
+	LIBS += -L./routing/bin/plugins_client -lcontractionhierarchiesclient -lgpsgridclient -lunicodetournamenttrieclient \
+		 -L./routing/bin/plugins_preprocessor -losmimporter -lcontractionhierarchies -lgpsgrid -lunicodetournamenttrie
+ }
 
 INSTALLS += target
 RESOURCES += luckygps.qrc
