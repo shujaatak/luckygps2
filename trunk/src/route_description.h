@@ -24,7 +24,9 @@
 #include <QStringList>
 #include <QtDebug>
 
+#ifdef WITH_ROUTING
 #include "interfaces/irouter.h"
+#endif
 #include "route.h"
 
 

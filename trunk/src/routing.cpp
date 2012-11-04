@@ -30,15 +30,23 @@
 
 Routing::Routing()
 {
-	_gpsLookup = NULL,
+#ifdef WITH_ROUTING
+	_gpsLookup = NULL;
 	_router = NULL;
 	_addressLookup = NULL;
+#endif
+	_descGenerator = NULL;
+	_addressManager = NULL;
+
+#ifdef WITH_ROUTING
 	_descGenerator = new DescriptionGenerator();
 	_addressManager = new osmAdressManager();
+#endif
 
 	_pos[0][0] = _pos[0][1] = 0.0;
 	_pos[1][0] = _pos[1][1] = 0.0;
 
+#ifdef WITH_ROUTING
 	foreach (QObject *plugin, QPluginLoader::staticInstances())
 	{
 		if (IGPSLookup *interface = qobject_cast< IGPSLookup* >(plugin))
@@ -62,14 +70,16 @@ Routing::Routing()
 			}
 		}
 	}
+#endif
 }
 
 Routing::~Routing()
 {
+#ifdef WITH_ROUTING
 	/* Free static plugins */
 	foreach (QObject *plugin, QPluginLoader::staticInstances())
 		delete plugin;
-
+#endif
 	/* Description Generator */
 	if(_descGenerator)
 		delete _descGenerator;
@@ -103,7 +113,13 @@ int Routing::dataFolder(QString dir, QString *result)
 
 bool Routing::init(QString dataDirectory)
 {
-	if(!_addressLookup || !_router || !_gpsLookup || !_descGenerator)
+	bool initBad = 0;
+#ifdef WITH_ROUTING
+	initBad |= (!_addressLookup || !_router || !_gpsLookup);
+#endif
+	initBad |= (!_descGenerator || !_addressManager);
+
+	if(initBad)
 	{
 		_init = false;
 		return false;
@@ -124,6 +140,7 @@ bool Routing::init(QString dataDirectory)
 
 int Routing::loadPlugins(QString dataDirectory)
 {
+#ifdef WITH_ROUTING
 	/* ---------------------------------- */
 	/*         GPS lookup plugin          */
 	/* ---------------------------------- */
@@ -197,6 +214,9 @@ int Routing::loadPlugins(QString dataDirectory)
 	qDebug("loadPlugins: successfull.");
 
 	return true;
+#else
+	return false;
+#endif
 }
 
 bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString hnDest)
@@ -204,6 +224,7 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 	if(!_init)
 		return false;
 
+#ifdef WITH_ROUTING
 	/* HACK */
 	// Check if house number is given, too */
 	if(!hnStart.isEmpty())
@@ -286,6 +307,9 @@ bool Routing::calculateRoute(Route &route, int units, QString hnStart, QString h
 	 }
 
 	return success;
+#else
+	return false;
+#endif
 }
 
 bool Routing::computeRoute(double *resultDistance, QVector< IRouter::Node > *resultNodes, QVector< IRouter::Edge > *resultEdge, GPSCoordinate source, GPSCoordinate target, double lookupRadius)
@@ -293,6 +317,7 @@ bool Routing::computeRoute(double *resultDistance, QVector< IRouter::Node > *res
 	if(!_init)
 		return false;
 
+#ifdef WITH_ROUTING
 	UnsignedCoordinate sourceCoordinate(source);
 	UnsignedCoordinate targetCoordinate(target);
 	IGPSLookup::Result sourcePosition;
@@ -321,6 +346,9 @@ bool Routing::computeRoute(double *resultDistance, QVector< IRouter::Node > *res
 	qDebug() << "Routing:" << time.restart() << "ms";
 
 	return found;
+#else
+	return false;
+#endif
 }
 
 bool Routing::getCitySuggestions(QString city, QStringList &suggestions)
@@ -328,6 +356,7 @@ bool Routing::getCitySuggestions(QString city, QStringList &suggestions)
 	if(!_init)
 		return false;
 
+#ifdef WITH_ROUTING
 	QStringList characters;
 	QTime time;
 	IAddressLookup *addressLookup = _addressLookup;
@@ -337,10 +366,11 @@ bool Routing::getCitySuggestions(QString city, QStringList &suggestions)
 	bool found = addressLookup->GetPlaceSuggestions(city, 10, &suggestions, &characters);
 	qDebug() << "City Lookup:" << time.elapsed() << "ms";
 
-	if (!found)
-		return false;
-	else
+	if (found)
 		return true;
+	else
+#endif
+		return false;
 }
 
 bool Routing::getStreetSuggestions(QString street, QStringList &suggestions, int typeID)
@@ -348,6 +378,7 @@ bool Routing::getStreetSuggestions(QString street, QStringList &suggestions, int
 	if(!_init)
 		return false;
 
+#ifdef WITH_ROUTING
 	QStringList characters;
 	QTime time;
 	IAddressLookup *addressLookup = _addressLookup;
@@ -363,10 +394,11 @@ bool Routing::getStreetSuggestions(QString street, QStringList &suggestions, int
 	bool found = addressLookup->GetStreetSuggestions(m_placeID, street, 10, &suggestions, &characters);
 	qDebug() << "Street Lookup:" << time.elapsed() << "ms";
 
-	if (!found)
-		return false;
-	else
+	if (found)
 		return true;
+	else
+#endif
+		return false;
 }
 
 bool Routing::suggestionClicked(QString text, int typeID)
@@ -374,6 +406,7 @@ bool Routing::suggestionClicked(QString text, int typeID)
 	if(!_init)
 		return false;
 
+#ifdef WITH_ROUTING
 	IAddressLookup *addressLookup = _addressLookup;
 
 	if(typeID == ID_START_CITY || typeID == ID_DEST_CITY)
@@ -431,6 +464,9 @@ bool Routing::suggestionClicked(QString text, int typeID)
 	}
 
 	return true;
+#else
+	return false;
+#endif
 }
 
 /* does not only verify GPS coordinates but also inserts them into the _pos list */
@@ -473,8 +509,9 @@ void Routing::getInstructions(Route &route, QStringList* icons, int units)
 {
 	if(!_init)
 		return;
-
+#ifdef WITH_ROUTING
 	_descGenerator->descriptions(route, _router, icons, route.pathNodes, route.pathEdges, units); // maxSeconds
+#endif
 }
 
 void Routing::getInstructions(RoutePoint *rp, RoutePoint *nextRp, double distance, QStringList* labels, QStringList* icons, int units)

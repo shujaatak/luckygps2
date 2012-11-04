@@ -30,6 +30,7 @@
 #include <Magick++.h>
 #endif
 
+#ifdef WITH_ROUTING
 Q_IMPORT_PLUGIN(contractionhierarchiesclient);
 Q_IMPORT_PLUGIN(gpsgridclient);
 Q_IMPORT_PLUGIN(unicodetournamenttrieclient);
@@ -38,7 +39,7 @@ Q_IMPORT_PLUGIN(osmimporter);
 Q_IMPORT_PLUGIN(contractionhierarchies);
 Q_IMPORT_PLUGIN(gpsgrid);
 Q_IMPORT_PLUGIN(unicodetournamenttrie);
-
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -83,6 +84,7 @@ int main(int argc, char *argv[])
 
 			a->exec();
 		}
+#ifdef WITH_ROUTING
 		else
 		{
 			/* check if 1 argument is given */
@@ -105,6 +107,7 @@ int main(int argc, char *argv[])
 					qWarning() << "Import failed.";
 			}
 		}
+#endif
 
 		delete a;
 	}
