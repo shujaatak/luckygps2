@@ -1,0 +1,1 @@
+Luckygps is an openstreetmap based navigation software.
